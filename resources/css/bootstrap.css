@@ -1,0 +1,25 @@
+/* @import 'bootstrap/dist/css/bootstrap.min.css'; */
+@import './style.css';
+
+/* Bootstrap-specific customizations */
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Authentication layout specific styles */
+.authentication-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+}
+
+.authentication-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    width: 100%;
+    max-width: 400px;
+}

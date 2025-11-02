@@ -1,0 +1,28 @@
+/* resources/css/public.css */
+
+@import "tailwindcss";
+
+@theme {
+  /* Palet Warna Utama */
+  --color-primary: #0D6EFD;      /* Biru Utama */
+  --color-primary-dark: #0a58ca; /* Biru Lebih Gelap (untuk hover) */
+  --color-secondary: #FFC107; /* Kuning Sekunder */
+  
+  /* Palet Warna Netral (Penting untuk desain modern) */
+  --color-slate-900: #1e293b; /* Teks Judul */
+  --color-slate-700: #334155; /* Teks Sub-judul */
+  --color-slate-500: #64748b; /* Teks Body/Muted */
+  --color-slate-200: #e2e8f0; /* Garis/Border */
+  --color-slate-100: #f1f5f9; /* Latar Belakang Section */
+  --color-slate-50: #f8fafc;   /* Latar Belakang Utama */
+
+  /* Tipografi */
+  /* Anda bisa menambahkan Google Fonts di <head> app.blade.php jika mau */
+  --font-family-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* Sedikit style tambahan untuk body */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

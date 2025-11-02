@@ -1,0 +1,111 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+/* Bootstrap */
+/* @import "bootstrap/dist/css/bootstrap.min.css";
+@import "sweetalert2/dist/sweetalert2.min.css"; */
+/* @import "style.css"; */
+@import "tailwindcss";
+
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Custom gradient utilities */
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-gradient {
+    animation: gradient 15s ease infinite;
+    background-size: 200% 200%;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-20px); 
+  }
+}
+
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Scrollbar styling */
+body::-webkit-scrollbar {
+    width: 8px;
+}
+
+body::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #4F46E5, #F59E0B);
+    border-radius: 4px;
+}
+
+/* Custom styles for public pages */
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Scrollbar styling */
+body::-webkit-scrollbar {
+    width: 8px;
+}
+
+body::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+}
+
+.scroll-container {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #888 transparent;
+}
+
+.scroll-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+}
+
+.scroll-container-0 {
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.scroll-container-0::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+.scroll-container-0::-webkit-scrollbar-thumb {
+    background: transparent;
+}
