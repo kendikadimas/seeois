@@ -23,16 +23,16 @@ export default defineConfig({
             },
         }),
     ],
-    server: {
-        host: '127.0.0.1',
-        port: 5173,
-        strictPort: true,
-        hmr: {
-            host: '127.0.0.1',
-            protocol: 'ws',
-            port: 5173,
-        },
-    },
+    // server: {
+    //     host: '127.0.0.1',
+    //     port: 5173,
+    //     strictPort: true,
+    //     hmr: {
+    //         host: '127.0.0.1',
+    //         protocol: 'ws',
+    //         port: 5173,
+    //     },
+    // },
     resolve: {
         alias: {
             "@": "/resources/js",
