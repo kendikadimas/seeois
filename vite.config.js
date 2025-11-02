@@ -5,11 +5,11 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
     plugins: [
-        tailwindcss(), // Tailwind v4 plugin
+        tailwindcss(),
         laravel({
             input: [
-                "resources/css/app.css", // Tailwind for public pages
-                "resources/css/bootstrap.css", // Bootstrap for staff pages
+                "resources/css/app.css",
+                "resources/css/bootstrap.css",
                 "resources/js/app.js",
             ],
             refresh: true,
@@ -23,16 +23,6 @@ export default defineConfig({
             },
         }),
     ],
-    // server: {
-    //     host: '127.0.0.1',
-    //     port: 5173,
-    //     strictPort: true,
-    //     hmr: {
-    //         host: '127.0.0.1',
-    //         protocol: 'ws',
-    //         port: 5173,
-    //     },
-    // },
     resolve: {
         alias: {
             "@": "/resources/js",
@@ -44,5 +34,15 @@ export default defineConfig({
                 charset: false,
             },
         },
+    },
+    // HMR config untuk development saja
+    server: {
+        host: 'localhost',
+        port: 5173,
+        hmr: process.env.VITE_HMR_HOST ? {
+            host: process.env.VITE_HMR_HOST,
+            protocol: 'https',
+            port: 443,
+        } : undefined,
     },
 });
