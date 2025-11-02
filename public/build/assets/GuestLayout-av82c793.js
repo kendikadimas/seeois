@@ -1,1 +1,0 @@
-import{_ as t}from"./_plugin-vue_export-helper-DlAUqK2U.js";import{g as o,o as s,b as r,y as a}from"./app-DU0LC3y2.js";const n={},c={class:"bg-light",style:{"min-height":"100vh"}};function l(e,_){return s(),o("body",c,[r("main",null,[a(e.$slots,"default")])])}const d=t(n,[["render",l]]);export{d as G};

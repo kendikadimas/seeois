@@ -125,11 +125,6 @@ const props = defineProps({
 
 const toastNotifRef = ref(null);
 
-// Load Tailwind CSS for this page
-onMounted(async () => {
-    await import('../../css/app.css');
-});
-
 watch(
     () => props.notif,
     (newValue) => {
