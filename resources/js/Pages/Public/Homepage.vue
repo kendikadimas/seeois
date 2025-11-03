@@ -44,7 +44,7 @@
                     
                     <div class="relative">
                         <div class="relative bg-slate-50 rounded-2xl overflow-hidden shadow-xl">
-                            <img src="/storage/local/images/compro/seeo.jpg" alt="SEEO Team" class="w-full h-96 lg:h-[500px] object-cover">
+                            <img :src="$imageUrl('compro/seeo.jpg')" alt="SEEO Team" class="w-full h-96 lg:h-[500px] object-cover">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                         </div>
                         
@@ -90,7 +90,7 @@
                     <!-- Left: Image -->
                     <div class="relative">
                         <div class="bg-white rounded-2xl p-8 shadow-lg">
-                            <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="w-full h-auto max-w-sm mx-auto"/>
+                            <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" class="w-full h-auto max-w-sm mx-auto"/>
                         </div>
                     </div>
                     
@@ -158,7 +158,7 @@
                     <!-- Left: Logo -->
                     <div class="order-2 lg:order-1">
                         <div class="bg-white rounded-2xl p-12 shadow-lg">
-                            <img src="/storage/local/images/compro/blaterianlogo.png" alt="Blaterian Logo" class="w-full h-auto max-w-sm mx-auto"/>
+                            <img :src="$imageUrl('compro/blaterianlogo.png')" alt="Blaterian Logo" class="w-full h-auto max-w-sm mx-auto"/>
                         </div>
                         
                         <!-- Product categories -->
@@ -234,7 +234,7 @@
                     <!-- EntClass Card -->
                     <div class="bg-slate-800 rounded-xl overflow-hidden hover:bg-slate-700 transition-colors duration-300">
                         <div class="h-48 overflow-hidden">
-                            <img src="/storage/local/images/compro/entclass.JPG" alt="EntClass I" class="w-full h-full object-cover">
+                            <img :src="$imageUrl('compro/entclass.JPG')" alt="EntClass I" class="w-full h-full object-cover">
                         </div>
                         
                         <div class="p-6">
@@ -261,7 +261,7 @@
                     <!-- Visitasi Card -->
                     <div class="bg-slate-800 rounded-xl overflow-hidden hover:bg-slate-700 transition-colors duration-300">
                         <div class="h-48 overflow-hidden">
-                            <img src="/storage/local/images/compro/visitasi.JPG" alt="Visitasi I" class="w-full h-full object-cover">
+                            <img :src="$imageUrl('compro/visitasi.JPG')" alt="Visitasi I" class="w-full h-full object-cover">
                         </div>
                         
                         <div class="p-6">
@@ -288,7 +288,7 @@
                     <!-- Upgrading Card -->
                     <div class="bg-slate-800 rounded-xl overflow-hidden hover:bg-slate-700 transition-colors duration-300 md:col-span-2 lg:col-span-1">
                         <div class="h-48 overflow-hidden">
-                            <img src="/storage/local/images/compro/upgrading.webp" alt="Upgrading I" class="w-full h-full object-cover">
+                            <img :src="$imageUrl('compro/upgrading.webp')" alt="Upgrading I" class="w-full h-full object-cover">
                         </div>
                         
                         <div class="p-6">

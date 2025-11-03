@@ -1,16 +1,19 @@
 <script setup>
 import { Head, useForm, usePage } from "@inertiajs/vue3";
+import { computed, inject } from "vue";
+
+const imageUrl = inject('imageUrl');
+
+const errorBg = computed(() => ({
+    backgroundImage: `url('${imageUrl('apps/error_background.png')}')`,
+    backgroundSize: 'cover'
+}));
 </script>
 
 <template>
     <body
-        style="
-            min-height: 100vh;
-            width: 100%;
-            margin: 0;
-            background: url('/storage/local/images/apps/error_background.png');
-            background-size: cover;
-        "
+        style="min-height: 100vh; width: 100%; margin: 0;"
+        :style="errorBg"
     >
         <div class="d-flex w-100 h-100">
             <div class="container" style="height: 100vh">

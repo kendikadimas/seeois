@@ -14,7 +14,7 @@
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <Link href="/" class="flex items-center gap-3">
                     <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                        <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="h-8 w-8 rounded-md">
+                        <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" class="h-8 w-8 rounded-md">
                     </div>
                     <div class="flex flex-col">
                         <span class="font-bold text-xl" style="color: #111827;">SEEO</span>
@@ -84,7 +84,7 @@
                 <div class="md:col-span-2">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                            <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="h-8 w-8 rounded-md">
+                            <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" class="h-8 w-8 rounded-md">
                         </div>
                         <div>
                             <h3 class="text-xl font-bold" style="color: #fbbf24;">SEEO</h3>

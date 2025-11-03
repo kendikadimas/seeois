@@ -34,6 +34,28 @@ async function resolvePageComponent(path, pages) {
   }
   throw new Error(`Page not found: ${path}`);
 }
+const imageHelperPlugin = {
+  install(app, options = {}) {
+    const imageUrl = (path) => {
+      const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+      const paths = [
+        `/images/${cleanPath}`,
+        `/storage/images/${cleanPath}`,
+        `/storage/local/images/${cleanPath}`
+      ];
+      return paths[0];
+    };
+    app.config.globalProperties.$imageUrl = imageUrl;
+    app.provide("imageUrl", imageUrl);
+    app.mixin({
+      methods: {
+        $imageUrl(path) {
+          return imageUrl(path);
+        }
+      }
+    });
+  }
+};
 const appName = "Blaterian";
 window.bootstrap = bootstrap;
 createInertiaApp({
@@ -41,7 +63,7 @@ createInertiaApp({
   resolve: async (name) => {
     const page = await resolvePageComponent(
       `./Pages/${name}.vue`,
-      /* @__PURE__ */ Object.assign({ "./Pages/Auth/ConfirmPassword.vue": () => import("./assets/ConfirmPassword-BK51SIzN.js"), "./Pages/Auth/ForgotPassword.vue": () => import("./assets/ForgotPassword-CBYOq2LK.js"), "./Pages/Auth/Login.vue": () => import("./assets/Login-D-q_OiCb.js"), "./Pages/Auth/Register.vue": () => import("./assets/Register-DzNlMddY.js"), "./Pages/Auth/RegisterGoogle.vue": () => import("./assets/RegisterGoogle-apDysBNu.js"), "./Pages/Auth/ResetPassword.vue": () => import("./assets/ResetPassword-DJo9V_AD.js"), "./Pages/Auth/VerifyEmail.vue": () => import("./assets/VerifyEmail-C-7VKzO7.js"), "./Pages/Bingo.vue": () => import("./assets/Bingo-C0m6IC1M.js"), "./Pages/Errors/Default.vue": () => import("./assets/Default-B0FUU6nt.js"), "./Pages/Internship/Certificates/Index.vue": () => import("./assets/Index-CyxtUdLw.js"), "./Pages/Internship/Index.vue": () => import("./assets/Index-C-1xTOS0.js"), "./Pages/Internship/Register.vue": () => import("./assets/Register-fJfyGzXs.js"), "./Pages/Public/About.vue": () => import("./assets/About-DEg4zh7L.js"), "./Pages/Public/Activity.vue": () => import("./assets/Activity-C-w1jihi.js"), "./Pages/Public/Contact.vue": () => import("./assets/Contact-C_R23jwh.js"), "./Pages/Public/Departments.vue": () => import("./assets/Departments-C88RtZFk.js"), "./Pages/Public/Events.vue": () => import("./assets/Events-Z-eKS6ef.js"), "./Pages/Public/Homepage.vue": () => import("./assets/Homepage-CdzDjnP-.js"), "./Pages/Public/OurBrand.vue": () => import("./assets/OurBrand-CGPlmkJE.js"), "./Pages/Public/Profile.vue": () => import("./assets/Profile-CzZDRXmg.js"), "./Pages/Public/Promotion.vue": () => import("./assets/Promotion-D3oo69Ni.js"), "./Pages/Public/Shop.vue": () => import("./assets/Shop-Dx-zxSeA.js"), "./Pages/Public/Stand.vue": () => import("./assets/Stand-D0d2r4Qj.js"), "./Pages/Public/Structure.vue": () => import("./assets/Structure-Ppx2eBU5.js"), "./Pages/Public/Transaction.vue": () => import("./assets/Transaction-DNPBqxkp.js"), "./Pages/Public/Welcome.vue": () => import("./assets/Welcome-DbO1Wumu.js"), "./Pages/Staff/Business/Insight.vue": () => import("./assets/Insight-CpUUXXnr.js"), "./Pages/Staff/Business/InsightCashflow.vue": () => import("./assets/InsightCashflow-CnmZRaCN.js"), "./Pages/Staff/Business/Stand.vue": () => import("./assets/Stand-u_aPRDJU.js"), "./Pages/Staff/Business/StandCashier.vue": () => import("./assets/StandCashier-Cvy_2OHa.js"), "./Pages/Staff/Business/StandDetail.vue": () => import("./assets/StandDetail-BH0pdJ-D.js"), "./Pages/Staff/Internship/CertificatesManage.vue": () => import("./assets/CertificatesManage-mAjxRYb-.js"), "./Pages/Staff/Profile.vue": () => import("./assets/Profile-DRQ8RXqz.js"), "./Pages/Staff/SEEO/CashFlow.vue": () => import("./assets/CashFlow-2UlqC7ov.js"), "./Pages/Staff/SEEO/Dashboard.vue": () => import("./assets/Dashboard-BlnB3Ag5.js"), "./Pages/Staff/SEEO/Department.vue": () => import("./assets/Department-QdHiRUk5.js"), "./Pages/Staff/SEEO/Employee.vue": () => import("./assets/Employee-DcSGtkUw.js"), "./Pages/Staff/SEEO/FinanceFeature.vue": () => import("./assets/FinanceFeature-fZRTG5RH.js"), "./Pages/Staff/SEEO/Program.vue": () => import("./assets/Program-C_S4IMZg.js"), "./Pages/Staff/SEEO/Structural.vue": () => import("./assets/Structural-cbiL0M-g.js"), "./Pages/Staff/Template.vue": () => import("./assets/Template-D3_T5aUn.js") })
+      /* @__PURE__ */ Object.assign({ "./Pages/Auth/ConfirmPassword.vue": () => import("./assets/ConfirmPassword-DtnlRWvX.js"), "./Pages/Auth/ForgotPassword.vue": () => import("./assets/ForgotPassword-DLwYqAay.js"), "./Pages/Auth/Login.vue": () => import("./assets/Login-ckGE_Mga.js"), "./Pages/Auth/Register.vue": () => import("./assets/Register-DzCIXMof.js"), "./Pages/Auth/RegisterGoogle.vue": () => import("./assets/RegisterGoogle-apDysBNu.js"), "./Pages/Auth/ResetPassword.vue": () => import("./assets/ResetPassword-DJo9V_AD.js"), "./Pages/Auth/VerifyEmail.vue": () => import("./assets/VerifyEmail-C-7VKzO7.js"), "./Pages/Bingo.vue": () => import("./assets/Bingo-C0m6IC1M.js"), "./Pages/Errors/Default.vue": () => import("./assets/Default-e4vhldhC.js"), "./Pages/Internship/Certificates/Index.vue": () => import("./assets/Index-CyxtUdLw.js"), "./Pages/Internship/Index.vue": () => import("./assets/Index-DzZo9Qbp.js"), "./Pages/Internship/Register.vue": () => import("./assets/Register-fJfyGzXs.js"), "./Pages/Public/About.vue": () => import("./assets/About-CPjko47y.js"), "./Pages/Public/Activity.vue": () => import("./assets/Activity-Dm6UuVSi.js"), "./Pages/Public/Contact.vue": () => import("./assets/Contact-Dw5f8-rp.js"), "./Pages/Public/Departments.vue": () => import("./assets/Departments-CSBr1cLW.js"), "./Pages/Public/Events.vue": () => import("./assets/Events-DM7QRWkz.js"), "./Pages/Public/Homepage.vue": () => import("./assets/Homepage-BQYWd8Cp.js"), "./Pages/Public/OurBrand.vue": () => import("./assets/OurBrand-Dwk0yL1c.js"), "./Pages/Public/Profile.vue": () => import("./assets/Profile-CzZDRXmg.js"), "./Pages/Public/Promotion.vue": () => import("./assets/Promotion-D3oo69Ni.js"), "./Pages/Public/Shop.vue": () => import("./assets/Shop-Dx-zxSeA.js"), "./Pages/Public/Stand.vue": () => import("./assets/Stand-D0d2r4Qj.js"), "./Pages/Public/Structure.vue": () => import("./assets/Structure-r_y-uwOY.js"), "./Pages/Public/Transaction.vue": () => import("./assets/Transaction-DNPBqxkp.js"), "./Pages/Public/Welcome.vue": () => import("./assets/Welcome-hrdq3TVn.js"), "./Pages/Staff/Business/Insight.vue": () => import("./assets/Insight-CPqFD-8i.js"), "./Pages/Staff/Business/InsightCashflow.vue": () => import("./assets/InsightCashflow-BQ69gQ57.js"), "./Pages/Staff/Business/Stand.vue": () => import("./assets/Stand--P-ls5bW.js"), "./Pages/Staff/Business/StandCashier.vue": () => import("./assets/StandCashier-CkXf4-qz.js"), "./Pages/Staff/Business/StandDetail.vue": () => import("./assets/StandDetail-CSSte5tV.js"), "./Pages/Staff/Internship/CertificatesManage.vue": () => import("./assets/CertificatesManage-BGF8-2E_.js"), "./Pages/Staff/Profile.vue": () => import("./assets/Profile-DRYFn2Bv.js"), "./Pages/Staff/SEEO/CashFlow.vue": () => import("./assets/CashFlow-DR4PKX4L.js"), "./Pages/Staff/SEEO/Dashboard.vue": () => import("./assets/Dashboard-Wrt5qokj.js"), "./Pages/Staff/SEEO/Department.vue": () => import("./assets/Department-yGP7Joub.js"), "./Pages/Staff/SEEO/Employee.vue": () => import("./assets/Employee-DyKBCPPK.js"), "./Pages/Staff/SEEO/FinanceFeature.vue": () => import("./assets/FinanceFeature-BZjZMlki.js"), "./Pages/Staff/SEEO/Program.vue": () => import("./assets/Program-DZeH54_e.js"), "./Pages/Staff/SEEO/Structural.vue": () => import("./assets/Structural-DGhuiWlT.js"), "./Pages/Staff/Template.vue": () => import("./assets/Template-Ds_-pLs0.js") })
     );
     const isPublicPage = name.startsWith("Public/") || name === "Public/Homepage";
     const isAuthPage = name.startsWith("Auth/");
@@ -53,7 +75,7 @@ createInertiaApp({
     return page;
   },
   setup({ el, App, props, plugin }) {
-    const app = createApp({ render: () => h(App, props) }).use(plugin);
+    const app = createApp({ render: () => h(App, props) }).use(plugin).use(imageHelperPlugin);
     app.config.globalProperties.route = window.route;
     app.provide("route", window.route);
     return app.mount(el);

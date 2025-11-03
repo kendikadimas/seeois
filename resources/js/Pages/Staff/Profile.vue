@@ -209,7 +209,7 @@ watch(
 <template>
     <!-- Page Layout -->
     <StaffLayout>
-        <Head :title="title" :icon="'/storage/local/images/apps/logo.png'" />
+        <Head :title="title" :icon="$imageUrl('apps/logo.png')" />
         <!-- Modal Box -->
         <ModalConfirmation ref="modalConfirmationRef" />
         <template #header>

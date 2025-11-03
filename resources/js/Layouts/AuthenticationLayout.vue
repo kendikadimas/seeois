@@ -28,7 +28,7 @@
                                 class="text-decoration-none"
                             >
                                 <img
-                                    src="/storage/local/images/compro/logo.png"
+                                    :src="$imageUrl('compro/logo.png')"
                                     alt="SEEO Logo"
                                     class="mb-3"
                                     width="60"

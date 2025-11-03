@@ -5,6 +5,7 @@ import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import imageHelperPlugin from './plugins/imageHelper';
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 window.bootstrap = bootstrap; // Make Bootstrap JS globally accessible if needed
@@ -35,7 +36,8 @@ createInertiaApp({
     },
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) })
-            .use(plugin);
+            .use(plugin)
+            .use(imageHelperPlugin);
 
         // Make route function available globally in Vue components
         app.config.globalProperties.route = window.route;

@@ -2,7 +2,7 @@
     <Head title="Welcome to Blaterian" />
     
     <main class="min-h-screen bg-cover bg-center bg-no-repeat relative" 
-          style="background-image: url('/storage/local/images/compro/seeo.jpg');">
+          :style="{ backgroundImage: `url('${$imageUrl('compro/seeo.jpg')}')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }">
         
         <!-- Overlay -->
         <div class="absolute inset-0 bg-black bg-opacity-50"></div>

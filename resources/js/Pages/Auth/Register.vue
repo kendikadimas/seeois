@@ -38,7 +38,7 @@ const togglePasswordVisibility = (field) => {
                     <div class="card-body p-4 p-lg-5">
                         <div class="text-center mb-4">
                             <div class="d-lg-none mb-4">
-                                <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" style="width: 70px; height: 70px;">
+                                <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" style="width: 70px; height: 70px;">
                             </div>
                             <h2 class="h3 fw-bold">Daftar Akun</h2>
                             <p class="text-muted">Bergabung bersama SEEO!</p>
@@ -188,7 +188,7 @@ const togglePasswordVisibility = (field) => {
                 <div class="text-center" style="max-width: 450px;">
                     <div class="mb-4 d-flex ">
                         <div class="mx-auto d-flex align-items-center justify-content-center bg-white bg-opacity-25 rounded-circle shadow-lg" style="width: 130px; height: 130px;">
-                            <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="rounded-circle" style="width: 90px; height: 90px;">
+                            <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" class="rounded-circle" style="width: 90px; height: 90px;">
                         </div>
                     </div>
                     <h1 class="display-4 fw-bolder mb-3">SIS v5.0</h1>

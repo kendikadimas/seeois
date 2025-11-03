@@ -240,7 +240,7 @@ watch(() => page.component, () => {
              <div class="sidebar-content-inner p-3">
                 <div class="sidebar-logo mb-4">
                      <div class="d-flex align-items-center p-2 rounded bg-white bg-opacity-10">
-                        <img src="/storage/local/images/apps/logo.png" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src='/storage/local/images/compro/logo.png'"/>
+                        <img :src="$imageUrl('apps/logo.png')" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src=$imageUrl('compro/logo.png')"/>
                         <div class="lh-sm">
                             <h5 class="sidebar-logo-title mb-0">SEEO</h5>
                             <span class="sidebar-logo-subtitle d-block">Information System</span>
@@ -304,7 +304,7 @@ watch(() => page.component, () => {
          <div class="offcanvas offcanvas-start bg-gradient-custom text-white sidebar-mobile" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel" ref="sidebarRef">
             <div class="offcanvas-header border-bottom border-white border-opacity-25">
                  <div class="d-flex align-items-center">
-                    <img src="/storage/local/images/apps/logo.png" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src='/storage/local/images/compro/logo.png'"/>
+                    <img :src="$imageUrl('apps/logo.png')" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src=$imageUrl('compro/logo.png')"/>
                     <div class="lh-sm">
                         <h5 class="sidebar-logo-title mb-0" id="sidebarOffcanvasLabel">SEEO</h5>
                         <span class="sidebar-logo-subtitle d-block">Information System</span>
@@ -394,7 +394,7 @@ watch(() => page.component, () => {
                                 :src="'/storage/images/profile/' + (auth_user?.profile_image ?? 'example.png')"
                                 alt="Profile"
                                 class="profile-img rounded-circle me-2"
-                                @error="$event.target.src='/storage/local/images/compro/logo.png'"
+                                @error="$event.target.src=$imageUrl('compro/logo.png')"
                                 style="width: 40px; height: 40px; object-fit: cover;"
                             />
                             <div class="profile-info d-none d-lg-block lh-sm text-start">

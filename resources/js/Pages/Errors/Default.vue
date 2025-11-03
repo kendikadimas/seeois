@@ -33,7 +33,7 @@ const image = computed(() => {
 });
 </script>
 <template>
-    <Head :title="status" :icon="'/storage/local/images/apps/logo.png'" />
+    <Head :title="status" :icon="$imageUrl('apps/logo.png')" />
     <ErrorsLayout>
         <template #status> {{ status }} </template>
         <template #title> {{ message[status] }} </template>

@@ -104,7 +104,7 @@
                     <div class="relative group">
                         <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 p-1">
                             <div class="relative h-96 lg:h-[500px] rounded-3xl overflow-hidden bg-white">
-                                <img src="/storage/local/images/compro/entclass.JPG" alt="EntClass I" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                                <img :src="$imageUrl('compro/entclass.JPG')" alt="EntClass I" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
                                 
                                 <!-- Overlay info -->
@@ -231,7 +231,7 @@
                     <!-- Visitasi -->
                     <div class="group relative bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 overflow-hidden hover:bg-white/10 transition-all duration-500 hover:scale-105">
                         <div class="relative h-64 overflow-hidden">
-                            <img src="/storage/local/images/compro/visitasi.JPG" alt="Visitasi I" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <img :src="$imageUrl('compro/visitasi.JPG')" alt="Visitasi I" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
                             
                             <div class="absolute top-4 left-4">
@@ -262,7 +262,7 @@
                     <!-- Upgrading -->
                     <div class="group relative bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 overflow-hidden hover:bg-white/10 transition-all duration-500 hover:scale-105">
                         <div class="relative h-64 overflow-hidden">
-                            <img src="/storage/local/images/compro/upgrading.webp" alt="Upgrading I" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <img :src="$imageUrl('compro/upgrading.webp')" alt="Upgrading I" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
                             
                             <div class="absolute top-4 left-4">
@@ -293,7 +293,7 @@
                     <!-- Rapat Pleno -->
                     <div class="group relative bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 overflow-hidden hover:bg-white/10 transition-all duration-500 hover:scale-105 md:col-span-2 lg:col-span-1">
                         <div class="relative h-64 overflow-hidden">
-                            <img src="/storage/local/images/compro/raplen1.JPG" alt="Rapat Pleno I" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <img :src="$imageUrl('compro/raplen1.JPG')" alt="Rapat Pleno I" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
                             
                             <div class="absolute top-4 left-4">
@@ -353,11 +353,14 @@
 <script setup>
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { ref, inject } from 'vue';
+
+const imageUrl = inject('imageUrl');
 
 const activities = [
-    { title: 'Visitasi I ke KOPMA UIN SAIZU', image: '/storage/local/images/compro/visitasi.JPG', department: 'Public Relations', badgeColor: 'bg-green-100 text-green-600', description: 'Studi banding untuk meningkatkan wawasan mengenai praktik kewirausahaan di organisasi lain.' },
-    { title: 'Upgrading I', image: '/storage/local/images/compro/upgrading.webp', department: 'Human Resources', badgeColor: 'bg-red-100 text-red-600', description: 'Kegiatan bonding anggota untuk memperkuat hubungan tim dan meningkatkan semangat kolaborasi.' },
-    { title: 'Rapat Pleno I', image: '/storage/local/images/compro/raplen1.JPG', department: 'CEO-CoCEO', badgeColor: 'bg-yellow-100 text-yellow-600', description: 'Membahas perkembangan dan evaluasi program kerja setiap departemen.' }
+    { title: 'Visitasi I ke KOPMA UIN SAIZU', image: 'compro/visitasi.JPG', department: 'Public Relations', badgeColor: 'bg-green-100 text-green-600', description: 'Studi banding untuk meningkatkan wawasan mengenai praktik kewirausahaan di organisasi lain.' },
+    { title: 'Upgrading I', image: 'compro/upgrading.webp', department: 'Human Resources', badgeColor: 'bg-red-100 text-red-600', description: 'Kegiatan bonding anggota untuk memperkuat hubungan tim dan meningkatkan semangat kolaborasi.' },
+    { title: 'Rapat Pleno I', image: 'compro/raplen1.JPG', department: 'CEO-CoCEO', badgeColor: 'bg-yellow-100 text-yellow-600', description: 'Membahas perkembangan dan evaluasi program kerja setiap departemen.' }
 ];
 </script>
 

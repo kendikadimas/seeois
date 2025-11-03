@@ -7,7 +7,7 @@
             <div class="absolute inset-0">
                 <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900"></div>
                 <div class="absolute inset-0 bg-black/20"></div>
-                <div class="absolute inset-0" style="background-image: url('/storage/local/images/compro/seeo.jpg'); background-size: cover; background-position: center; background-attachment: fixed; opacity: 0.1;"></div>
+                <div class="absolute inset-0" :style="{ backgroundImage: `url('${$imageUrl('compro/seeo.jpg')}')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', opacity: 0.1 }"></div>
             </div>
             
             <!-- Floating particles -->
@@ -113,7 +113,7 @@
                     <!-- Right: Visual -->
                     <div class="relative">
                         <div class="relative bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                            <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="w-full h-auto max-w-md mx-auto filter drop-shadow-2xl"/>
+                            <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" class="w-full h-auto max-w-md mx-auto filter drop-shadow-2xl"/>
                         </div>
                         
                         <!-- Floating elements -->
