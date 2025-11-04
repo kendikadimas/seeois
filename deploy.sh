@@ -97,31 +97,40 @@ else
     log_success "public_html directory created"
 fi
 
-# Copy build content to public_html
+# Copy build folder to public_html
 log_info "Checking build source directory: $PROJECT_DIR/public/build/"
 if [ -d "$PROJECT_DIR/public/build" ]; then
     BUILD_FILE_COUNT=$(find "$PROJECT_DIR/public/build" -type f | wc -l)
     log_info "Found $BUILD_FILE_COUNT build files"
     
-    # Copy with full directory structure preserved
-    log_info "Copying build directory structure..."
-    if cp -r "$PROJECT_DIR/public/build/." "$PUBLIC_HTML/" 2>&1 | tee -a "$LOG_FILE"; then
-        log_success "Build files copied to public_html"
+    # Remove old build folder if exists
+    if [ -d "$PUBLIC_HTML/build" ]; then
+        log_warning "Removing old build folder..."
+        rm -rf "$PUBLIC_HTML/build"
+        log_success "Old build folder removed"
+    fi
+    
+    # Copy entire build folder to public_html
+    log_info "Copying build folder with full directory structure..."
+    if cp -r "$PROJECT_DIR/public/build" "$PUBLIC_HTML/" 2>&1 | tee -a "$LOG_FILE"; then
+        log_success "Build folder copied to public_html"
         
         # Verify copy was successful
-        COPIED_FILE_COUNT=$(find "$PUBLIC_HTML" -type f ! -name ".htaccess" ! -name "error_log" ! -name ".gitkeep" | wc -l)
-        ASSETS_COUNT=$(find "$PUBLIC_HTML/assets" -type f 2>/dev/null | wc -l)
+        BUILD_ASSET_COUNT=$(find "$PUBLIC_HTML/build/assets" -type f 2>/dev/null | wc -l)
+        BUILD_MANIFEST=$(find "$PUBLIC_HTML/build" -name "manifest.json" 2>/dev/null)
         
-        log_info "Verified $COPIED_FILE_COUNT total files in public_html"
-        log_info "Found $ASSETS_COUNT files in assets folder"
+        log_info "Found $BUILD_ASSET_COUNT files in build/assets/"
+        if [ -n "$BUILD_MANIFEST" ]; then
+            log_success "Build manifest.json found"
+        fi
         
-        if [ "$ASSETS_COUNT" -lt 50 ]; then
-            log_error "Assets folder appears to be empty or incomplete! Expected >50 files"
-            log_error "Source: $(find "$PROJECT_DIR/public/build/assets" -type f | wc -l) files"
+        if [ "$BUILD_ASSET_COUNT" -lt 50 ]; then
+            log_error "Build assets folder appears to be incomplete! Expected >50 files"
+            log_error "Source had: $(find "$PROJECT_DIR/public/build/assets" -type f | wc -l) files"
             exit 1
         fi
     else
-        log_error "Failed to copy build files"
+        log_error "Failed to copy build folder"
         exit 1
     fi
 else
@@ -241,10 +250,25 @@ else
     log_warning "Laravel index.php not found"
 fi
 
-if [ -f "$PROJECT_DIR/public/build/manifest.json" ]; then
-    log_success "Frontend build manifest found"
+if [ -d "$PROJECT_DIR/public/build" ] && [ -f "$PROJECT_DIR/public/build/manifest.json" ]; then
+    log_success "Frontend build folder found with manifest"
 else
-    log_warning "Frontend build manifest not found"
+    log_warning "Frontend build folder or manifest not found"
+fi
+
+# Verify build folder in public_html
+if [ -d "$PUBLIC_HTML/build" ]; then
+    BUILD_FILES=$(find "$PUBLIC_HTML/build" -type f | wc -l)
+    log_success "Build folder found in public_html with $BUILD_FILES files"
+    
+    if [ -f "$PUBLIC_HTML/build/manifest.json" ]; then
+        log_success "Build manifest.json verified"
+    else
+        log_warning "Build manifest.json not found"
+    fi
+else
+    log_error "Build folder not found in public_html"
+    exit 1
 fi
 
 # Verify index.php in public_html
