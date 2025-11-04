@@ -98,10 +98,22 @@ else
 fi
 
 # Copy build content to public_html
-if cp -r "$PROJECT_DIR/public/build"/* "$PUBLIC_HTML/" 2>/dev/null; then
-    log_success "Build files copied to public_html"
+log_info "Checking build source directory: $PROJECT_DIR/public/build/"
+if [ -d "$PROJECT_DIR/public/build" ]; then
+    BUILD_FILE_COUNT=$(find "$PROJECT_DIR/public/build" -type f | wc -l)
+    log_info "Found $BUILD_FILE_COUNT build files"
+    
+    if cp -r "$PROJECT_DIR/public/build"/* "$PUBLIC_HTML/" 2>&1 | tee -a "$LOG_FILE"; then
+        log_success "Build files copied to public_html"
+        COPIED_FILE_COUNT=$(find "$PUBLIC_HTML" -type f ! -name ".htaccess" ! -name "error_log" ! -name ".gitkeep" | wc -l)
+        log_info "Verified $COPIED_FILE_COUNT files in public_html"
+    else
+        log_error "Failed to copy build files"
+        exit 1
+    fi
 else
-    log_warning "Build files may already exist in public_html (this is OK)"
+    log_error "Build source directory not found: $PROJECT_DIR/public/build"
+    exit 1
 fi
 
 # Also copy index.php and other root files
