@@ -5,8 +5,8 @@
   "node_modules/bootstrap/dist/css/bootstrap.min.css": [],
   "node_modules/laravel-vite-plugin/inertia-helpers/index.js": [],
   "resources/js/Components/Checkbox.vue": [
-    "/build/assets/Login-ckGE_Mga.js",
-    "/build/assets/Login-DRbBzw--.css"
+    "/build/assets/Login-By4iNGpr.js",
+    "/build/assets/Login-B7V0G-71.css"
   ],
   "resources/js/Components/InputError.vue": [
     "/build/assets/InputError-DkffFxkw.js"
@@ -67,12 +67,12 @@
     "/build/assets/ForgotPassword-C6wMHWOB.css"
   ],
   "resources/js/Pages/Auth/Login.vue": [
-    "/build/assets/Login-ckGE_Mga.js",
-    "/build/assets/Login-DRbBzw--.css"
+    "/build/assets/Login-By4iNGpr.js",
+    "/build/assets/Login-B7V0G-71.css"
   ],
-  "resources/js/Pages/Auth/Login.vue?vue&type=style&index=0&scoped=395ddb74&lang.css": [
-    "/build/assets/Login-ckGE_Mga.js",
-    "/build/assets/Login-DRbBzw--.css"
+  "resources/js/Pages/Auth/Login.vue?vue&type=style&index=0&scoped=8401c969&lang.css": [
+    "/build/assets/Login-By4iNGpr.js",
+    "/build/assets/Login-B7V0G-71.css"
   ],
   "resources/js/Pages/Auth/Register.vue": [
     "/build/assets/Register-DzCIXMof.js",
