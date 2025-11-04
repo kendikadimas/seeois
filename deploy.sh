@@ -83,13 +83,18 @@ echo ""
 # ============================================================================
 log_info "Step 2/5: Copying build files to public_html..."
 
-# Remove old public_html content (keep .gitkeep and other important files)
+# Remove old public_html content (keep images symlink and other important files)
 if [ -d "$PUBLIC_HTML" ]; then
     log_warning "Cleaning public_html directory..."
-    # Remove everything except .htaccess, index.php, and other important files
-    find "$PUBLIC_HTML" -maxdepth 1 -type f ! -name ".htaccess" ! -name "error_log" ! -name ".gitkeep" -delete
-    find "$PUBLIC_HTML" -maxdepth 1 -type d ! -name "." ! -name ".." ! -name "images" -exec rm -rf {} + 2>/dev/null || true
+    # Remove files except .htaccess, error_log, .gitkeep
+    find "$PUBLIC_HTML" -maxdepth 1 -type f ! -name ".htaccess" ! -name "error_log" ! -name ".gitkeep" -delete 2>/dev/null || true
+    # Remove directories except images (which is the symlink)
+    find "$PUBLIC_HTML" -maxdepth 1 -type d ! -name "." ! -name ".." ! -name "images" -delete 2>/dev/null || true
     log_success "Public_html cleaned"
+else
+    log_warning "Creating public_html directory..."
+    mkdir -p "$PUBLIC_HTML"
+    log_success "public_html directory created"
 fi
 
 # Copy build content to public_html
