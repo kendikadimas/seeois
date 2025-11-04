@@ -88,7 +88,7 @@ if [ -d "$PUBLIC_HTML" ]; then
     log_warning "Cleaning public_html directory..."
     # Remove files except .htaccess, error_log, .gitkeep
     find "$PUBLIC_HTML" -maxdepth 1 -type f ! -name ".htaccess" ! -name "error_log" ! -name ".gitkeep" -delete 2>/dev/null || true
-    # Remove directories except images (which is the symlink)
+    # Remove directories except images (which is the symlink) - use -delete not -exec
     find "$PUBLIC_HTML" -maxdepth 1 -type d ! -name "." ! -name ".." ! -name "images" -delete 2>/dev/null || true
     log_success "Public_html cleaned"
 else
@@ -103,10 +103,23 @@ if [ -d "$PROJECT_DIR/public/build" ]; then
     BUILD_FILE_COUNT=$(find "$PROJECT_DIR/public/build" -type f | wc -l)
     log_info "Found $BUILD_FILE_COUNT build files"
     
-    if cp -r "$PROJECT_DIR/public/build"/* "$PUBLIC_HTML/" 2>&1 | tee -a "$LOG_FILE"; then
+    # Copy with full directory structure preserved
+    log_info "Copying build directory structure..."
+    if cp -r "$PROJECT_DIR/public/build/." "$PUBLIC_HTML/" 2>&1 | tee -a "$LOG_FILE"; then
         log_success "Build files copied to public_html"
+        
+        # Verify copy was successful
         COPIED_FILE_COUNT=$(find "$PUBLIC_HTML" -type f ! -name ".htaccess" ! -name "error_log" ! -name ".gitkeep" | wc -l)
-        log_info "Verified $COPIED_FILE_COUNT files in public_html"
+        ASSETS_COUNT=$(find "$PUBLIC_HTML/assets" -type f 2>/dev/null | wc -l)
+        
+        log_info "Verified $COPIED_FILE_COUNT total files in public_html"
+        log_info "Found $ASSETS_COUNT files in assets folder"
+        
+        if [ "$ASSETS_COUNT" -lt 50 ]; then
+            log_error "Assets folder appears to be empty or incomplete! Expected >50 files"
+            log_error "Source: $(find "$PROJECT_DIR/public/build/assets" -type f | wc -l) files"
+            exit 1
+        fi
     else
         log_error "Failed to copy build files"
         exit 1
@@ -162,26 +175,31 @@ echo ""
 # ============================================================================
 log_info "Step 4/5: Setting up image symlink..."
 
-# Remove old symlink if exists
+# Remove old symlink if exists (but not the images directory itself)
 if [ -L "$PUBLIC_HTML/images" ]; then
     log_warning "Removing old symlink: $PUBLIC_HTML/images"
-    rm "$PUBLIC_HTML/images"
+    rm -f "$PUBLIC_HTML/images"
     log_success "Old symlink removed"
 fi
 
 # Create new symlink
-if ln -s "$PROJECT_DIR/public/images" "$PUBLIC_HTML/images"; then
+if ln -s "$PROJECT_DIR/public/images" "$PUBLIC_HTML/images" 2>&1 | tee -a "$LOG_FILE"; then
     log_success "Image symlink created: $PUBLIC_HTML/images → $PROJECT_DIR/public/images"
 else
-    log_error "Failed to create symlink"
-    exit 1
+    # If symlink already exists and is correct, don't fail
+    if [ -L "$PUBLIC_HTML/images" ] && [ "$(readlink "$PUBLIC_HTML/images")" = "$PROJECT_DIR/public/images" ]; then
+        log_success "Image symlink already exists and is correct"
+    else
+        log_error "Failed to create symlink"
+        exit 1
+    fi
 fi
 
-# Set permissions
-if chmod -R 755 "$PUBLIC_HTML/images"; then
-    log_success "Permissions set (755) for images"
+# Set permissions on source
+if chmod -R 755 "$PROJECT_DIR/public/images" 2>/dev/null; then
+    log_success "Permissions set (755) for images source"
 else
-    log_warning "Could not set permissions for images"
+    log_warning "Could not set permissions for images source"
 fi
 echo ""
 
