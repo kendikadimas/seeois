@@ -15,26 +15,31 @@ class ImageHelper
      */
     public static function url($path)
     {
-        // Untuk production (cpanel), gunakan public folder
-        $publicPath = public_path('images/' . $path);
-        if (file_exists($publicPath)) {
+        // Prioritas 1: Production - images dalam public/images/
+        $publicImagesPath = public_path('images/' . $path);
+        if (file_exists($publicImagesPath)) {
             return asset('images/' . $path);
         }
 
-        // Untuk local, cek di storage/app/public
-        $storagePath = storage_path('app/public/images/' . $path);
-        if (file_exists($storagePath)) {
-            return asset('storage/images/' . $path);
+        // Prioritas 2: Production symlink - storage/app/public/images/ via /storage/
+        $storagePublicPath = storage_path('app/public/images/' . $path);
+        if (file_exists($storagePublicPath)) {
+            // Check if storage:link has been run (symlink exists)
+            if (file_exists(public_path('storage'))) {
+                return asset('storage/images/' . $path);
+            }
+            // Fallback jika symlink belum ada tapi file exists
+            return '/storage/app/public/images/' . $path;
         }
 
-        // Fallback ke storage local (untuk kompatibilitas)
+        // Prioritas 3: Backward compatibility - storage/app/local/images/
         $localPath = storage_path('app/local/images/' . $path);
         if (file_exists($localPath)) {
             return asset('storage/local/images/' . $path);
         }
 
-        // Return placeholder jika gambar tidak ditemukan
-        return asset('images/placeholder.jpg');
+        // Prioritas 4: Development - just use /images/ directly
+        return '/images/' . $path;
     }
 
     /**

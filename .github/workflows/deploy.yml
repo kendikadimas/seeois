@@ -1,0 +1,35 @@
+name: 🚀 Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to seeoftunsoed.com
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd ~/sis/seeois
+            bash deploy.sh
+
+      - name: ✅ Notify Success
+        if: success()
+        run: echo "✨ Deployment to production completed successfully!"
+
+      - name: ❌ Notify Failure
+        if: failure()
+        run: echo "⚠️ Deployment failed! Check GitHub Actions log."
