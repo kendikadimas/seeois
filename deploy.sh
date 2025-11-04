@@ -129,10 +129,17 @@ else
     exit 1
 fi
 
-# Also copy index.php and other root files
+# Also copy index.php and .htaccess
 if [ -f "$PROJECT_DIR/public/index.php" ]; then
     cp "$PROJECT_DIR/public/index.php" "$PUBLIC_HTML/index.php"
     log_success "index.php copied"
+fi
+
+if [ -f "$PROJECT_DIR/public/.htaccess" ]; then
+    cp "$PROJECT_DIR/public/.htaccess" "$PUBLIC_HTML/.htaccess"
+    log_success ".htaccess copied for URL routing"
+else
+    log_warning ".htaccess not found - URL routing may not work correctly"
 fi
 
 # Edit index.php to reference sis/seeois path
@@ -252,6 +259,18 @@ if [ -f "$PUBLIC_HTML/index.php" ]; then
 else
     log_error "index.php not found in public_html"
     exit 1
+fi
+
+# Verify .htaccess for URL routing
+if [ -f "$PUBLIC_HTML/.htaccess" ]; then
+    log_success ".htaccess found in public_html"
+    if grep -q "RewriteEngine On" "$PUBLIC_HTML/.htaccess"; then
+        log_success ".htaccess contains mod_rewrite rules for routing"
+    else
+        log_warning ".htaccess may not have routing rules configured"
+    fi
+else
+    log_warning ".htaccess not found - routing may not work"
 fi
 echo ""
 
