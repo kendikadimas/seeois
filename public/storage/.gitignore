@@ -1,9 +1,0 @@
-# Ignore everything except tracked image files and .gitignore
-*
-!.gitignore
-!images/
-!internship/
-
-# Ignore specific directories
-document/
-

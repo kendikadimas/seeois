@@ -25,10 +25,16 @@ class InternshipCertificatePolicy
 
     /**
      * Determine if user can manage (view all, create, update, delete) certificates
-     * Only the PIC (Person In Charge) of internship program can manage
+     * Both PIC (Person In Charge) and HR Manager (role 5) can manage
      */
     public function manage(User $user, ?InternshipCertificate $certificate = null): bool
     {
+        // Allow HR Manager (role_id = 5)
+        if ($user->roles_id === 5) {
+            return true;
+        }
+
+        // Allow PIC of internship program
         $internshipProgram = $this->getInternshipProgram();
         
         if (!$internshipProgram) {

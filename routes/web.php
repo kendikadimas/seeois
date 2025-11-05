@@ -232,7 +232,6 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
         Route::get('/internship/certificate/download/{id}', [InternshipCertificateController::class, 'download'])->name('certificate.download');
     });
 
-    // Internship Certificates Management - For PIC of Internship Program
     Route::middleware('auth')->prefix('staff')->group(function(){
         Route::get('/internship/certificates/manage', [InternshipCertificateController::class, 'manageIndex'])->name('certificate.manage');
         Route::post('/internship/certificate/store', [InternshipCertificateController::class, 'store'])->name('certificate.store');
