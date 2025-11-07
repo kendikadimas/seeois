@@ -73,3 +73,10 @@ if (!function_exists('format_date_time')) {
     return $date_time->format('d/m/y H:i');
   }
 }
+
+if (!function_exists('image_url')) {
+  function image_url($path)
+  {
+    return app('ImageHelper')->url($path);
+  }
+}
