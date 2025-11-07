@@ -3,10 +3,18 @@
     <PublicLayout>
         <main>
             <!-- Hero Section -->
-            <section class="relative text-white pt-48 pb-24 px-6 text-center" style="background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #000000 100%);">
+            <section class="relative text-white pt-48 pb-24 px-6 text-center" style="background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);">
                 <div class="relative z-10 max-w-7xl mx-auto">
-                    <h1 class="text-4xl sm:text-6xl font-black mb-4">Hubungi Kami</h1>
-                    <p class="text-lg max-w-3xl mx-auto" style="color: rgba(255, 255, 255, 0.8);">Kami siap mendengar dari Anda. Kirimkan pertanyaan, saran, atau ide kolaborasi melalui informasi di bawah ini.</p>
+                    <!-- Badge -->
+                    <div class="inline-flex items-center px-4 py-2 bg-slate-100 text-slate-700 rounded-full text-sm font-medium mb-6">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                        </svg>
+                        Hubungi Kami
+                    </div>
+                    <h1 class="text-4xl sm:text-6xl font-bold mb-4">Hubungi Kami</h1>
+                    <p class="text-lg max-w-3xl mx-auto text-slate-300">Kami siap mendengar dari Anda. Kirimkan pertanyaan, saran, atau ide kolaborasi melalui informasi di bawah ini.</p>
                 </div>
             </section>
 

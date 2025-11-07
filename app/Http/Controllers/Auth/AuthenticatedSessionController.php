@@ -43,7 +43,7 @@ class AuthenticatedSessionController extends Controller
         if (Auth::user()->roles_id > 0) {
             return redirect()->intended(route('dashboard', absolute: false))->with('notif', ['type' => 'info', 'message' => 'Hi ' . Auth::user()->name . ', welcome to SEEO Information System']);
         } else {
-            return redirect()->intended(route('intro', absolute: false))->with('notif', ['type' => 'info', 'message' => 'Hi ' . Auth::user()->name . ', welcome to Blaterian']);
+            return redirect()->intended(route('login', absolute: false))->with('notif', ['type' => 'info', 'message' => 'Hi ' . Auth::user()->name . ', welcome to Blaterian']);
         }
     }
 

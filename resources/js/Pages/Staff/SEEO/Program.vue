@@ -269,13 +269,13 @@ function handleFileAddDisbursementLetter(event) {
 function setDisbursementReceipt(receipt) {
     disbursement_receipt.value.image = receipt;
     disbursement_receipt.value.link =
-        "/storage/images/receipt/disbursement/" + receipt;
+        "/storage/local/images/receipt/disbursement/" + receipt;
     showReceiptDisbursementModal(true);
 }
 function setExpenseReceipt(expense) {
     expense_receipt.value.image = expense.reciept;
     expense_receipt.value.link =
-        "/storage/images/receipt/expense/" + expense.reciept;
+        "/storage/local/images/receipt/expense/" + expense.reciept;
     expense_receipt.value.status =
         expense.financial_id > 0
             ? "Validated by " + expense.financial.name
@@ -801,7 +801,7 @@ watch(
                                                         >
                                                             <img
                                                                 :src="
-                                                                    '/storage/images/log/' +
+                                                                    '/storage/local/images/log/' +
                                                                     program.id +
                                                                     '/' +
                                                                     logbook.image
@@ -859,7 +859,7 @@ watch(
                                                                             >
                                                                                 <img
                                                                                     :src="
-                                                                                        '/storage/images/log/' +
+                                                                                        '/storage/local/images/log/' +
                                                                                         program.id +
                                                                                         '/' +
                                                                                         selectedLogbookImage
@@ -874,7 +874,7 @@ watch(
                                                                         >
                                                                             <a
                                                                                 :href="
-                                                                                    '/storage/images/log/' +
+                                                                                    '/storage/local/images/log/' +
                                                                                     program.id +
                                                                                     '/' +
                                                                                     selectedLogbookImage
@@ -1010,7 +1010,7 @@ watch(
                                                             :style="'width: 25%; height: auto;'"
                                                         >
                                                             <img
-                                                                :src="'/storage/images/apps/logo.png'"
+                                                                :src="'/storage/local/images/apps/logo.png'"
                                                                 alt="image"
                                                                 class="rounded border border-1 border-secondary-subtle"
                                                             />

@@ -70,7 +70,7 @@ class DepartmentController extends Controller
     /**
      * Display departments.
      */
-    public function department(Request $request, $id = 0)
+    public function department(Request $request, $id)
     {
         $staff_session = session('department_staff', ['keyword' => null]);
         $request->session()->put('department_staff', $staff_session);

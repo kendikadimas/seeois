@@ -935,7 +935,7 @@ watch(
                                                                     >
                                                                         <a
                                                                             :href="
-                                                                                '/storage/images/receipt/contribution/' +
+                                                                                '/storage/local/images/receipt/contribution/' +
                                                                                 selected_receipt.receipt
                                                                             "
                                                                             class="btn btn-sm btn-light border-0 mx-auto"
@@ -977,7 +977,7 @@ watch(
                                                                                         selected_receipt
                                                                                     "
                                                                                     :src="
-                                                                                        '/storage/images/receipt/contribution/' +
+                                                                                        '/storage/local/images/receipt/contribution/' +
                                                                                         selected_receipt.receipt
                                                                                     "
                                                                                     class="w-100 rounded"

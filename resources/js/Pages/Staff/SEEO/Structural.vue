@@ -3,8 +3,7 @@ import StaffLayout from "@/Layouts/StaffLayout.vue";
 import InputError from "@/Components/InputError.vue";
 import Notif from "@/Components/Notif.vue";
 import ModalConfirmation from "@/Components/ModalConfirmation.vue";
-import vSelect from "vue-select";
-import "vue-select/dist/vue-select.css";
+import VueSelect from "@/Components/VueSelect.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
 import {
     ref,
@@ -199,6 +198,31 @@ watch(
     overflow-y: auto;
     text-wrap: nowrap;
 }
+
+.department-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.department-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border-color: #0d6efd;
+}
+
+.department-card:active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background-color: #f0f7ff;
+}
+
+.department-card .card-title {
+    transition: color 0.2s ease;
+}
+
+.department-card:hover .card-title {
+    color: #0d6efd;
+}
 </style>
 
 <template>
@@ -273,41 +297,42 @@ watch(
             </div>
             <!-- Department List -->
             <div class="row gx-4 mt-4 mt-lg-5">
-                <div v-for="item in department_list" class="col-lg-4 col-12">
-                    <a
-                        :id="'department_' + (item.id * 7 - 4)"
-                        :href="route('department', item.id)"
-                        class="text-decoration-none"
-                    >
-                    </a>
-                    <div
-                        class="card card-bg-hover p-3 mb-3 mb-lg-4"
-                        @click="navigateToDepartment(item.id * 7 - 4)"
+                <div v-for="item in department_list" :key="item.id" class="col-lg-4 col-12">
+                    <div 
+                        class="card department-card p-3 mb-3 mb-lg-4" 
+                        style="cursor: pointer;"
+                        @click="$inertia.visit(`/seeo/department/${item.id}`)"
                     >
                         <div class="d-flex">
                             <div class="" style="font-size: 0.8rem">
-                                <span class="text-secondary d-block">{{
-                                    item.manager.name
-                                }}</span>
-                                <span class="h5 text-primary-emphasis d-block">
+                                <span class="text-secondary d-block mb-1">
+                                    <i class="bi bi-person-badge me-1"></i>
+                                    {{ item.manager.name }}
+                                </span>
+                                <span class="h5 text-primary-emphasis d-block card-title">
+                                    <i class="bi bi-building me-2"></i>
                                     {{ "Department " + item.name }}
                                 </span>
                             </div>
-                            <div class="ms-auto mb-auto d-flex">
+                            <div class="ms-auto mb-auto d-flex" style="z-index: 10; position: relative;">
                                 <button
                                     class="border-0 btn btn-sm btn-outline-secondary"
                                     v-if="auth_user.roles_id == 1"
                                     @click.stop="
                                         () => {
                                             active_department = item;
+                                            form_update_department.name = item.name;
+                                            form_update_department.manager_id = item.manager_id;
                                             showUpdateDepartmentModal(true);
                                         }
                                     "
+                                    title="Edit Department"
                                 >
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <div
                                     class="border-start border-secondary border-2 mx-1 my-1"
+                                    v-if="auth_user.roles_id == 1"
                                 ></div>
                                 <button
                                     class="border-0 btn btn-sm btn-outline-secondary"
@@ -318,6 +343,7 @@ watch(
                                             showDeleteDepartmentModal(true);
                                         }
                                     "
+                                    title="Delete Department"
                                 >
                                     <i class="bi bi-trash3"></i>
                                 </button>
@@ -394,7 +420,7 @@ watch(
                                 >
                             </div>
                             <div class="col-8 col-lg-7">
-                                <v-select
+                                <VueSelect
                                     class="bg-white text-nowrap"
                                     :options="staff_list"
                                     label="name"
@@ -486,7 +512,7 @@ watch(
                                 >
                             </div>
                             <div class="col-8 col-lg-7">
-                                <v-select
+                                <VueSelect
                                     class="bg-white text-nowrap"
                                     :options="staff_list"
                                     label="name"

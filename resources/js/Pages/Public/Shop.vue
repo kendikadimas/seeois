@@ -229,7 +229,7 @@ watch(
                             }
                         "
                     >
-                        <a ref="linkIntroRef" :href="route('intro')"></a>
+                        <a ref="linkIntroRef" :href="route('login')"></a>
                         <div class="d-flex fs-5">
                             <i class="bi bi-house me-2"></i>
                             {{ "Home" }}

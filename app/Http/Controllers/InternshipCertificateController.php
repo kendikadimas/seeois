@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class InternshipCertificateController extends Controller
 {
@@ -15,7 +17,7 @@ class InternshipCertificateController extends Controller
 
     public function index()
     {
-        $user = auth()->user();
+        $user = Auth::user();
         // Hanya sertifikat published yang ditampilkan ke pemiliknya
         $certs = InternshipCertificate::where('generated_for_user_id', $user->id)
             ->orWhereHas('application', fn($q) => $q->where('user_id', $user->id))
@@ -28,27 +30,52 @@ class InternshipCertificateController extends Controller
 
     public function download($id)
     {
-        $cert = InternshipCertificate::findOrFail($id);
-        // Authorization: check via policy
+        $cert = InternshipCertificate::with('recipient')->findOrFail($id);
         $this->authorize('download', $cert);
         
-        $cert->increment('download_count');
-        
         $filePath = storage_path('app/public/' . $cert->file);
+        
+        // Get recipient name and format filename
+        $recipientName = $cert->recipient?->name ?? 'unknown';
+        // Convert to slug: remove special chars, lowercase, replace spaces with underscore
+        $recipientSlug = strtoupper(str_replace(' ', '_', preg_replace('/[^a-zA-Z0-9 ]/', '', $recipientName)));
+        $fileName = 'SERTIFIKAT_INTERNSHIP25_' . $recipientSlug . '.pdf';
+        
         if (!file_exists($filePath)) {
-            abort(404, 'File not found');
+            abort(404, 'File tidak ditemukan');
+        }
+
+        if (!is_readable($filePath)) {
+            abort(403, 'File tidak bisa dibaca');
+        }
+
+        // Track last download timestamp in cache per user per cert
+        // Prevent multiple increments within 2 seconds (normal browser behavior)
+        $cacheKey = 'cert_download_' . $id . '_' . Auth::id();
+        $lastDownload = cache()->get($cacheKey);
+        $now = now()->timestamp;
+        
+        // Only increment if last download was more than 2 seconds ago
+        if (!$lastDownload || ($now - $lastDownload) > 2) {
+            $cert->increment('download_count');
         }
         
-        return response()->download($filePath, 'sertifikat-' . $cert->id . '.pdf');
+        // Update last download timestamp
+        cache()->put($cacheKey, $now, now()->addMinutes(5));
+
+        return response()->download($filePath, $fileName, [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 
     // For HR/PIC: list management page
     public function manageIndex()
     {
         $this->authorize('manage', InternshipCertificate::class);
-        $applications = InternshipApplication::with('user')->orderBy('created_at','desc')->get();
-        $certs = InternshipCertificate::with(['application','recipient','issuer'])->orderBy('created_at','desc')->paginate(30);
-        return inertia('Staff/Internship/CertificatesManage', compact('applications','certs'));
+        // Get all interns (users with role_id = 6 or application users)
+        $interns = \App\Models\User::where('roles_id', 6)->orderBy('name')->get();
+        $certs = InternshipCertificate::with(['application','recipient','issuer'])->orderBy('created_at','desc')->get();
+        return inertia('Staff/Internship/CertificatesManage', compact('interns','certs'));
     }
 
     // Store uploaded PDF
@@ -57,19 +84,18 @@ class InternshipCertificateController extends Controller
         $this->authorize('manage', InternshipCertificate::class);
 
         $data = $request->validate([
-            'internship_application_id' => ['required','exists:internship_applications,id'],
-            'generated_for_user_id' => ['nullable','exists:users,id'],
+            'generated_for_user_id' => ['required','exists:users,id'],
             'file' => ['required','file','mimes:pdf','max:20480'], // max 20MB in KB
         ]);
 
         $path = $request->file('file')->store('internship/certificates', 'public');
 
         $cert = InternshipCertificate::create([
-            'internship_application_id' => $data['internship_application_id'],
-            'generated_for_user_id' => $data['generated_for_user_id'] ?? null,
+            'internship_application_id' => null,
+            'generated_for_user_id' => $data['generated_for_user_id'],
             'file' => $path,
             'status' => 'published',
-            'issued_by' => auth()->id(),
+            'issued_by' => Auth::user()->id,
             'issued_at' => now(),
             'download_token' => Str::random(40),
         ]);

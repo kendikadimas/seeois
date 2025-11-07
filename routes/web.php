@@ -103,7 +103,7 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
     Route::post('/payroll/balance/add', [UserController::class, 'setPayrollBalance'])->name('payroll.balance.add');
     Route::get('/seeo/structural/{id?}', [DepartmentController::class, 'structural'])->name('structural');
     Route::post('/structural', [DepartmentController::class, 'filterDepartment'])->name('structural.filter');
-    Route::get('/seeo/department/{id?}', [DepartmentController::class, 'department'])->name('department');
+    Route::get('/seeo/department/{id}', [DepartmentController::class, 'department'])->name('department');
     Route::post('/unemployee', [UserController::class, 'filterUnmployee'])->name('unemployee.filter');
     Route::get('/seeo/finance', [CashFlowController::class, 'index'])->name('finance');
     Route::get('/seeo/finance_feature', [CashFlowController::class, 'feature'])->name('finance.feature');
@@ -232,7 +232,7 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
         Route::get('/internship/certificate/download/{id}', [InternshipCertificateController::class, 'download'])->name('certificate.download');
     });
 
-    Route::middleware('auth')->prefix('staff')->group(function(){
+    Route::prefix('staff')->group(function(){
         Route::get('/internship/certificates/manage', [InternshipCertificateController::class, 'manageIndex'])->name('certificate.manage');
         Route::post('/internship/certificate/store', [InternshipCertificateController::class, 'store'])->name('certificate.store');
         Route::post('/internship/certificate/update/{id}', [InternshipCertificateController::class, 'update'])->name('certificate.update');

@@ -15,7 +15,7 @@ class StaffAuthorizationCheck
     public function handle(Request $request, Closure $next)
     {
         if ($request->user()->roles_id == null) {
-            return redirect()->route('intro')->with('notif', ['type' => 'warning', 'message' => 'Only SEEO Staff are alowed.']);
+            return redirect()->route('login')->with('notif', ['type' => 'warning', 'message' => 'Only SEEO Staff are alowed.']);
         }
         return $next($request);
     }

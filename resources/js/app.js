@@ -3,12 +3,13 @@ import "./bootstrap";
 import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
+import imageHelperPlugin from './plugins/imageHelper';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import imageHelperPlugin from './plugins/imageHelper';
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
-window.bootstrap = bootstrap; // Make Bootstrap JS globally accessible if needed
+window.bootstrap = bootstrap; // Make Bootstrap globally accessible
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: async (name) => {
@@ -17,19 +18,11 @@ createInertiaApp({
             import.meta.glob("./Pages/**/*.vue")
         );
 
-        // 🎯 CONDITIONAL CSS LOADING
-        const isPublicPage =
-            name.startsWith("Public/") ||
-            name === "Public/Homepage";
-
-        const isAuthPage = name.startsWith("Auth/");
-
+        // Load additional CSS for public pages (Tailwind)
+        const isPublicPage = name.startsWith("Public/") || name === "Public/Homepage";
+        
         if (isPublicPage) {
-            // ✅ Load Tailwind untuk company profile
             await import("../css/app.css");
-        } else if (isAuthPage || name.includes("Staff/") || name.includes("Dashboard")) {
-            // ✅ Load Bootstrap untuk auth/dashboard
-            await import("../css/bootstrap.css");
         }
 
         return page;
@@ -48,6 +41,8 @@ createInertiaApp({
         return app.mount(el);
     },
     progress: {
-        color: "#4B5563",
+        color: "#0d6efd",
+        showSpinner: true,
+        delay: 250, // Hanya tampilkan jika loading > 250ms
     },
 });

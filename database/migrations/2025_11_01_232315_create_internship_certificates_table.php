@@ -9,7 +9,7 @@ class CreateInternshipCertificatesTable extends Migration
     {
         Schema::create('internship_certificates', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('internship_application_id')->constrained('internship_applications')->cascadeOnDelete();
+            $table->foreignId('internship_application_id')->nullable()->constrained('internship_applications')->cascadeOnDelete();
             $table->foreignId('generated_for_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('file')->nullable(); // path di storage disk 'public'
             $table->enum('status', ['draft','published','revoked'])->default('published');

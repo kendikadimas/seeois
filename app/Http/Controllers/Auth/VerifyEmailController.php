@@ -18,7 +18,7 @@ class VerifyEmailController extends Controller
             if ($request->user()->roles_id == null) {
                 return redirect()->intended(route('dashboard', absolute: false) . '?verified=1');
             } else {
-                return redirect()->intended(route('intro', absolute: false) . '?verified=1');
+                return redirect()->intended(route('login', absolute: false) . '?verified=1');
             }
         }
 
@@ -26,6 +26,6 @@ class VerifyEmailController extends Controller
             event(new Verified($request->user()));
         }
 
-        return redirect()->intended(route('intro', absolute: false) . '?verified=1');
+        return redirect()->intended(route('login', absolute: false) . '?verified=1');
     }
 }

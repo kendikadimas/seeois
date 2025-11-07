@@ -11,9 +11,15 @@ export default {
       // Remove leading slash if present
       const cleanPath = path.startsWith('/') ? path.slice(1) : path;
 
-      // Check multiple possible locations based on environment
-      // Priority: public/images > storage/public/images > storage/local/images
-      
+      // Check if we're in development mode by looking at Vite HMR
+      const isDev = import.meta.env.DEV;
+
+      // For development, use direct path; for production, use /images/
+      if (isDev) {
+        // In dev, try common locations
+        return `/images/${cleanPath}`;
+      }
+
       // For production: /images/ folder in public
       const paths = [
         `/images/${cleanPath}`,

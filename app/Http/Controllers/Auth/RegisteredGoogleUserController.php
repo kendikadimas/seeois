@@ -49,6 +49,6 @@ class RegisteredGoogleUserController extends Controller
 
         Auth::login($user);
 
-        return ($user->roles_id > 0) ? (redirect()->route('dashboard')->with('notif', ['type' => 'info', 'message' => 'Hi ' . $user->name . ', welcome to SEEO Information System!']))  : (redirect()->route('intro')->with('notif', ['type' => 'info', 'message' => 'Hi ' . $user->name . ', welcome to Blaterian!']));
+        return ($user->roles_id > 0) ? (redirect()->route('dashboard')->with('notif', ['type' => 'info', 'message' => 'Hi ' . $user->name . ', welcome to SEEO Information System!']))  : (redirect()->route('login')->with('notif', ['type' => 'info', 'message' => 'Hi ' . $user->name . ', welcome to Blaterian!']));
     }
 }

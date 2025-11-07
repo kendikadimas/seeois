@@ -927,7 +927,7 @@ watch(
                         <div class="col-12 d-flex">
                             <img
                                 :src="
-                                    '/storage/images/receipt/cash_in/' +
+                                    '/storage/local/images/receipt/cash_in/' +
                                     cash_in_receipt
                                 "
                                 alt="image"
@@ -946,7 +946,7 @@ watch(
                         <div class="col-12 d-flex">
                             <a
                                 :href="
-                                    '/storage/images/reeceipt/cash_in/' +
+                                    '/storage/local/images/receipt/cash_in/' +
                                     cash_in_receipt
                                 "
                                 target="blank"

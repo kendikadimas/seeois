@@ -7,72 +7,148 @@
 
     <div class="min-h-screen" style="background: white; font-family: 'Poppins', sans-serif;">
         <nav 
-            class="py-4 mt-5 px-6 fixed top-0 w-full z-50 transition-transform duration-300" 
+            class="fixed top-0 w-full z-50 transition-all duration-500 px-6 py-4" 
             :class="{ '-translate-y-full': isNavbarHidden }"
-            style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);"
+            style="background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);"
         >
             <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <Link href="/" class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                        <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" class="h-8 w-8 rounded-md">
+                <!-- Logo/Brand - Tetap di Kiri -->
+                <Link href="/" class="flex items-center gap-3 transition-all duration-300 hover:scale-105">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, #3b82f6, #1e40af);">
+                        <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="h-6 w-6 rounded-md" @error="$event.target.src='/storage/local/images/compro/logo.png'">
                     </div>
                     <div class="flex flex-col">
-                        <span class="font-bold text-xl" style="color: #111827;">SEEO</span>
+                        <span class="font-bold text-lg" style="color: #1e293b; letter-spacing: -0.02em;">SEEO</span>
+                        <!-- <span class="text-xs text-gray-500 -mt-1">Engineering</span> -->
                     </div>
                 </Link>
                 
-                <ul class="hidden md:flex items-center gap-8 text-sm font-medium">
-                    <li>
-                        <Link href="/" :class="linkClass('Public/Homepage')" class="nav-link px-5 py-2 rounded-lg" :style="getLinkStyle('Public/Homepage')">
-                            Beranda
-                        </Link>
-                    </li>
-                    <!-- <li>
-                        <Link href="/about" :class="linkClass('Public/About')" class="nav-link px-5 py-2 rounded-lg" :style="getLinkStyle('Public/About')">
-                            Tentang
-                        </Link>
-                    </li> -->
-                    <li>
-                        <Link href="/structure" :class="linkClass('Public/Structure')" class="nav-link px-5 py-2 rounded-lg" :style="getLinkStyle('Public/Structure')">
-                            Struktur
-                        </Link>
-                    </li>
-                    <li>
-                        <Link href="/activity" :class="linkClass('Public/Activity')" class="nav-link px-5 py-2 rounded-lg" :style="getLinkStyle('Public/Activity')">
-                            Kegiatan
-                        </Link>
-                    </li>
-                    <li>
-                        <Link href="/contact" :class="linkClass('Public/Contact')" class="nav-link px-5 py-2 rounded-lg" :style="getLinkStyle('Public/Contact')">
-                            Kontak
-                        </Link>
-                    </li>
-                </ul>
-                
-                <!-- Login button di kanan -->
-                <div class="hidden md:flex items-center">
-                    <Link href="/login" class="text-white text-sm px-6 py-3 rounded-md font-semibold transition-all duration-300 transform hover:scale-105" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);">
-                        Login
+                <!-- Navigation Menu (Desktop) - Center -->
+                <div class="hidden lg:flex items-center gap-1 px-2 py-1.5 rounded-2xl" style="background: rgba(241, 245, 249, 0.6); border: 1px solid rgba(226, 232, 240, 0.8);">
+                    <Link href="/" 
+                          :class="page.component === 'Public/Homepage' ? 'bg-white shadow-sm' : 'hover:bg-white hover:bg-opacity-60'"
+                          class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300"
+                          style="color: #334155;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Beranda</span>
+                    </Link>
+                    
+                    <Link href="/structure" 
+                          :class="page.component === 'Public/Structure' ? 'bg-white shadow-sm' : 'hover:bg-white hover:bg-opacity-60'"
+                          class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300"
+                          style="color: #334155;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Struktur</span>
+                    </Link>
+                    
+                    <Link href="/activity" 
+                          :class="page.component === 'Public/Activity' ? 'bg-white shadow-sm' : 'hover:bg-white hover:bg-opacity-60'"
+                          class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300"
+                          style="color: #334155;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Kegiatan</span>
+                    </Link>
+                    
+                    <Link href="/contact" 
+                          :class="page.component === 'Public/Contact' ? 'bg-white shadow-sm' : 'hover:bg-white hover:bg-opacity-60'"
+                          class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300"
+                          style="color: #334155;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Kontak</span>
                     </Link>
                 </div>
+                
+                <!-- Login Button -->
+                <Link href="/login" class="hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm text-white transition-all duration-300 hover:shadow-lg hover:scale-105" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span>Masuk</span>
+                </Link>
 
                 <!-- Mobile menu button -->
-                <button @click="open = !open" class="md:hidden text-xl p-2 rounded-md transition-colors" style="color: #374151; background-color: #f3f4f6;">
-                    <span v-if="!open">☰</span>
-                    <span v-else>✕</span>
+                <button @click="open = !open" class="lg:hidden p-2.5 rounded-xl transition-all duration-300 hover:bg-gray-100" style="color: #1e293b;">
+                    <span v-if="!open">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </span>
+                    <span v-else>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </span>
                 </button>
             </div>
 
             <!-- Mobile Menu -->
-            <div v-if="open" class="md:hidden mt-4 p-6 rounded-lg space-y-4 text-sm font-medium shadow-xl" style="background: linear-gradient(135deg, #ffffff, #f8fafc); border: 1px solid #e5e7eb;">
-                <Link href="/" class="mobile-link block px-4 py-3 rounded-md" style="color: #374151; background-color: #f9fafb;">Beranda</Link>
-                <!-- <Link href="/about" class="mobile-link block px-4 py-3 rounded-md" style="color: #374151;">Tentang</Link> -->
-                <Link href="/structure" class="mobile-link block px-4 py-3 rounded-md" style="color: #374151;">Struktur</Link>
-                <Link href="/activity" class="mobile-link block px-4 py-3 rounded-md" style="color: #374151;">Kegiatan</Link>
-                <Link href="/contact" class="mobile-link block px-4 py-3 rounded-md" style="color: #374151;">Kontak</Link>
-                <hr style="border-color: #e5e7eb; margin: 1rem 0;" />
-                <Link href="/login" class="block text-white text-center px-4 py-3 rounded-md font-semibold transition-all duration-300 hover:shadow-lg hover:scale-105" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">Login</Link>
-            </div>
+            <Transition
+                enter-active-class="transition duration-200 ease-out"
+                enter-from-class="transform scale-95 opacity-0"
+                enter-to-class="transform scale-100 opacity-100"
+                leave-active-class="transition duration-150 ease-in"
+                leave-from-class="transform scale-100 opacity-100"
+                leave-to-class="transform scale-95 opacity-0"
+            >
+                <div v-if="open" class="lg:hidden mt-4 p-3 rounded-2xl space-y-1 backdrop-filter backdrop-blur-xl" style="background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);">
+                    <Link href="/" 
+                          :class="page.component === 'Public/Homepage' ? 'bg-blue-50' : ''"
+                          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50" 
+                          style="color: #1e293b;">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Beranda</span>
+                    </Link>
+                    
+                    <Link href="/structure" 
+                          :class="page.component === 'Public/Structure' ? 'bg-blue-50' : ''"
+                          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50" 
+                          style="color: #1e293b;">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Struktur</span>
+                    </Link>
+                    
+                    <Link href="/activity" 
+                          :class="page.component === 'Public/Activity' ? 'bg-blue-50' : ''"
+                          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50" 
+                          style="color: #1e293b;">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Kegiatan</span>
+                    </Link>
+                    
+                    <Link href="/contact" 
+                          :class="page.component === 'Public/Contact' ? 'bg-blue-50' : ''"
+                          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50" 
+                          style="color: #1e293b;">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Kontak</span>
+                    </Link>
+                    
+                    <div style="border-top: 1px solid rgba(226, 232, 240, 0.8); margin: 0.5rem 0;"></div>
+                    
+                    <Link href="/login" class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-white transition-all hover:shadow-md" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span class="text-sm">Masuk</span>
+                    </Link>
+                </div>
+            </Transition>
         </nav>
 
         <main class="pt-20">
@@ -84,7 +160,7 @@
                 <div class="md:col-span-2">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                            <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" class="h-8 w-8 rounded-md">
+                            <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="h-8 w-8 rounded-md" @error="$event.target.src='/storage/local/images/compro/logo.png'">
                         </div>
                         <div>
                             <h3 class="text-xl font-bold" style="color: #fbbf24;">SEEO</h3>
@@ -226,14 +302,21 @@ const scrollToTop = () => {
 .flex { display: flex; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
 .gap-3 { gap: 0.75rem; }
 .gap-8 { gap: 2rem; }
+.w-10 { width: 2.5rem; }
+.h-10 { height: 2.5rem; }
 .w-12 { width: 3rem; }
 .h-12 { height: 3rem; }
 .w-8 { width: 2rem; }
 .h-8 { height: 2rem; }
+.w-4 { width: 1rem; }
+.h-4 { height: 1rem; }
 .w-5 { width: 1.25rem; }
 .h-5 { height: 1.25rem; }
+.rounded-2xl { border-radius: 1rem; }
 .rounded-xl { border-radius: 0.75rem; }
 .rounded-full { border-radius: 50%; }
 .rounded-lg { border-radius: 0.5rem; }
@@ -241,32 +324,52 @@ const scrollToTop = () => {
 .font-bold { font-weight: 700; }
 .font-semibold { font-weight: 600; }
 .text-xl { font-size: 1.25rem; }
+.text-lg { font-size: 1.125rem; }
 .text-sm { font-size: 0.875rem; }
 .text-xs { font-size: 0.75rem; }
+.font-medium { font-weight: 500; }
 .hidden { display: none; }
 .block { display: block; }
+.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
 .px-4 { padding-left: 1rem; padding-right: 1rem; }
 .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
 .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
 .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+.p-2\.5 { padding: 0.625rem; }
 .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
 .transition-all { transition: all 0.3s; }
 .duration-300 { transition-duration: 300ms; }
 .duration-200 { transition-duration: 200ms; }
+.duration-500 { transition-duration: 500ms; }
 .transform { transform: translateZ(0); }
 .hover\:scale-105:hover { transform: scale(1.05); }
 .hover\:scale-110:hover { transform: scale(1.1); }
 .text-white { color: white; }
+.text-gray-500 { color: #6b7280; }
 .text-center { text-align: center; }
+.bg-white { background-color: white; }
+.hover\:bg-white:hover { background-color: white; }
+.hover\:bg-opacity-60:hover { --tw-bg-opacity: 0.6; }
+.hover\:bg-gray-50:hover { background-color: #f9fafb; }
+.hover\:bg-gray-100:hover { background-color: #f3f4f6; }
+.bg-blue-50 { background-color: #eff6ff; }
+.-mt-1 { margin-top: -0.25rem; }
 .fixed { position: fixed; }
 .bottom-8 { bottom: 2rem; }
 .right-8 { right: 2rem; }
 .z-50 { z-index: 50; }
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
 .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+.hover\:shadow-lg:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
 .sticky { position: sticky; }
 .top-0 { top: 0; }
 .relative { position: relative; }
+.space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
 .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
 .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
 .mb-4 { margin-bottom: 1rem; }
@@ -307,6 +410,11 @@ const scrollToTop = () => {
   .md\:col-span-2 { grid-column: span 2 / span 2; }
 }
 
+@media (min-width: 1024px) {
+  .lg\:flex { display: flex !important; }
+  .lg\:hidden { display: none !important; }
+}
+
 /* Hover effects */
 .hover\:text-yellow-400:hover { color: #fbbf24; }
 
@@ -343,5 +451,27 @@ const scrollToTop = () => {
 
 .show-scroll-button {
     animation: fadeIn 0.3s ease-out;
+}
+
+/* Global link styles - remove underline from all links */
+a, button, [role="button"] {
+    text-decoration: none !important;
+}
+
+a:hover, button:hover, [role="button"]:hover {
+    text-decoration: none !important;
+}
+
+/* Ensure Inertia Link components don't have underline */
+:deep(a) {
+    text-decoration: none !important;
+}
+
+:deep(a:hover) {
+    text-decoration: none !important;
+}
+
+:deep(a:focus) {
+    text-decoration: none !important;
 }
 </style>

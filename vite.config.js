@@ -35,14 +35,43 @@ export default defineConfig({
             },
         },
     },
-    // HMR config untuk development saja
+    // Optimized server config untuk development
     server: {
-        host: 'localhost',
+        host: '127.0.0.1', // Gunakan IP langsung, lebih cepat dari localhost
         port: 5173,
-        hmr: process.env.VITE_HMR_HOST ? {
-            host: process.env.VITE_HMR_HOST,
-            protocol: 'https',
-            port: 443,
-        } : undefined,
+        strictPort: true, // Gagal jika port sudah dipakai
+        hmr: {
+            host: '127.0.0.1',
+            protocol: 'ws', // WebSocket biasa untuk local
+            timeout: 5000, // Timeout 5 detik (default 30s)
+        },
+        watch: {
+            usePolling: false, // Disable polling untuk performa lebih baik
+            ignored: ['**/vendor/**', '**/node_modules/**', '**/storage/**'],
+        },
+    },
+    // Optimasi build
+    build: {
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'vue-vendor': ['vue', '@inertiajs/vue3'],
+                    'bootstrap': ['bootstrap'],
+                    'chart': ['chart.js'],
+                },
+            },
+        },
+    },
+    // Optimasi dependencies
+    optimizeDeps: {
+        include: [
+            'vue',
+            '@inertiajs/vue3',
+            'bootstrap',
+            'date-fns',
+            'vue-select',
+        ],
+        exclude: ['@tailwindcss/vite'],
     },
 });

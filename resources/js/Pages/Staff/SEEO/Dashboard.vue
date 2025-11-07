@@ -92,10 +92,15 @@ function handleSubmitPost() {
 
 // --- Fungsi Helper Tampilan ---
 // function setBillboardImage(billboard_image) { return `/storage/images/billboard/${billboard_image}`; }
+function setBillboardImage(billboard_image) {
+    if (!billboard_image) return null;
+    // Gunakan path langsung yang sama seperti VerifyEmail
+    return `/storage/local/images/billboard/${billboard_image}`;
+}
 function setPostImage(isAnonymus, profile_image) {
     const defaultImage = 'example.png';
     const image = isAnonymus ? defaultImage : (profile_image || defaultImage);
-    return `/storage/images/profile/${image}`;
+    return `/storage/local/images/profile/${image}`;
 }
 // --- Akhir Helper Tampilan ---
 
@@ -177,7 +182,7 @@ onMounted(async () => {
                                              <div v-for="(billboard, index) in billboard_list" :key="billboard.id" :class="['carousel-item', index === 0 ? 'active' : '']">
                                                 <div class="billboard-wrapper position-relative">
                                                      <button v-if="auth_user.roles_id == 1" class="btn btn-danger btn-sm rounded-circle p-0 lh-1 position-absolute m-2" style="z-index: 11; width: 28px; height: 28px; top: 0.35rem; right: 3rem;" @click="confirmation( route('billboard.remove', { id: billboard.id }), 'Hapus billboard \'' + billboard.title + '\'?' )"> <i class="bi bi-x-lg small"></i> </button>
-                                                    <img v-if="billboard.image" :src="billboard.full_image_url" alt="Billboard"/>
+                                                    <img v-if="billboard.image && setBillboardImage(billboard.image)" :src="setBillboardImage(billboard.image)" alt="Billboard" @error="$event.target.style.display='none'"/>
                                                     <div v-else-if="!billboard.image && billboard.text" class="d-flex flex-column justify-content-center align-items-center text-center p-4 bg-light w-100 h-100"> <h3 class="mb-2">{{ billboard.title }}</h3> <p class="mb-0">{{ billboard.text }}</p> </div>
                                                 </div>
                                             </div>

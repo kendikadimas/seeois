@@ -42,7 +42,7 @@ const errorBg = computed(() => ({
 
                                 <div class="d-flex mt-3">
                                     <a
-                                        :href="route('intro')"
+                                        :href="route('login')"
                                         class="btn btn-sm btn-primary border-0 w-75"
                                     >
                                         {{ "Back to Home" }}

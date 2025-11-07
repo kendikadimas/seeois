@@ -16,8 +16,8 @@
 
 set -e  # Exit on error
 
-PROJECT_PATH="/path/to/seeonow/blaterian_seeo"
-USER_ID=${1:-3}  # Default user ID is 3, can be overridden
+PROJECT_PATH="/path/to/sis/seeois"
+USER_ID=${1:-}  # Default user ID is 3, can be overridden
 
 echo ""
 echo "========================================="

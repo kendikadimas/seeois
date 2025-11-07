@@ -92,7 +92,27 @@ route.current = (routeName) => {
 
 const currentTime = ref('');
 const modalConfirmationRef = ref(null);
-const nav_list = ref({});
+// OPTIMIZED: Build nav_list ONCE saat initialization
+const nav_list = computed(() => ({
+    Organization: {
+        Dashboard: { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard" },
+        User: { route: route("role"), active: route.current("role"), title: "User" },
+        Structural: { route: route("structural"), active: route.current("structural") || route.current("department") || route.current("program"), title: "Structural" },
+        Finance: [
+            { route: route("finance"), active: route.current("finance"), title: "Cashflow" },
+            { route: route("finance.feature"), active: route.current("finance.feature"), title: "Feature" }
+        ],
+    },
+    Business: {
+        Insight: { route: route("blaterian.insight"), active: route.current("blaterian.insight"), title: "Insight" },
+        Foods: [
+            { route: route("food.stand"), active: route.current("food.stand"), title: "Stand" },
+        ],
+        Goods: [
+             { route: route('good.product'), active: route.current("good"), title: "Product (Coming Soon)" }
+        ],
+    },
+}));
 
 const active_section = computed(() => {
     const current = page.component;
@@ -159,30 +179,8 @@ function toggleSidebar() {
     }
 }
 
-function updateNavList() {
-     // Definisikan ulang nav_list di sini
-     nav_list.value = {
-        Organization: {
-            Dashboard: { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard" },
-            User: { route: route("role"), active: route.current("role"), title: "User" },
-            Structural: { route: route("structural"), active: route.current("structural") || route.current("department") || route.current("program"), title: "Structural" },
-            Finance: [
-                { route: route("finance"), active: route.current("finance"), title: "Cashflow" },
-                { route: route("finance.feature"), active: route.current("finance.feature"), title: "Feature" }
-            ],
-        },
-        Business: {
-            Insight: { route: route("blaterian.insight"), active: route.current("blaterian.insight"), title: "Insight" },
-            Foods: [
-                { route: route("food.stand"), active: route.current("food.stand"), title: "Stand" },
-            ],
-            Goods: [
-                 { route: route('good.product'), active: route.current("good"), title: "Product (Coming Soon)" }
-            ],
-        },
-    };
-     console.log("Nav list updated:", JSON.parse(JSON.stringify(nav_list.value))); // Debug log
-}
+// REMOVED: updateNavList() - nav_list is now a computed property
+// No need to rebuild nav_list manually anymore
 
 let timeInterval = null;
 
@@ -191,12 +189,11 @@ onMounted(async () => {
     timeInterval = setInterval(updateTime, 1000);
     await nextTick(); // Tunggu DOM siap
 
-    // Inisialisasi Bootstrap Offcanvas
+    // Inisialisasi Bootstrap Offcanvas HANYA SEKALI
     if (typeof window.bootstrap !== 'undefined') {
         if (sidebarRef.value) {
             try {
                 offcanvasInstance.value = window.bootstrap.Offcanvas.getOrCreateInstance(sidebarRef.value);
-                console.log("Bootstrap Offcanvas initialized.");
                 // Add resize listener
                 window.addEventListener('resize', () => {
                      if (window.innerWidth >= 992 && offcanvasInstance.value) {
@@ -204,23 +201,17 @@ onMounted(async () => {
                     }
                 });
             } catch (e) { console.error("Error initializing Offcanvas:", e); }
-        } else console.warn("Sidebar element not found.");
-         // Panggil updateNavList SETELAH memastikan bootstrap ada (atau setidaknya setelah tick pertama)
-        updateNavList(); // Panggil di sini
-
+        }
     } else console.error("window.bootstrap is undefined. Check app.js.");
 
     // Cleanup function
     return () => {
         if (timeInterval) clearInterval(timeInterval);
-        // Hapus listener
-        // offcanvasInstance.value?.dispose();
     };
 });
 
-// Watch page component changes to update nav list and close mobile sidebar
+// OPTIMIZED: Close mobile sidebar on navigation (no rebuilding nav_list)
 watch(() => page.component, () => {
-    updateNavList(); // Update list on navigation
     if (window.innerWidth < 992 && offcanvasInstance.value) {
         offcanvasInstance.value.hide(); // Close mobile sidebar
     }
@@ -239,14 +230,16 @@ watch(() => page.component, () => {
         <div class="sidebar-desktop d-none d-lg-flex flex-column flex-shrink-0 bg-gradient-custom text-white">
              <div class="sidebar-content-inner p-3">
                 <div class="sidebar-logo mb-4">
-                     <div class="d-flex align-items-center p-2 rounded bg-white bg-opacity-10">
-                        <img :src="$imageUrl('apps/logo.png')" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src=$imageUrl('compro/logo.png')"/>
-                        <div class="lh-sm">
-                            <h5 class="sidebar-logo-title mb-0">SEEO</h5>
-                            <span class="sidebar-logo-subtitle d-block">Information System</span>
-                            <small class="sidebar-logo-version text-warning">v2.0</small>
+                     <a :href="route('dashboard')" class="text-decoration-none">
+                        <div class="d-flex align-items-center p-2 rounded bg-white bg-opacity-10 sidebar-logo-hover">
+                            <img src="/storage/local/images/apps/logo.png" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src='/storage/local/images/compro/logo.png'"/>
+                            <div class="lh-sm">
+                                <h5 class="sidebar-logo-title mb-0 text-white">SEEO</h5>
+                                <span class="sidebar-logo-subtitle d-block text-white">Information System</span>
+                                <small class="sidebar-logo-version text-warning">v5.0</small>
+                            </div>
                         </div>
-                    </div>
+                     </a>
                 </div>
                  <div class="navigation-menu flex-grow-1">
                     <div v-for="(sectionContent, sectionKey) in nav_list" :key="sectionKey" class="nav-section mb-2">
@@ -303,13 +296,15 @@ watch(() => page.component, () => {
 
          <div class="offcanvas offcanvas-start bg-gradient-custom text-white sidebar-mobile" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel" ref="sidebarRef">
             <div class="offcanvas-header border-bottom border-white border-opacity-25">
-                 <div class="d-flex align-items-center">
-                    <img :src="$imageUrl('apps/logo.png')" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src=$imageUrl('compro/logo.png')"/>
-                    <div class="lh-sm">
-                        <h5 class="sidebar-logo-title mb-0" id="sidebarOffcanvasLabel">SEEO</h5>
-                        <span class="sidebar-logo-subtitle d-block">Information System</span>
+                 <a :href="route('dashboard')" class="text-decoration-none">
+                    <div class="d-flex align-items-center">
+                        <img src="/storage/local/images/apps/logo.png" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src='/storage/local/images/compro/logo.png'"/>
+                        <div class="lh-sm">
+                            <h5 class="sidebar-logo-title mb-0 text-white" id="sidebarOffcanvasLabel">SEEO</h5>
+                            <span class="sidebar-logo-subtitle d-block text-white">Information System</span>
+                        </div>
                     </div>
-                </div>
+                 </a>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body sidebar-content-inner p-3">
@@ -366,8 +361,8 @@ watch(() => page.component, () => {
             </div>
         </div>
 
-        <div class="main-content-wrapper flex-grow-1 d-flex flex-column overflow-hidden">
-<header class="top-header bg-white border-bottom shadow-sm px-2 px-lg-3 py-2" v-if="$slots.header">
+        <div class="main-content-wrapper flex-grow-1 d-flex flex-column overflow-hidden position-relative">
+<header class="top-header bg-white border-bottom shadow-sm px-2 px-lg-3 py-2 position-relative z-dropdown" v-if="$slots.header">
                  <div class="d-flex justify-content-between align-items-center">
                     <button class="btn border-0 d-lg-none p-1 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
                         <i class="bi bi-list fs-3"></i>
@@ -394,7 +389,7 @@ watch(() => page.component, () => {
                                 :src="'/storage/images/profile/' + (auth_user?.profile_image ?? 'example.png')"
                                 alt="Profile"
                                 class="profile-img rounded-circle me-2"
-                                @error="$event.target.src=$imageUrl('compro/logo.png')"
+                                @error="$event.target.src='/storage/local/images/compro/logo.png'"
                                 style="width: 40px; height: 40px; object-fit: cover;"
                             />
                             <div class="profile-info d-none d-lg-block lh-sm text-start">
@@ -424,7 +419,7 @@ watch(() => page.component, () => {
                 </div>
             </header>
 
-            <main class="content-container flex-grow-1 overflow-auto p-2 p-lg-3">
+            <main class="content-container flex-grow-1 overflow-auto">
                 <slot />
             </main>
         </div>
@@ -459,6 +454,14 @@ watch(() => page.component, () => {
 .sidebar-logo-title { font-weight: 600; font-size: 1.2rem; }
 .sidebar-logo-subtitle { font-size: 0.8rem; opacity: 0.8; }
 .sidebar-logo-version { font-size: 0.7rem; }
+.sidebar-logo-hover {
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.sidebar-logo-hover:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    transform: translateX(2px);
+}
 
 /* Navigation Base */
 .nav-section .btn { /* Tombol header section & group */
@@ -527,6 +530,17 @@ watch(() => page.component, () => {
 .top-header {
     height: 65px; /* Tinggi header tetap */
     flex-shrink: 0;
+    z-index: 1040;
+}
+.z-dropdown {
+    z-index: 1040;
+}
+.user-profile {
+    position: relative;
+    z-index: 1041;
+}
+.dropdown-menu {
+    z-index: 1050 !important;
 }
 .profile-img { width: 40px; height: 40px; } /* Ukuran gambar profil */
 

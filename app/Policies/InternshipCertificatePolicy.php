@@ -47,7 +47,7 @@ class InternshipCertificatePolicy
 
     /**
      * Determine if user can view a specific certificate
-     * Only the recipient or the PIC can view
+     * Only the recipient, intern from application, or HR/PIC can view
      */
     public function view(User $user, InternshipCertificate $certificate): bool
     {
@@ -56,7 +56,12 @@ class InternshipCertificatePolicy
             return true;
         }
 
-        // PIC of internship program can view any certificate
+        // Intern from the application can view their own certificate
+        if ($certificate->application && $certificate->application->user_id === $user->id) {
+            return true;
+        }
+
+        // HR Manager or PIC can view any certificate
         return $this->manage($user, $certificate);
     }
 

@@ -44,7 +44,7 @@
                     
                     <div class="relative">
                         <div class="relative bg-slate-50 rounded-2xl overflow-hidden shadow-xl">
-                            <img :src="$imageUrl('compro/seeo.jpg')" alt="SEEO Team" class="w-full h-96 lg:h-[500px] object-cover">
+                            <img src="/storage/local/images/compro/seeo.jpg" alt="SEEO Team" class="w-full h-96 lg:h-[500px] object-cover" @error="$event.target.src='/storage/local/images/compro/logo.png'">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                         </div>
                         
@@ -90,7 +90,7 @@
                     <!-- Left: Image -->
                     <div class="relative">
                         <div class="bg-white rounded-2xl p-8 shadow-lg">
-                            <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" class="w-full h-auto max-w-sm mx-auto"/>
+                            <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="w-full h-auto max-w-sm mx-auto" @error="$event.target.src='/storage/local/images/compro/logo.png'"/>
                         </div>
                     </div>
                     
@@ -158,7 +158,7 @@
                     <!-- Left: Logo -->
                     <div class="order-2 lg:order-1">
                         <div class="bg-white rounded-2xl p-12 shadow-lg">
-                            <img :src="$imageUrl('compro/blaterianlogo.png')" alt="Blaterian Logo" class="w-full h-auto max-w-sm mx-auto"/>
+                            <img src="/storage/local/images/compro/blaterianlogo.png" alt="Blaterian Logo" class="w-full h-auto max-w-sm mx-auto" @error="$event.target.src='/storage/local/images/compro/logo.png'"/>
                         </div>
                         
                         <!-- Product categories -->
@@ -234,7 +234,7 @@
                     <!-- EntClass Card -->
                     <div class="bg-slate-800 rounded-xl overflow-hidden hover:bg-slate-700 transition-colors duration-300">
                         <div class="h-48 overflow-hidden">
-                            <img :src="$imageUrl('compro/entclass.JPG')" alt="EntClass I" class="w-full h-full object-cover">
+                            <img src="/storage/local/images/compro/entclass.JPG" alt="EntClass I" class="w-full h-full object-cover" @error="$event.target.src='/storage/local/images/compro/logo.png'">
                         </div>
                         
                         <div class="p-6">
@@ -249,7 +249,7 @@
                             <p class="text-slate-300 mb-4 leading-relaxed">
                                 Program pelatihan wirausaha intensif yang fokus pada pengembangan keterampilan bisnis fundamental dan strategi inovasi.
                             </p>
-                            <Link href="/activity" class="inline-flex items-center text-blue-400 font-medium hover:text-blue-300 transition-colors">
+                            <Link href="/activity" class="inline-flex items-center text-blue-400 font-medium hover:text-blue-300 transition-colors no-underline">
                                 Pelajari Lebih Lanjut
                                 <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
@@ -261,7 +261,7 @@
                     <!-- Visitasi Card -->
                     <div class="bg-slate-800 rounded-xl overflow-hidden hover:bg-slate-700 transition-colors duration-300">
                         <div class="h-48 overflow-hidden">
-                            <img :src="$imageUrl('compro/visitasi.JPG')" alt="Visitasi I" class="w-full h-full object-cover">
+                            <img src="/storage/local/images/compro/visitasi.JPG" alt="Visitasi I" class="w-full h-full object-cover" @error="$event.target.src='/storage/local/images/compro/logo.png'">
                         </div>
                         
                         <div class="p-6">
@@ -276,7 +276,7 @@
                             <p class="text-slate-300 mb-4 leading-relaxed">
                                 Studi banding ke organisasi terkemuka untuk memperluas wawasan tentang best practices dalam kewirausahaan dan manajemen.
                             </p>
-                            <Link href="/activity" class="inline-flex items-center text-green-400 font-medium hover:text-green-300 transition-colors">
+                            <Link href="/activity" class="inline-flex items-center text-green-400 font-medium hover:text-green-300 transition-colors no-underline">
                                 Lihat Dokumentasi
                                 <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
@@ -288,7 +288,7 @@
                     <!-- Upgrading Card -->
                     <div class="bg-slate-800 rounded-xl overflow-hidden hover:bg-slate-700 transition-colors duration-300 md:col-span-2 lg:col-span-1">
                         <div class="h-48 overflow-hidden">
-                            <img :src="$imageUrl('compro/upgrading.webp')" alt="Upgrading I" class="w-full h-full object-cover">
+                            <img src="/storage/local/images/compro/upgrading.webp" alt="Upgrading I" class="w-full h-full object-cover" @error="$event.target.src='/storage/local/images/compro/logo.png'">
                         </div>
                         
                         <div class="p-6">
@@ -303,7 +303,7 @@
                             <p class="text-slate-300 mb-4 leading-relaxed">
                                 Kegiatan team building yang dirancang untuk memperkuat soliditas tim dan meningkatkan chemistry antar anggota organisasi.
                             </p>
-                            <Link href="/activity" class="inline-flex items-center text-red-400 font-medium hover:text-red-300 transition-colors">
+                            <Link href="/activity" class="inline-flex items-center text-red-400 font-medium hover:text-red-300 transition-colors no-underline">
                                 Jelajahi Kegiatan
                                 <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
