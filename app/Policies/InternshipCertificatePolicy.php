@@ -29,8 +29,17 @@ class InternshipCertificatePolicy
      */
     public function manage(User $user, ?InternshipCertificate $certificate = null): bool
     {
+        // Log for debugging
+        \Log::info('InternshipCertificatePolicy::manage called', [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'roles_id' => $user->roles_id,
+            'roles_id_type' => gettype($user->roles_id),
+        ]);
+
         // Allow HR Manager (role_id = 5)
-        if ($user->roles_id === 5) {
+        if ($user->roles_id == 5) {
+            \Log::info('InternshipCertificatePolicy: HR Manager authorized');
             return true;
         }
 
@@ -38,11 +47,29 @@ class InternshipCertificatePolicy
         $internshipProgram = $this->getInternshipProgram();
         
         if (!$internshipProgram) {
+            \Log::warning('InternshipCertificatePolicy: No internship program found');
             return false;
         }
 
+        \Log::info('InternshipCertificatePolicy: Checking PIC', [
+            'program_id' => $internshipProgram->id,
+            'program_name' => $internshipProgram->name,
+            'program_pic_id' => $internshipProgram->pic_id,
+            'is_pic' => $user->id === $internshipProgram->pic_id,
+        ]);
+
         // Check if user is the PIC of internship program
-        return $user->id === $internshipProgram->pic_id;
+        $isPic = $user->id === $internshipProgram->pic_id;
+        
+        if (!$isPic) {
+            \Log::warning('InternshipCertificatePolicy: User not authorized', [
+                'user_id' => $user->id,
+                'roles_id' => $user->roles_id,
+                'is_pic' => false,
+            ]);
+        }
+        
+        return $isPic;
     }
 
     /**
@@ -51,6 +78,7 @@ class InternshipCertificatePolicy
      */
     public function view(User $user, InternshipCertificate $certificate): bool
     {
+
         // Owner (recipient) can view their own certificate
         if ($certificate->generated_for_user_id === $user->id) {
             return true;
