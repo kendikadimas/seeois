@@ -25,6 +25,11 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
+        // Force HTTPS in production
+        if ($this->app->environment('production')) {
+            \URL::forceScheme('https');
+        }
+
         // Register image_url helper function globally
         if (!function_exists('image_url')) {
             function image_url($path)
