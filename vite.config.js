@@ -55,10 +55,23 @@ export default defineConfig({
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
             output: {
-                manualChunks: {
-                    'vue-vendor': ['vue', '@inertiajs/vue3'],
-                    'bootstrap': ['bootstrap'],
-                    'chart': ['chart.js'],
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        if (id.includes('bootstrap')) {
+                            return 'bootstrap';
+                        }
+                        if (id.includes('chart.js')) {
+                            return 'chart';
+                        }
+                        if (id.includes('vue-select')) {
+                            return 'vue-select';
+                        }
+                        if (id.includes('sweetalert2')) {
+                            return 'sweetalert';
+                        }
+                        // Vendor chunk untuk packages yang lebih kecil
+                        return 'vendor';
+                    }
                 },
             },
         },
