@@ -40,7 +40,22 @@ SESSION_PATH=/
 
 ## Langkah-Langkah Deploy ke Production
 
-### 1. Update .env di Production Server
+### 1. Pull Latest Code
+```bash
+# SSH ke server
+ssh -p 2223 seej2596@seeoftunsoed.com
+
+# Navigate to project
+cd sis/seeois
+
+# Pull latest changes
+git pull origin main
+
+# Install/update dependencies
+composer install --optimize-autoloader --no-dev
+```
+
+### 2. Update .env di Production Server
 ```bash
 # SSH ke server
 ssh -p 2223 seej2596@seeoftunsoed.com
