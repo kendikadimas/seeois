@@ -73,7 +73,7 @@ class InternshipCertificateController extends Controller
     {
         $this->authorize('manage', InternshipCertificate::class);
         // Get all interns (users with role_id = 6 or application users)
-        $interns = \App\Models\User::where('roles_id', 6)->orderBy('name')->get();
+        $interns = \App\Models\User::where('roles_id',5)->orderBy('name')->get();
         $certs = InternshipCertificate::with(['application','recipient','issuer'])->orderBy('created_at','desc')->get();
         return inertia('Staff/Internship/CertificatesManage', compact('interns','certs'));
     }
