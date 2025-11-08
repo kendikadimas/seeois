@@ -38,7 +38,7 @@ class InternshipCertificatePolicy
         ]);
 
         // Allow HR Manager (role_id = 5)
-        if ($user->roles_id == 5) {
+        if ((int)$user->roles_id === 5) {
             \Log::info('InternshipCertificatePolicy: HR Manager authorized');
             return true;
         }
@@ -55,11 +55,11 @@ class InternshipCertificatePolicy
             'program_id' => $internshipProgram->id,
             'program_name' => $internshipProgram->name,
             'program_pic_id' => $internshipProgram->pic_id,
-            'is_pic' => $user->id === $internshipProgram->pic_id,
+            'is_pic' => (int)$user->id === (int)$internshipProgram->pic_id,
         ]);
 
         // Check if user is the PIC of internship program
-        $isPic = $user->id === $internshipProgram->pic_id;
+        $isPic = (int)$user->id === (int)$internshipProgram->pic_id;
         
         if (!$isPic) {
             \Log::warning('InternshipCertificatePolicy: User not authorized', [
@@ -78,19 +78,34 @@ class InternshipCertificatePolicy
      */
     public function view(User $user, InternshipCertificate $certificate): bool
     {
+        // Log inputs for diagnostics
+        \Log::info('InternshipCertificatePolicy::view called', [
+            'user_id' => $user->id,
+            'user_roles_id' => $user->roles_id,
+            'cert_id' => $certificate->id,
+            'cert_generated_for_user_id' => $certificate->generated_for_user_id,
+            'application_user_id' => optional($certificate->application)->user_id,
+        ]);
 
         // Owner (recipient) can view their own certificate
-        if ($certificate->generated_for_user_id === $user->id) {
+        if ((int)$certificate->generated_for_user_id === (int)$user->id) {
             return true;
         }
 
         // Intern from the application can view their own certificate
-        if ($certificate->application && $certificate->application->user_id === $user->id) {
+        if ($certificate->application && (int)$certificate->application->user_id === (int)$user->id) {
             return true;
         }
 
         // HR Manager or PIC can view any certificate
-        return $this->manage($user, $certificate);
+        $canManage = $this->manage($user, $certificate);
+        if (!$canManage) {
+            \Log::warning('InternshipCertificatePolicy::view denied', [
+                'user_id' => $user->id,
+                'cert_id' => $certificate->id,
+            ]);
+        }
+        return $canManage;
     }
 
     /**
