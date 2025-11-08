@@ -33,20 +33,44 @@ class InternshipCertificateController extends Controller
         $cert = InternshipCertificate::with('recipient')->findOrFail($id);
         $this->authorize('download', $cert);
         
-        $filePath = storage_path('app/public/' . $cert->file);
-        
+        // Use Storage disk to avoid direct filesystem permission issues
+        $relativePath = $cert->file; // e.g. internship/certificates/foo.pdf
+        $disk = Storage::disk('public');
+        $fullPath = method_exists($disk, 'path') ? $disk->path($relativePath) : null;
+        if (!$fullPath) {
+            // Fallback if path() not available
+            $fullPath = storage_path('app/public/' . $relativePath);
+        }
+
         // Get recipient name and format filename
         $recipientName = $cert->recipient?->name ?? 'unknown';
         // Convert to slug: remove special chars, lowercase, replace spaces with underscore
         $recipientSlug = strtoupper(str_replace(' ', '_', preg_replace('/[^a-zA-Z0-9 ]/', '', $recipientName)));
         $fileName = 'SERTIFIKAT_INTERNSHIP25_' . $recipientSlug . '.pdf';
-        
-        if (!file_exists($filePath)) {
-            abort(404, 'File tidak ditemukan');
+
+        // Basic diagnostics for visibility in logs (helps diagnose 403/404)
+        try {
+            $exists = $disk->exists($relativePath);
+            $size = $exists ? $disk->size($relativePath) : null;
+            Log::info('Certificate download check', [
+                'user_id' => Auth::id(),
+                'roles_id' => Auth::user()?->roles_id,
+                'certificate_id' => $cert->id,
+                'relative_path' => $relativePath,
+                'full_path' => $fullPath,
+                'exists' => $exists,
+                'size' => $size,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Certificate download pre-check failed', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'certificate_id' => $cert->id,
+            ]);
         }
 
-        if (!is_readable($filePath)) {
-            abort(403, 'File tidak bisa dibaca');
+        if (!$disk->exists($relativePath)) {
+            abort(404, 'File tidak ditemukan');
         }
 
         // Track last download timestamp in cache per user per cert
@@ -63,7 +87,8 @@ class InternshipCertificateController extends Controller
         // Update last download timestamp
         cache()->put($cacheKey, $now, now()->addMinutes(5));
 
-        return response()->download($filePath, $fileName, [
+        // Stream the file via Storage to ensure correct visibility handling
+        return response()->download($fullPath, $fileName, [
             'Content-Type' => 'application/pdf',
         ]);
     }
