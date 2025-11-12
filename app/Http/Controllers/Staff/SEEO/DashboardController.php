@@ -9,6 +9,7 @@ use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
 use Inertia\Inertia;
@@ -23,11 +24,20 @@ class DashboardController extends Controller
         $billboard_list = Billboard::all()->map(function ($billboard) {
             if ($billboard->image) {
                 $diskName = config('app.env') === 'production' ? 'google' : 'public';
-                $disk = Storage::disk($diskName);
-                // Storage::url() akan otomatis membuat URL yang benar
-                // Untuk disk 'public', hasilnya: /storage/images/billboard/namafile.webp
-                // Untuk disk 'google', hasilnya: https://storage.googleapis.com/.../namafile.webp
-                $billboard->full_image_url = $disk->url('images/billboard/' . $billboard->image);
+                try {
+                    // Guard: Storage::disk(...) can throw when misconfigured (e.g., missing Google creds)
+                    $disk = Storage::disk($diskName);
+                    $billboard->full_image_url = $disk->url('images/billboard/' . $billboard->image);
+                } catch (\Throwable $e) {
+                    // Log the issue and gracefully fallback to public storage URL
+                    Log::warning('Failed to resolve storage disk for billboard image', [
+                        'disk' => $diskName,
+                        'billboard_id' => $billboard->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Fallback: assume file exists in local public storage path
+                    $billboard->full_image_url = '/storage/images/billboard/' . $billboard->image;
+                }
             }
             return $billboard;
         });
