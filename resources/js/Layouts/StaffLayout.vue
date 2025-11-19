@@ -224,6 +224,8 @@ watch(() => page.component, () => {
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"> <!-- Ganti ke 5.3.2 jika perlu -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet"> <!-- Ganti ke 1.11 jika perlu -->
+        <!-- Ensure Bootstrap JS is available globally (window.bootstrap) for Collapse/Offcanvas/Modal -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
     </Head>
 
     <div class="d-flex vh-100 overflow-hidden">
@@ -254,22 +256,23 @@ watch(() => page.component, () => {
                             <i :id="'icon_nav_section_desktop_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', active_section == sectionKey ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                             <span class="fw-semibold">{{ sectionKey }}</span>
                         </button>
-                        <div class="collapse" :id="'nav_section_desktop_' + sectionKey.replace(/\s+/g, '')">
+                        <div :class="['collapse', active_section == sectionKey ? 'show' : '']" :id="'nav_section_desktop_' + sectionKey.replace(/\s+/g, '')">
                             <div class="nav-items pt-1 ps-3">
                                 <div v-for="(nav_group, nav_group_key) in sectionContent" :key="nav_group_key" class="mb-1">
-                                    <a v-if="Array.isArray(nav_group)"
+                                    <button v-if="Array.isArray(nav_group)"
+                                        type="button"
                                         class="nav-item nav-group d-flex align-items-center btn text-start w-100"
                                         data-bs-toggle="collapse"
-                                        :href="'#nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
-                                        role="button"
+                                        :data-bs-target="'#nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
+                                        :aria-controls="'nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
                                         :class="{'active-group': active_group == nav_group_key}"
                                         @click="changeIcon('icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, ''))"
                                     >
                                         <i :id="'icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', active_group == nav_group_key ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                                         <span class="fw-medium">{{ nav_group_key }}</span>
-                                    </a>
+                                    </button>
                                      <div v-if="Array.isArray(nav_group)"
-                                        class="collapse"
+                                        :class="['collapse', active_group == nav_group_key ? 'show' : '']"
                                         :id="'nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
                                     >
                                          <a v-for="(nav, index) in nav_group"
@@ -294,7 +297,7 @@ watch(() => page.component, () => {
             </div>
         </div>
 
-         <div class="offcanvas offcanvas-start bg-gradient-custom text-white sidebar-mobile" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel" ref="sidebarRef">
+    <div class="offcanvas offcanvas-start bg-gradient-custom text-white sidebar-mobile" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel" ref="sidebarRef">
             <div class="offcanvas-header border-bottom border-white border-opacity-25">
                  <a :href="route('dashboard')" class="text-decoration-none">
                     <div class="d-flex align-items-center">
@@ -321,22 +324,23 @@ watch(() => page.component, () => {
                             <i :id="'icon_nav_section_mobile_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', active_section == sectionKey ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                             <span class="fw-semibold">{{ sectionKey }}</span>
                         </button>
-                         <div class="collapse" :id="'nav_section_mobile_' + sectionKey.replace(/\s+/g, '')">
+                         <div :class="['collapse', active_section == sectionKey ? 'show' : '']" :id="'nav_section_mobile_' + sectionKey.replace(/\s+/g, '')">
                             <div class="nav-items pt-1 ps-3">
                                  <div v-for="(nav_group, nav_group_key) in sectionContent" :key="nav_group_key + '-mobile'" class="mb-1">
-                                     <a v-if="Array.isArray(nav_group)"
+                                     <button v-if="Array.isArray(nav_group)"
+                                        type="button"
                                         class="nav-item nav-group d-flex align-items-center btn text-start w-100"
                                         data-bs-toggle="collapse"
-                                        :href="'#nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
-                                        role="button"
+                                        :data-bs-target="'#nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
+                                        :aria-controls="'nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
                                         :class="{'active-group': active_group == nav_group_key}"
                                         @click="changeIcon('icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, ''))"
                                     >
                                          <i :id="'icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', active_group == nav_group_key ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                                          <span class="fw-medium">{{ nav_group_key }}</span>
-                                    </a>
+                                    </button>
                                      <div v-if="Array.isArray(nav_group)"
-                                        class="collapse"
+                                        :class="['collapse', active_group == nav_group_key ? 'show' : '']"
                                         :id="'nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
                                     >
                                          <a v-for="(nav, index) in nav_group"

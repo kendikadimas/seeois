@@ -142,6 +142,10 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
     Route::get('/blaterian/foods/balance/{default_tab?}/{refresh?}', [BlaterianFoodBalanceController::class, 'balance'])->name('food.balance');
     Route::get('/blaterian/foods/stand', [StandController::class, 'index'])->name('food.stand');
     Route::get('/blaterian/foods/stand_detail/{id?}', [StandController::class, 'stand'])->name('food.stand.detail');
+    // Alias/typo redirect: some links might mistakenly use the route name in path
+    Route::get('/blaterian/foods/food.stand.detail/{id?}', function ($id = null) {
+        return redirect()->route('food.stand.detail', ['id' => $id]);
+    });
     Route::get('/blaterian/goods/balance/{default_tab?}/{refresh?}', [BlaterianGoodBalanceController::class, 'balance'])->name('good.balance');
     Route::get('/blaterian/goods/product', [GoodController::class, 'product'])->name('good.product');
     Route::get('/blaterian/goods/product/detail/{id}', [GoodDetailController::class, 'detail'])->name('good.product.detail');
