@@ -1,5 +1,5 @@
-// import "../css/app.scss";
 import "./bootstrap";
+import "../css/app.css"; // Load Tailwind + custom utilities globally
 import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
@@ -18,12 +18,7 @@ createInertiaApp({
             import.meta.glob("./Pages/**/*.vue")
         );
 
-        // Load additional CSS for public pages (Tailwind)
-        const isPublicPage = name.startsWith("Public/") || name === "Public/Homepage";
-        
-        if (isPublicPage) {
-            await import("../css/app.css");
-        }
+        // CSS loaded globally; no need for conditional dynamic import.
 
         return page;
     },
