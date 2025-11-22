@@ -224,7 +224,7 @@ watch(
                         v-if="activeTab == 1 || isLargeScreen"
                         :class="
                             'col-12 ' +
-                            (auth_user.id == profile.id
+                            (auth_user.roles_id == 99 || auth_user.id == profile.id
                                 ? 'col-lg-5'
                                 : 'col-lg-9')
                         "
@@ -232,7 +232,7 @@ watch(
                         <div class="card position-relative shadow">
                             <div class="dropdown">
                                 <button
-                                    v-if="auth_user.id == profile.id"
+                                    v-if="auth_user.roles_id == 99 || auth_user.id == profile.id"
                                     data-bs-toggle="dropdown"
                                     aria-expanded="false"
                                     class="btn btn-sm btn-outline-secondary end-0 top-0 position-absolute mt-1 me-1 border-0"
@@ -279,7 +279,7 @@ watch(
                                 </div>
                                 <!-- Update Profile Modal -->
                                 <div
-                                    v-if="auth_user.id == profile.id"
+                                    v-if="auth_user.roles_id == 99 || auth_user.id == profile.id"
                                     class="modal fade"
                                     ref="modalUpdateProfileRef"
                                     tabindex="-1"
@@ -427,7 +427,7 @@ watch(
                                 </div>
                                 <!-- Update Password Modal -->
                                 <div
-                                    v-if="auth_user.id == profile.id"
+                                    v-if="auth_user.roles_id == 99 || auth_user.id == profile.id"
                                     class="modal fade"
                                     ref="modalUpdatePasswordRef"
                                     tabindex="-1"
@@ -698,7 +698,7 @@ watch(
                                             <i class="bi bi-download"></i>
                                         </a>
                                         <button
-                                            v-if="auth_user.id == profile.id"
+                                            v-if="auth_user.roles_id == 99 || auth_user.id == profile.id"
                                             @click="
                                                 triggerFileUploadProfileImage()
                                             "
@@ -843,7 +843,7 @@ watch(
                     </div>
                 </transition>
                 <!-- Staff Obligations -->
-                <div class="col-lg-7 col-12" v-if="auth_user.id == profile.id">
+                <div class="col-lg-7 col-12" v-if="auth_user.roles_id == 99 || auth_user.id == profile.id">
                     <div class="row gx-4">
                         <div class="col-lg-6 col-12">
                             <transition

@@ -2,6 +2,8 @@
 import InputError from "@/Components/InputError.vue";
 import { Head, useForm } from "@inertiajs/vue3";
 import { ref } from 'vue';
+// Temporary inline logo placeholder to avoid build failure (real asset missing)
+const logoSrc = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
 const props = defineProps({
     email: {
@@ -49,7 +51,7 @@ const submit = () => {
                 <div class="text-center" style="max-width: 450px;">
                     <div class="mb-4 d-flex ">
                         <div class="mx-auto d-flex align-items-center justify-content-center bg-white bg-opacity-25 rounded-circle shadow-lg" style="width: 130px; height: 130px;">
-                            <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="rounded-circle" style="width: 90px; height: 90px;">
+                            <img :src="logoSrc" alt="SEEO Logo" class="rounded-circle" style="width: 90px; height: 90px;">
                         </div>
                     </div>
                     <h1 class="display-4 fw-bolder mb-3">SIS v5.0</h1>
@@ -64,7 +66,7 @@ const submit = () => {
                         
                         <div class="text-center mb-4">
                             <div class="d-lg-none mb-4">
-                                <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" style="width: 70px; height: 70px;">
+                                <img :src="logoSrc" alt="SEEO Logo" style="width: 70px; height: 70px;">
                             </div>
                             <h2 class="h3 fw-bold mb-2">Buat Kata Sandi Baru</h2>
                             <p class="text-muted">Silakan masukkan kata sandi baru Anda.</p>

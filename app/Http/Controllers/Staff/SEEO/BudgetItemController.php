@@ -54,7 +54,7 @@ class BudgetItemController extends Controller
         $budget = BudgetItem::with(['program'])->find($id);
         $program = $budget->program;
         // Authorization check
-        if (Auth::user()->id != $program->pic_id) {
+        if (!is_super_admin(Auth::user()) && Auth::user()->id != $program->pic_id) {
             return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'You are not authorized. Please contact the person in charge of this program.']);
         }
         $name = $budget->name;

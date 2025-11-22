@@ -282,7 +282,7 @@ watch(
                             </div>
                             <!-- New Department -->
                             <button
-                                v-if="auth_user.roles_id == 1"
+                                v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
                                 class="ms-2 btn btn-sm btn-outline-primary border-0 py-0 text-nowrap"
                                 @click="showNewDepartmentModal(true)"
                             >
@@ -317,7 +317,7 @@ watch(
                             <div class="ms-auto mb-auto d-flex" style="z-index: 10; position: relative;">
                                 <button
                                     class="border-0 btn btn-sm btn-outline-secondary"
-                                    v-if="auth_user.roles_id == 1"
+                                    v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
                                     @click.stop="
                                         () => {
                                             active_department = item;
@@ -332,11 +332,11 @@ watch(
                                 </button>
                                 <div
                                     class="border-start border-secondary border-2 mx-1 my-1"
-                                    v-if="auth_user.roles_id == 1"
+                                    v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
                                 ></div>
                                 <button
                                     class="border-0 btn btn-sm btn-outline-secondary"
-                                    v-if="auth_user.roles_id == 1"
+                                    v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
                                     @click.stop="
                                         () => {
                                             active_department = item;
@@ -357,7 +357,7 @@ watch(
 
     <!-- New Department Modal -->
     <div
-        v-if="auth_user.roles_id == 1"
+        v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
         class="modal fade"
         id="newDepartmentModal"
         tabindex="-1"
@@ -448,7 +448,7 @@ watch(
     </div>
     <!-- Edit Department Modal -->
     <div
-        v-if="auth_user.roles_id == 1"
+        v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
         class="modal fade"
         id="updateDepartmentModal"
         tabindex="-1"
@@ -543,7 +543,7 @@ watch(
     </div>
     <!-- Delete Department Modal -->
     <div
-        v-if="auth_user.roles_id == 1"
+        v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
         class="modal fade"
         id="deleteDepartmentModal"
         tabindex="-1"

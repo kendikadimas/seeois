@@ -326,7 +326,7 @@ watch(
                                             <div
                                                 class="d-flex"
                                                 v-if="
-                                                    auth_user.roles_id == 1 &&
+                                                    (auth_user.roles_id == 1 || auth_user.roles_id == 99) &&
                                                     selected_employee?.id > 0
                                                 "
                                             >
@@ -353,7 +353,7 @@ watch(
                                             </div>
                                             <InputError
                                                 v-if="
-                                                    auth_user.roles_id == 1 &&
+                                                    (auth_user.roles_id == 1 || auth_user.roles_id == 99) &&
                                                     selected_employee?.id > 0
                                                 "
                                                 :message="
@@ -367,7 +367,7 @@ watch(
                                     <div
                                         class="d-flex mt-2"
                                         v-if="
-                                            auth_user.roles_id == 1 &&
+                                            (auth_user.roles_id == 1 || auth_user.roles_id == 99) &&
                                             selected_employee.id > 0
                                         "
                                     >
@@ -465,7 +465,7 @@ watch(
                                     </div>
                                     <button
                                         v-if="
-                                            auth_user.roles_id == 1 &&
+                                            (auth_user.roles_id == 1 || auth_user.roles_id == 99) &&
                                             selected_customer?.id > 0
                                         "
                                         @click="

@@ -16,6 +16,7 @@ import {
     defineExpose,
 } from "vue";
 import { formatDate, formatDateOnly } from "@/utils";
+// no Ziggy; use explicit endpoints
 
 const props = defineProps({
     staff_list: Array,
@@ -45,6 +46,14 @@ const form_new_stand = useForm({
     type: 0,
 });
 
+// Safe label accessor to avoid reading .name of null/primitive
+function safeNameLabel(option) {
+    if (option == null) return '';
+    if (typeof option === 'string') return option;
+    if (typeof option === 'object') return option.name || option.label || '';
+    return '';
+}
+
 function handleSubmitFilter(category) {
     if (category) {
         form_filter.order =
@@ -56,7 +65,7 @@ function handleSubmitFilter(category) {
         form_filter.category = category;
         form_filter.keyword = null;
     }
-    form_filter.post(route("food.stand.filter"));
+    form_filter.post('/food/stand/filter');
 }
 
 function showNewStandModal(is_show) {
@@ -72,7 +81,7 @@ function showNewStandModal(is_show) {
 }
 
 function handleNewStand() {
-    form_new_stand.post(route("food.stand.insert"), {
+    form_new_stand.post('/food/stand/add/new', {
         onSuccess: () => {
             showNewStandModal(false);
             form_new_stand.reset();
@@ -199,7 +208,7 @@ watch(
                             </div>
                             <!-- New Stand -->
                             <button
-                                v-if="auth_user.roles_id == 3"
+                                v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
                                 class="btn btn-sm btn-outline-primary border-0 py-0"
                                 @click="showNewStandModal(true)"
                             >
@@ -216,32 +225,32 @@ watch(
             <div class="row gx-4 mt-4 mt-lg-5">
                 <div v-for="stand in stand_list" class="col-lg-4 col-12">
                     <a
-                        :href="route('food.stand.detail', stand.id)"
+                        :href="`/blaterian/foods/stand_detail/${stand.id}`"
                         class="text-decoration-none"
                     >
                         <div class="card card-bg-hover p-3 mb-3 mb-lg-4">
                             <div class="d-flex" style="font-size: 0.8rem">
                                 <span class="me-auto">{{
-                                    formatDateOnly(stand.date)
+                                    stand?.date ? formatDateOnly(stand.date) : '-'
                                 }}</span>
                                 <span
                                     :class="
                                         'd-block ' +
-                                        (stand.menu_lock > 0 &&
-                                        stand.sale_validation == 0
+                                        ((stand?.menu_lock || 0) > 0 &&
+                                        (stand?.sale_validation || 0) == 0
                                             ? 'text-success'
                                             : 'text-secondary')
                                     "
                                     >{{
-                                        stand.menu_lock > 0 &&
-                                        stand.sale_validation == 0
+                                        (stand?.menu_lock || 0) > 0 &&
+                                        (stand?.sale_validation || 0) == 0
                                             ? "active"
                                             : "inactive"
                                     }}</span
                                 >
                             </div>
                             <span class="h5 text-primary-emphasis me-auto">
-                                {{ "Stand " + stand.name }}
+                                {{ "Stand " + (stand?.name || 'Unknown') }}
                             </span>
                         </div>
                     </a>
@@ -253,7 +262,7 @@ watch(
     <!-- Modal -->
     <!-- New Stand Modal -->
     <div
-        v-if="auth_user.roles_id == 3"
+        v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
         class="modal fade"
         id="newStandModal"
         tabindex="-1"
@@ -387,8 +396,9 @@ watch(
                                 <v-select
                                     class="bg-white text-nowrap"
                                     :options="staff_list"
+                                    :getOptionLabel="safeNameLabel"
                                     label="name"
-                                    :reduce="(staff) => staff.id"
+                                    :reduce="(staff) => staff?.id"
                                     v-model="form_new_stand.pic_id"
                                     placeholder="Select staff"
                                 />

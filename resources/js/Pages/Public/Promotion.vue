@@ -574,11 +574,11 @@ watch(
                                     {{ "Voucher Gallery" }}
                                 </span>
                                 <button
-                                    v-if="auth_user?.roles_id == 3"
+                                    v-if="auth_user?.roles_id == 3 || auth_user?.roles_id == 99"
                                     class="btn btn-sm btn-outline-primary border-0 py-0 ms-auto"
                                     @click="
                                         () => {
-                                            if (auth_user.roles_id == 3) {
+                                            if (auth_user.roles_id == 3 || auth_user.roles_id == 99) {
                                                 showAddVoucherModal(true);
                                             }
                                         }
@@ -910,7 +910,7 @@ watch(
     <!-- Modal -->
     <!-- Add Menu Modal -->
     <div
-        v-if="auth_user?.roles_id == 3"
+        v-if="auth_user?.roles_id == 3 || auth_user?.roles_id == 99"
         class="modal fade"
         id="addVoucherModal"
         tabindex="-1"

@@ -6,6 +6,7 @@ use App\Models\InternshipCertificate;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Support\Facades\Log;
 
 class InternshipCertificatePolicy
 {
@@ -30,16 +31,22 @@ class InternshipCertificatePolicy
     public function manage(User $user, ?InternshipCertificate $certificate = null): bool
     {
         // Log for debugging
-        \Log::info('InternshipCertificatePolicy::manage called', [
+        Log::info('InternshipCertificatePolicy::manage called', [
             'user_id' => $user->id,
             'user_name' => $user->name,
             'roles_id' => $user->roles_id,
             'roles_id_type' => gettype($user->roles_id),
         ]);
 
+        // Super Admin bypass
+        if (is_super_admin($user)) {
+            Log::info('InternshipCertificatePolicy: Super Admin bypass granted');
+            return true;
+        }
+
         // Allow HR Manager (role_id = 5)
-        if ((int)$user->roles_id === 5) {
-            \Log::info('InternshipCertificatePolicy: HR Manager authorized');
+        if ((int)$user->roles_id === 5 || is_super_admin($user)) {
+            Log::info('InternshipCertificatePolicy: HR Manager authorized');
             return true;
         }
 
@@ -47,11 +54,11 @@ class InternshipCertificatePolicy
         $internshipProgram = $this->getInternshipProgram();
         
         if (!$internshipProgram) {
-            \Log::warning('InternshipCertificatePolicy: No internship program found');
+            Log::warning('InternshipCertificatePolicy: No internship program found');
             return false;
         }
 
-        \Log::info('InternshipCertificatePolicy: Checking PIC', [
+        Log::info('InternshipCertificatePolicy: Checking PIC', [
             'program_id' => $internshipProgram->id,
             'program_name' => $internshipProgram->name,
             'program_pic_id' => $internshipProgram->pic_id,
@@ -62,7 +69,7 @@ class InternshipCertificatePolicy
         $isPic = (int)$user->id === (int)$internshipProgram->pic_id;
         
         if (!$isPic) {
-            \Log::warning('InternshipCertificatePolicy: User not authorized', [
+            Log::warning('InternshipCertificatePolicy: User not authorized', [
                 'user_id' => $user->id,
                 'roles_id' => $user->roles_id,
                 'is_pic' => false,
@@ -79,7 +86,7 @@ class InternshipCertificatePolicy
     public function view(User $user, InternshipCertificate $certificate): bool
     {
         // Log inputs for diagnostics
-        \Log::info('InternshipCertificatePolicy::view called', [
+        Log::info('InternshipCertificatePolicy::view called', [
             'user_id' => $user->id,
             'user_roles_id' => $user->roles_id,
             'cert_id' => $certificate->id,
@@ -100,7 +107,7 @@ class InternshipCertificatePolicy
         // HR Manager or PIC can view any certificate
         $canManage = $this->manage($user, $certificate);
         if (!$canManage) {
-            \Log::warning('InternshipCertificatePolicy::view denied', [
+            Log::warning('InternshipCertificatePolicy::view denied', [
                 'user_id' => $user->id,
                 'cert_id' => $certificate->id,
             ]);

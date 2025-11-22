@@ -2,6 +2,8 @@
 import ModalConfirmation from "@/Components/ModalConfirmation.vue";
 import { Head, usePage } from "@inertiajs/vue3";
 import { ref, watch, computed, onMounted, defineProps, nextTick } from "vue";
+// Placeholder logo to prevent missing asset build failures
+const logoSrc = 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
 
 // Prop total_amount (jika masih relevan)
 // const props = defineProps({
@@ -31,6 +33,8 @@ const route = (name, params = {}) => {
         'food.stand': '/blaterian/foods/stand',
         'food.stand.detail': '/blaterian/foods/stand_detail',
         'food.stand.cashier': '/blaterian/foods/cashier',
+            'stand.expense.receipt': '/food/stand/expense/receipt/{filename}',
+            'good.product': '/blaterian/goods/product',
         'profile.edit': '/profile',
         'logout': '/logout',
         'intro': '/intro',
@@ -129,6 +133,19 @@ const active_group = computed(() => {
     return null;
 });
 
+// Local UI state for collapses (prevent immediate hide after Bootstrap animation)
+const openedSection = ref(null);
+const openedGroups = ref({}); // { SectionKey: GroupKey }
+
+function toggleSection(sectionKey) {
+    openedSection.value = openedSection.value === sectionKey ? null : sectionKey;
+}
+
+function toggleGroup(sectionKey, groupKey) {
+    const current = openedGroups.value[sectionKey];
+    openedGroups.value[sectionKey] = current === groupKey ? null : groupKey;
+}
+
 function updateTime() {
     currentTime.value = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
@@ -189,6 +206,13 @@ onMounted(async () => {
     timeInterval = setInterval(updateTime, 1000);
     await nextTick(); // Tunggu DOM siap
 
+    // Initialize openedSection with active_section for initial route context
+    openedSection.value = active_section.value;
+    // Initialize openedGroups for active group if present
+    if (active_group.value) {
+        openedGroups.value[active_section.value] = active_group.value;
+    }
+
     // Inisialisasi Bootstrap Offcanvas HANYA SEKALI
     if (typeof window.bootstrap !== 'undefined') {
         if (sidebarRef.value) {
@@ -212,8 +236,13 @@ onMounted(async () => {
 
 // OPTIMIZED: Close mobile sidebar on navigation (no rebuilding nav_list)
 watch(() => page.component, () => {
+    // Sync opened state with route changes
+    openedSection.value = active_section.value;
+    if (active_group.value) {
+        openedGroups.value[active_section.value] = active_group.value;
+    }
     if (window.innerWidth < 992 && offcanvasInstance.value) {
-        offcanvasInstance.value.hide(); // Close mobile sidebar
+        offcanvasInstance.value.hide();
     }
 });
 </script>
@@ -224,17 +253,17 @@ watch(() => page.component, () => {
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"> <!-- Ganti ke 5.3.2 jika perlu -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet"> <!-- Ganti ke 1.11 jika perlu -->
-        <!-- Ensure Bootstrap JS is available globally (window.bootstrap) for Collapse/Offcanvas/Modal -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+        <!-- Bootstrap JS loaded via Vite in app.js; removed inline <script> to avoid Vue side-effect tag warning -->
     </Head>
 
-    <div class="d-flex vh-100 overflow-hidden">
+    <!-- Removed overflow-hidden to prevent dropdown menu clipping; use overflow-x-hidden if horizontal clipping needed -->
+    <div class="d-flex vh-100 overflow-x-hidden">
         <div class="sidebar-desktop d-none d-lg-flex flex-column flex-shrink-0 bg-gradient-custom text-white">
              <div class="sidebar-content-inner p-3">
                 <div class="sidebar-logo mb-4">
                      <a :href="route('dashboard')" class="text-decoration-none">
                         <div class="d-flex align-items-center p-2 rounded bg-white bg-opacity-10 sidebar-logo-hover">
-                            <img src="/storage/local/images/apps/logo.png" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src='/storage/local/images/compro/logo.png'"/>
+                            <img :src="logoSrc" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src=logoSrc"/>
                             <div class="lh-sm">
                                 <h5 class="sidebar-logo-title mb-0 text-white">SEEO</h5>
                                 <span class="sidebar-logo-subtitle d-block text-white">Information System</span>
@@ -245,34 +274,29 @@ watch(() => page.component, () => {
                 </div>
                  <div class="navigation-menu flex-grow-1">
                     <div v-for="(sectionContent, sectionKey) in nav_list" :key="sectionKey" class="nav-section mb-2">
-                         <button
+                        <button
                             type="button"
                             class="nav-header btn w-100 text-start d-flex align-items-center"
-                            data-bs-toggle="collapse"
-                            :data-bs-target="'#nav_section_desktop_' + sectionKey.replace(/\s+/g, '')"
-                            :class="{'active-section': active_section == sectionKey}"
-                            @click="changeIcon('icon_nav_section_desktop_' + sectionKey.replace(/\s+/g, ''))"
+                            :class="{'active-section': active_section == sectionKey, 'open': openedSection === sectionKey}"
+                            @click="() => { toggleSection(sectionKey); changeIcon('icon_nav_section_desktop_' + sectionKey.replace(/\s+/g, '')); }"
                         >
                             <i :id="'icon_nav_section_desktop_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', active_section == sectionKey ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                             <span class="fw-semibold">{{ sectionKey }}</span>
                         </button>
-                        <div :class="['collapse', active_section == sectionKey ? 'show' : '']" :id="'nav_section_desktop_' + sectionKey.replace(/\s+/g, '')">
+                        <div :class="['collapse', { 'show': openedSection === sectionKey }]" :id="'nav_section_desktop_' + sectionKey.replace(/\s+/g, '')">
                             <div class="nav-items pt-1 ps-3">
                                 <div v-for="(nav_group, nav_group_key) in sectionContent" :key="nav_group_key" class="mb-1">
                                     <button v-if="Array.isArray(nav_group)"
                                         type="button"
                                         class="nav-item nav-group d-flex align-items-center btn text-start w-100"
-                                        data-bs-toggle="collapse"
-                                        :data-bs-target="'#nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
-                                        :aria-controls="'nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
-                                        :class="{'active-group': active_group == nav_group_key}"
-                                        @click="changeIcon('icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, ''))"
+                                        :class="{'active-group': active_group == nav_group_key, 'open': openedGroups[sectionKey] === nav_group_key}"
+                                        @click="() => { toggleGroup(sectionKey, nav_group_key); changeIcon('icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')); }"
                                     >
                                         <i :id="'icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', active_group == nav_group_key ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                                         <span class="fw-medium">{{ nav_group_key }}</span>
                                     </button>
                                      <div v-if="Array.isArray(nav_group)"
-                                        :class="['collapse', active_group == nav_group_key ? 'show' : '']"
+                                        :class="['collapse', { 'show': openedGroups[sectionKey] === nav_group_key }]"
                                         :id="'nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
                                     >
                                          <a v-for="(nav, index) in nav_group"
@@ -301,7 +325,7 @@ watch(() => page.component, () => {
             <div class="offcanvas-header border-bottom border-white border-opacity-25">
                  <a :href="route('dashboard')" class="text-decoration-none">
                     <div class="d-flex align-items-center">
-                        <img src="/storage/local/images/apps/logo.png" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src='/storage/local/images/compro/logo.png'"/>
+                        <img :src="logoSrc" alt="SEEO Logo" class="sidebar-logo-img me-2" @error="$event.target.src=logoSrc"/>
                         <div class="lh-sm">
                             <h5 class="sidebar-logo-title mb-0 text-white" id="sidebarOffcanvasLabel">SEEO</h5>
                             <span class="sidebar-logo-subtitle d-block text-white">Information System</span>
@@ -316,31 +340,26 @@ watch(() => page.component, () => {
                          <button
                             type="button"
                             class="nav-header btn w-100 text-start d-flex align-items-center"
-                            data-bs-toggle="collapse"
-                            :data-bs-target="'#nav_section_mobile_' + sectionKey.replace(/\s+/g, '')"
-                            :class="{'active-section': active_section == sectionKey}"
-                            @click="changeIcon('icon_nav_section_mobile_' + sectionKey.replace(/\s+/g, ''))"
+                            :class="{'active-section': active_section == sectionKey, 'open': openedSection === sectionKey}"
+                            @click="() => { toggleSection(sectionKey); changeIcon('icon_nav_section_mobile_' + sectionKey.replace(/\s+/g, '')); }"
                         >
                             <i :id="'icon_nav_section_mobile_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', active_section == sectionKey ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                             <span class="fw-semibold">{{ sectionKey }}</span>
                         </button>
-                         <div :class="['collapse', active_section == sectionKey ? 'show' : '']" :id="'nav_section_mobile_' + sectionKey.replace(/\s+/g, '')">
+                         <div :class="['collapse', { 'show': openedSection === sectionKey }]" :id="'nav_section_mobile_' + sectionKey.replace(/\s+/g, '')">
                             <div class="nav-items pt-1 ps-3">
                                  <div v-for="(nav_group, nav_group_key) in sectionContent" :key="nav_group_key + '-mobile'" class="mb-1">
                                      <button v-if="Array.isArray(nav_group)"
                                         type="button"
                                         class="nav-item nav-group d-flex align-items-center btn text-start w-100"
-                                        data-bs-toggle="collapse"
-                                        :data-bs-target="'#nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
-                                        :aria-controls="'nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
-                                        :class="{'active-group': active_group == nav_group_key}"
-                                        @click="changeIcon('icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, ''))"
+                                        :class="{'active-group': active_group == nav_group_key, 'open': openedGroups[sectionKey] === nav_group_key}"
+                                        @click="() => { toggleGroup(sectionKey, nav_group_key); changeIcon('icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')); }"
                                     >
                                          <i :id="'icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', active_group == nav_group_key ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                                          <span class="fw-medium">{{ nav_group_key }}</span>
                                     </button>
                                      <div v-if="Array.isArray(nav_group)"
-                                        :class="['collapse', active_group == nav_group_key ? 'show' : '']"
+                                        :class="['collapse', { 'show': openedGroups[sectionKey] === nav_group_key }]"
                                         :id="'nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
                                     >
                                          <a v-for="(nav, index) in nav_group"
@@ -390,7 +409,7 @@ watch(() => page.component, () => {
                             aria-expanded="false"
                         >
                             <img
-                                :src="'/storage/images/profile/' + (auth_user?.profile_image ?? 'example.png')"
+                                :src="auth_user?.full_profile_image_url || '/storage/images/profile/example.png'"
                                 alt="Profile"
                                 class="profile-img rounded-circle me-2"
                                 @error="$event.target.src='/storage/local/images/compro/logo.png'"
@@ -398,7 +417,7 @@ watch(() => page.component, () => {
                             />
                             <div class="profile-info d-none d-lg-block lh-sm text-start">
                                 <h6 class="mb-0 small fw-medium text-dark text-truncate" style="max-width: 150px;">{{ auth_user?.name }}</h6>
-                                <small class="text-muted d-block text-truncate" style="max-width: 150px;">{{ auth_user?.roles?.name || 'Staff' }}</small>
+                                <small class="text-muted d-block text-truncate" style="max-width: 150px;">{{ auth_user?.role_name || 'Staff' }}</small>
                             </div>
                         </button>
                          <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="profileDropdownMenu">

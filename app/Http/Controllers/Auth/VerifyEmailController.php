@@ -15,6 +15,10 @@ class VerifyEmailController extends Controller
     public function __invoke(EmailVerificationRequest $request): RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
+            // Super Admin: arahkan langsung ke dashboard
+            if (is_super_admin($request->user())) {
+                return redirect()->intended(route('dashboard', absolute: false) . '?verified=1');
+            }
             if ($request->user()->roles_id == null) {
                 return redirect()->intended(route('dashboard', absolute: false) . '?verified=1');
             } else {
@@ -26,6 +30,8 @@ class VerifyEmailController extends Controller
             event(new Verified($request->user()));
         }
 
-        return redirect()->intended(route('login', absolute: false) . '?verified=1');
+        return redirect()->intended(is_super_admin($request->user()) || $request->user()->roles_id == null
+            ? route('dashboard', absolute: false) . '?verified=1'
+            : route('login', absolute: false) . '?verified=1');
     }
 }

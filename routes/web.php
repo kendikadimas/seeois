@@ -17,6 +17,7 @@ use App\Http\Controllers\Staff\Business\GoodSaleController;
 use App\Http\Controllers\Staff\Business\InsightController;
 use App\Http\Controllers\Staff\Business\SalesController;
 use App\Http\Controllers\Staff\Business\StandController;
+use App\Http\Controllers\Staff\Business\ExpenseReceiptController;
 use App\Http\Controllers\Staff\SEEO\BudgetItemController;
 use App\Http\Controllers\Staff\SEEO\CashFlowController;
 use App\Http\Controllers\Staff\SEEO\DashboardController;
@@ -144,7 +145,8 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
     Route::get('/blaterian/foods/stand_detail/{id?}', [StandController::class, 'stand'])->name('food.stand.detail');
     // Alias/typo redirect: some links might mistakenly use the route name in path
     Route::get('/blaterian/foods/food.stand.detail/{id?}', function ($id = null) {
-        return redirect()->route('food.stand.detail', ['id' => $id]);
+        $path = '/blaterian/foods/stand_detail' . ($id ? '/' . $id : '');
+        return redirect($path);
     });
     Route::get('/blaterian/goods/balance/{default_tab?}/{refresh?}', [BlaterianGoodBalanceController::class, 'balance'])->name('good.balance');
     Route::get('/blaterian/goods/product', [GoodController::class, 'product'])->name('good.product');
@@ -157,11 +159,17 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
     Route::post('/food/stand/expense/filter', [StandController::class, 'filterStandExpense'])->name('stand.expense.filter');
     Route::post('/food/stand/expense/add/{id}', [StandController::class, 'insertStandExpense'])->name('stand.expense.add');
     Route::post('/food/stand/expense/delete/{id}', [StandController::class, 'deleteStandExpenseItem'])->name('stand.expense.delete');
+    // Stream expense receipt image directly from Google Drive (always google disk)
+    Route::get('/food/stand/expense/receipt/{filename}', [ExpenseReceiptController::class, 'showExpenseReceipt'])
+        // Allow both patterns: SE<stand>_<expense>_receipt.webp (new) and SE<digits>_receipt.webp (legacy)
+        ->where('filename', '(SE\d+_\d+_receipt\.webp|SE\d+_receipt\.webp)')
+        ->name('stand.expense.receipt');
     Route::post('/food/stand/menu/filter/{id}', [StandController::class, 'filterStandMenu'])->name('stand.menu.filter');
     Route::post('/food/stand/menu/add/{id}', [StandController::class, 'insertMenu'])->name('stand.menu.add');
     Route::post('/food/stand/menu/delete/{id}', [StandController::class, 'deleteMenu'])->name('stand.menu.delete');
     Route::post('/food/stand/menu/stock/update', [StandController::class, 'updateStock'])->name('stand.menu.stock.update');
     Route::post('/food/stand/menu/image/update/{id}', [StandController::class, 'updateImage'])->name('stand.menu.image.update');
+    Route::post('/food/stand/menu/recipe/store/{menu_id}', [\App\Http\Controllers\Staff\Business\RecipeComponentController::class, 'store'])->name('stand.menu.recipe.store');
     Route::post('/food/stand/sales/customer/add/{id}', [SalesController::class, 'insertCustomer'])->name('sale.customer.add');
     Route::post('/food/stand/sales/add/{id}', [SalesController::class, 'insertSale'])->name('stand.sale.add');
     Route::post('/food/stand/sales/filter', [SalesController::class, 'filterStandIncome'])->name('stand.income.filter');

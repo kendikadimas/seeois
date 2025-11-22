@@ -80,3 +80,13 @@ if (!function_exists('image_url')) {
     return app('ImageHelper')->url($path);
   }
 }
+
+if (!function_exists('is_super_admin')) {
+  /**
+   * Cek apakah user adalah Super Admin (roles_id = 99)
+   */
+  function is_super_admin($user): bool
+  {
+    return $user && (int)$user->roles_id === 99;
+  }
+}

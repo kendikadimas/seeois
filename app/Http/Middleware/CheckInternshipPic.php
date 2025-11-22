@@ -32,13 +32,19 @@ class CheckInternshipPic
             'roles_id' => $user->roles_id,
         ]);
 
-        // 2. CEO (roles_id = 1) selalu bisa akses
-        if ($user->roles_id === 1) { // UBAH DARI role_id KE roles_id
+        // 2. Super Admin bypass dulu
+        if (is_super_admin($user)) {
+            Log::info('Super Admin bypass (CheckInternshipPic)');
+            return $next($request);
+        }
+
+        // 3. CEO (roles_id = 1) selalu bisa akses
+        if ($user->roles_id === 1 || is_super_admin($user)) {
             Log::info('User is CEO, access granted');
             return $next($request);
         }
 
-        // 3. Dapatkan program 'Internship' dari database
+        // 4. Dapatkan program 'Internship' dari database
         $internshipProgram = Program::where('name', 'Internship')->first();
         
         Log::info('Internship program check', [
@@ -52,7 +58,7 @@ class CheckInternshipPic
             abort(404, 'Program Internship tidak ditemukan.');
         }
 
-        // 4. Cek apakah user adalah PIC dari program Internship
+        // 5. Cek apakah user adalah PIC dari program Internship
         if ($user->id !== $internshipProgram->pic_id) {
             Log::warning('User bukan PIC Internship', [
                 'user_id' => $user->id,

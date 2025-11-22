@@ -31,6 +31,14 @@ class InternshipApplicationController extends Controller
         
         // Double check authorization di controller
         $user = Auth::user();
+
+        // Super Admin bypass: langsung akses penuh
+        if (is_super_admin($user)) {
+            Log::info('Super Admin bypass internship applications', [
+                'user_id' => $user->id,
+                'roles_id' => $user->roles_id,
+            ]);
+        }
         
         // Debug info
         Log::info('User trying to access internship applications', [
@@ -48,12 +56,12 @@ class InternshipApplicationController extends Controller
             'user_id' => $user->id
         ]);
         
-        // Definisi role yang diizinkan akses:
+        // Definisi role yang diizinkan akses (non super admin):
         // 1 = CEO, 5 = Co-CEO, 6 = HR Manager
-        $allowedRoles = [1, 5, 6]; // CEO, Co-CEO, HR Manager
+        $allowedRoles = [1, 5, 6];
         
         // Cek apakah user memiliki role yang diizinkan
-        $hasAllowedRole = in_array($user->roles_id, $allowedRoles);
+        $hasAllowedRole = is_super_admin($user) || in_array($user->roles_id, $allowedRoles);
         
         // Cek apakah user adalah PIC Internship
         $isPICInternship = $internshipProgram && $user->id === $internshipProgram->pic_id;
@@ -82,11 +90,12 @@ class InternshipApplicationController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'role_id' => $user->roles_id,
+                'is_super_admin' => is_super_admin($user),
                 'is_ceo' => $user->roles_id === 1,
                 'is_co_ceo' => $user->roles_id === 5,
                 'is_hr_manager' => $user->roles_id === 6,
                 'is_internship_pic' => $internshipProgram && $user->id === $internshipProgram->pic_id,
-                'has_management_access' => in_array($user->roles_id, [1, 5, 6]) || ($internshipProgram && $user->id === $internshipProgram->pic_id)
+                'has_management_access' => is_super_admin($user) || in_array($user->roles_id, [1, 5, 6]) || ($internshipProgram && $user->id === $internshipProgram->pic_id)
             ]
         ]);
     }

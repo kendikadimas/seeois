@@ -30,9 +30,11 @@ class AppServiceProvider extends ServiceProvider
             \URL::forceScheme('https');
         }
 
-        // Share image_url helper with all views
-        view()->share('image_url', function ($path) {
-            return image_url($path);
+        // Share helpers & auth flags with all views (Blade)
+        view()->share('image_url', fn($path) => image_url($path));
+        view()->composer('*', function ($view) {
+            $user = \Illuminate\Support\Facades\Auth::user();
+            $view->with('is_super_admin', is_super_admin($user));
         });
     }
 }

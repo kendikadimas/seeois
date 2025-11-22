@@ -15,6 +15,9 @@ import {
     defineExpose,
 } from "vue";
 
+// Placeholder image (1x1 transparent GIF) to avoid build errors from missing assets
+const logoSrc = "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
+
 const props = defineProps({
     notif: Object,
     stand_list: Array,
@@ -51,7 +54,8 @@ const headerStyle = computed(() => {
         opacity: opacity,
         width: "100%",
         padding: "1rem",
-        backgroundImage: `url('/storage/local/images/shop/brand/background.png')`,
+        // Using placeholder instead of missing background asset
+        backgroundImage: `url(${logoSrc})`,
         backgroundRepeat: "repeat-x",
         backgroundSize: isLargeScreen.value ? "auto 100%" : "auto 0%",
     };
@@ -123,7 +127,7 @@ watch(
 <template>
     <GuestLayout>
         <!-- Page Layout -->
-        <Head :title="title" :icon="'/storage/local/images/apps/logo.png'" />
+        <Head :title="title" :icon="logoSrc" />
         <!-- Modal Box -->
         <ModalConfirmation ref="modalConfirmationRef" />
         <ModalAlertNotification ref="modalAlertNotificationRef" />
@@ -144,13 +148,13 @@ watch(
                         class="d-flex border-end border-primary-subtle border-2 pe-1 me-2"
                     >
                         <img
-                            src="/storage/local/images/shop/brand/blaterian_logo.png"
+                            :src="logoSrc"
                             alt="image"
                             style="height: 2.5rem"
                             class="my-auto"
                         />
                         <img
-                            src="/storage/local/images/shop/brand/blaterian_text.png"
+                            :src="logoSrc"
                             alt="image"
                             class="my-auto"
                             style="height: 2.5rem"
@@ -308,12 +312,12 @@ watch(
                                     class="scroll-container-horizontal scroll-container-horizontal-lg pb-1"
                                 >
                                     <img
-                                        src="/storage/images/billboard/Billboard_1741771637.png"
+                                        :src="logoSrc"
                                         alt=""
                                         class="img-fluid rounded w-100 me-2"
                                     />
                                     <img
-                                        src="/storage/images/billboard/Billboard_1741771637.png"
+                                        :src="logoSrc"
                                         alt=""
                                         class="img-fluid rounded w-100 me-2"
                                     />
@@ -528,12 +532,12 @@ watch(
                                                             )"
                                                         >
                                                             <img
-                                                                :src="
-                                                                    menu.image
-                                                                        ? '/storage/images/shop/foods/menu/' +
-                                                                          menu.image
-                                                                        : '/storage/local/images/shop/foods/menu/default.png'
-                                                                "
+                                                                                                                                :src="
+                                                                                                                                        menu.image
+                                                                                                                                                ? '/storage/images/shop/foods/menu/' +
+                                                                                                                                                    menu.image
+                                                                                                                                                : logoSrc
+                                                                                                                                "
                                                                 alt=""
                                                                 class="rounded-top placeholder m-1"
                                                                 style="

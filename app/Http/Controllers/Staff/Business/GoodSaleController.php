@@ -39,7 +39,8 @@ class GoodSaleController extends Controller
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Cart is not existed. Please make a cart.']);
         }
 
-        if ($auth_user->product->count() <= 0 && $auth_user->roles_id !== 3) {
+        // Super Admin bypass: allow even without products
+        if ($auth_user->product->count() <= 0 && $auth_user->roles_id !== 3 && !is_super_admin($auth_user)) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not authorize to add transaction. Please ask to Product PIC or Operational Officer.']);
         }
 

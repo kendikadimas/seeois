@@ -327,7 +327,7 @@ watch(
                                     </span>
                                     <button
                                         v-if="
-                                            auth_user.id ==
+                                            auth_user.roles_id == 99 || auth_user.id ==
                                             department.manager_id
                                         "
                                         @click="showAddStaffModal(true)"
@@ -418,7 +418,7 @@ watch(
                                     </span>
                                     <button
                                         v-if="
-                                            auth_user.id ==
+                                            auth_user.roles_id == 99 || auth_user.id ==
                                             department.manager_id
                                         "
                                         @click="showNewProgramModal(true)"
@@ -501,7 +501,7 @@ watch(
 
     <!-- Add Staff Modal -->
     <div
-        v-if="auth_user.id == department.manager_id"
+        v-if="auth_user.roles_id == 99 || auth_user.id == department.manager_id"
         class="modal fade"
         id="addStaffModal"
         tabindex="-1"
@@ -573,7 +573,7 @@ watch(
     </div>
     <!-- New Program Modal -->
     <div
-        v-if="auth_user.id == department.manager_id"
+        v-if="auth_user.roles_id == 99 || auth_user.id == department.manager_id"
         class="modal fade"
         id="newProgramModal"
         tabindex="-1"

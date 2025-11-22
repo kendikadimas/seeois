@@ -34,6 +34,26 @@ class ProfileController extends Controller
             $profile = Auth::user();
         }
 
+        // Add full_profile_image_url to the profile object
+        if ($profile->profile_image) {
+            try {
+                $path = 'images/profile/' . $profile->profile_image;
+                $disk = Storage::disk('google');
+                if ($disk->exists($path)) {
+                    $profile->full_profile_image_url = $disk->url($path);
+                } else {
+                    $profile->full_profile_image_url = '/storage/images/profile/example.png';
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed to resolve Google Drive URL for profile image in edit', [
+                    'user_id' => $profile->id,
+                    'error' => $e->getMessage(),
+                ]);
+                $profile->full_profile_image_url = '/storage/images/profile/example.png';
+            }
+        }
+
+
         if (!$profile->phone || !$profile->password) {
             return back()->with('notif', ['type' => 'info', 'message' => $profile->name . '`s account has not finish the registration process.']);
         }
@@ -74,8 +94,8 @@ class ProfileController extends Controller
                 ]
             );
             // Delete previous profile if exist
-            // Checkk for env
-            $disk = config('app.env') === 'production' ? 'google' : 'public';
+            // Force to use google drive for profile picture
+            $disk = 'google';
             if ($auth_user->profile_image) {
                 Storage::disk($disk)->delete('images/profile/' . $auth_user->profile_image);
             }
@@ -92,7 +112,7 @@ class ProfileController extends Controller
             // Format receipt name
             $receipt_name =  'PRF_' . $auth_user->id . '_image.webp';
             // store reciept file
-            Storage::disk($disk)->put('images/profile/' . $receipt_name, $receipt_encoded);
+            Storage::disk('google')->put('images/profile/' . $receipt_name, $receipt_encoded);
 
             $user->profile_image = $receipt_name;
         }

@@ -16,6 +16,7 @@ use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use App\Services\ProfitCalculator;
 
 class SalesController extends Controller
 {
@@ -259,7 +260,9 @@ class SalesController extends Controller
         // update stand income
         $stand = Stand::find($id);
         $stand->income = $new_income;
-        $stand->profit = $stand->income - $stand->expense;
+        // Recalculate profit with recipe-based COGS if available
+        $recalc = ProfitCalculator::calculateStandProfit($stand->id);
+        $stand->profit = $recalc !== null ? $recalc : ($stand->income - $stand->expense);
         $stand->updated_at = now();
         $stand->save();
 

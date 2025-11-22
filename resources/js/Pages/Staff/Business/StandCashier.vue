@@ -25,6 +25,7 @@ import {
     formatTimeOnly,
 } from "@/utils";
 import { format } from "date-fns";
+// no Ziggy; use explicit endpoints
 
 const props = defineProps({
     stand: Object,
@@ -115,7 +116,7 @@ function addOrder(menu) {
 function handleSubmitTransaction() {
     console.log(form_transaction);
 
-    form_transaction.post(route("stand.sale.add", props.stand.id), {
+    form_transaction.post(`/food/stand/sales/add/${props.stand.id}`, {
         onError: (errors) => {
             for (const key in errors) {
                 toastNotifRef.value.showToast("warning", errors[key]);
@@ -125,14 +126,14 @@ function handleSubmitTransaction() {
 }
 
 function handleSubmitNewCustomer() {
-    form_new_customer.post(route("sale.customer.add", props.stand.id));
+    form_new_customer.post(`/food/stand/sales/customer/add/${props.stand.id}`);
 }
 
 function handleFinishTransaction(id) {
     const form = useForm({
         transaction_id: id,
     });
-    form.post(route("shop.transaction.finish"));
+    form.post('/shop/transaction/finish');
 }
 
 function showPrintReceiptModal(is_show) {
@@ -278,14 +279,14 @@ watch(
         <ModalAlertNotification ref="modalAlertNotificationRef" />
         <template #header>
             <a
-                :href="route('food.stand')"
+                href="/blaterian/foods/stand"
                 class="bg-opacity-0 text-decoration-none text-primary-emphasis"
             >
                 <span class="fw-light">{{ "Stand" }}</span>
             </a>
             <span class="mx-2">{{ "/" }}</span>
             <a
-                :href="route('food.stand.detail', stand.id)"
+                :href="`/blaterian/foods/stand_detail/${stand.id}`"
                 class="bg-opacity-0 text-decoration-none text-primary-emphasis"
             >
                 <span class="fw-light">{{ stand.name }}</span>
@@ -508,10 +509,7 @@ watch(
                                     <i
                                         @click.prevent="
                                             confirmation(
-                                                route(
-                                                    'shop.transaction.cancel',
-                                                    item.id
-                                                ),
+                                                `/shop/transaction/cancel/${item.id}`,
                                                 'Confirm to cancel tranasction order from ' +
                                                     item?.customer?.name +
                                                     '?'
@@ -1773,7 +1771,7 @@ watch(
                                 padding: 0.1rem;
                             "
                         >
-                            <use href="/icons.svg#dana"></use>
+                            <rect width="24" height="24" fill="#ccc" rx="4"></rect>
                         </svg>
                         {{ "Dana Transfer Receipt" }}
                     </span>

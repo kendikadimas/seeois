@@ -1535,7 +1535,7 @@ watch(
     <!-- Modal -->
     <!-- Contribution Setting Modal -->
     <div
-        v-if="auth_user.roles_id == 2"
+        v-if="auth_user.roles_id == 2 || auth_user.roles_id == 99"
         class="modal fade"
         id="modalSettingContribution"
         tabindex="-1"
@@ -1671,7 +1671,7 @@ watch(
     </div>
     <!-- Payroll Setting Modal -->
     <div
-        v-if="auth_user.roles_id == 2"
+        v-if="auth_user.roles_id == 2 || auth_user.roles_id == 99"
         class="modal fade"
         id="modalSettingPayroll"
         tabindex="-1"

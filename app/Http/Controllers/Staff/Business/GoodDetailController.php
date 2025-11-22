@@ -126,7 +126,7 @@ class GoodDetailController extends Controller
     function updateDescription(Request $request, $id)
     {
         $variant = ProductVariant::find($id);
-        if ($variant->product->pic_id !== Auth::user()->id) {
+        if (!is_super_admin(Auth::user()) && $variant->product->pic_id !== Auth::user()->id) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not authorized. Please contact the Person In Charge of this product.']);
         }
         $variant->description = $request->input('update_description');
@@ -143,7 +143,7 @@ class GoodDetailController extends Controller
     function updateStock(Request $request, $id)
     {
         $variant = ProductVariant::find($id);
-        if ($variant->product->pic_id !== Auth::user()->id) {
+        if (!is_super_admin(Auth::user()) && $variant->product->pic_id !== Auth::user()->id) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not authorized. Please contact the Person In Charge of this product.']);
         }
         $variant->stock += $request->input('update_stock');

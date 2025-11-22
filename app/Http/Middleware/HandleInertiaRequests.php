@@ -30,11 +30,28 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'roles_id' => $user->roles_id,
+                    // Share resolved role_name for UI (avoids needing roles relationship everywhere)
+                    'role_name' => match ((int)$user->roles_id) {
+                        99 => 'Super Admin',
+                        1 => 'CEO',
+                        2 => 'Finance',
+                        3 => 'Operational',
+                        6 => 'HR Manager',
+                        default => 'Staff',
+                    },
+                    'is_super_admin' => is_super_admin($user),
+                ] : null,
             ],
+            'is_super_admin' => $user ? is_super_admin($user) : false,
             'ziggy' => fn() => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),

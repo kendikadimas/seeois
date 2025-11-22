@@ -42,10 +42,27 @@ class DashboardController extends Controller
             return $billboard;
         });
 
+        $post_list = Post::with('user')->orderBy('created_at', 'desc')->limit(50)->get()->map(function ($post) {
+            if ($post->user && $post->user->profile_image) {
+                try {
+                    $disk = Storage::disk('google');
+                    $post->user->full_profile_image_url = $disk->url('images/profile/' . $post->user->profile_image);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to resolve Google Drive URL for profile image', [
+                        'user_id' => $post->user->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Fallback to a default or non-existent path if needed
+                    $post->user->full_profile_image_url = '/storage/images/profile/example.png';
+                }
+            }
+            return $post;
+        });
+
         return Inertia::render('Staff/SEEO/Dashboard', [
             'billboard_list' => $billboard_list,
             'attachment_list' => Attachment::all(),
-            'post_list' => Post::with('user')->orderBy('created_at', 'desc')->limit(50)->get('*'),
+            'post_list' => $post_list,
             'notif' => session('notif'),
             'errors' => session('errors') ? session('errors')->getBag('default')->getMessages() : [],
         ]);

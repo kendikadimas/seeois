@@ -91,16 +91,14 @@ function handleSubmitPost() {
 // --- Akhir Handler Form ---
 
 // --- Fungsi Helper Tampilan ---
-// function setBillboardImage(billboard_image) { return `/storage/images/billboard/${billboard_image}`; }
-function setBillboardImage(billboard_image) {
-    if (!billboard_image) return null;
-    // Gunakan path langsung yang sama seperti VerifyEmail
-    return `/storage/local/images/billboard/${billboard_image}`;
-}
-function setPostImage(isAnonymus, profile_image) {
-    const defaultImage = 'example.png';
-    const image = isAnonymus ? defaultImage : (profile_image || defaultImage);
-    return `/storage/local/images/profile/${image}`;
+function getProfileImage(user) {
+    if (!user) return '/storage/images/profile/example.png';
+    // Prioritize drive URL if provided, else full url, else fallback
+    return (
+        user.drive_profile_image_url ||
+        user.full_profile_image_url ||
+        '/storage/images/profile/example.png'
+    );
 }
 // --- Akhir Helper Tampilan ---
 
@@ -171,18 +169,18 @@ onMounted(async () => {
                             <div class="card shadow-sm mb-2 mb-lg-3 flex-shrink-0 rounded-3 border-0">
                                 <div class="card-body p-0 position-relative rounded-3 overflow-hidden">
                                     <div v-if="!billboard_list || billboard_list.length === 0" class="empty-billboard d-flex align-items-center justify-content-center p-4" style="min-height: 200px; max-height: 360px; background-color: #e9ecef;">
-                                         <button class="btn btn-primary btn-lg" @click="showModalBillboard" v-if="auth_user.roles_id === 1"> <i class="bi bi-plus-circle me-2"></i> <span>Tambah Billboard</span> </button>
+                                         <button class="btn btn-primary btn-lg" @click="showModalBillboard" v-if="auth_user.roles_id === 1 || auth_user.roles_id === 99"> <i class="bi bi-plus-circle me-2"></i> <span>Tambah Billboard</span> </button>
                                          <span v-else class="text-muted fs-5">Selamat Datang!</span>
                                     </div>
                                     <div v-else id="billboardCarousel" class="carousel slide" data-bs-ride="carousel" style="max-height: 360px;">
-                                        <div v-if="auth_user.roles_id === 1" class="position-absolute top-0 end-0 p-2" style="z-index: 20;">
+                                        <div v-if="auth_user.roles_id === 1 || auth_user.roles_id === 99" class="position-absolute top-0 end-0 p-2" style="z-index: 20;">
                                             <button class="btn btn-sm btn-light me-1" @click="showModalBillboard" title="Tambah Billboard Baru"> <i class="bi bi-plus-lg"></i> </button>
                                         </div>
                                         <div class="carousel-inner rounded-3">
                                              <div v-for="(billboard, index) in billboard_list" :key="billboard.id" :class="['carousel-item', index === 0 ? 'active' : '']">
                                                 <div class="billboard-wrapper position-relative">
-                                                     <button v-if="auth_user.roles_id == 1" class="btn btn-danger btn-sm rounded-circle p-0 lh-1 position-absolute m-2" style="z-index: 11; width: 28px; height: 28px; top: 0.35rem; right: 3rem;" @click="confirmation( route('billboard.remove', { id: billboard.id }), 'Hapus billboard \'' + billboard.title + '\'?' )"> <i class="bi bi-x-lg small"></i> </button>
-                                                    <img v-if="billboard.image && setBillboardImage(billboard.image)" :src="setBillboardImage(billboard.image)" alt="Billboard" @error="$event.target.style.display='none'"/>
+                                                    <button v-if="auth_user.roles_id == 1 || auth_user.roles_id === 99" class="btn btn-danger btn-sm rounded-circle p-0 lh-1 position-absolute m-2" style="z-index: 11; width: 28px; height: 28px; top: 0.35rem; right: 3rem;" @click="confirmation(route('billboard.remove', { id: billboard.id }), `Hapus billboard '${billboard.title}'?`)"> <i class="bi bi-x-lg small"></i> </button>
+                                                    <img v-if="billboard.image && billboard.full_image_url" :src="billboard.full_image_url" alt="Billboard" @error="$event.target.style.display='none'"/>
                                                     <div v-else-if="!billboard.image && billboard.text" class="d-flex flex-column justify-content-center align-items-center text-center p-4 bg-light w-100 h-100"> <h3 class="mb-2">{{ billboard.title }}</h3> <p class="mb-0">{{ billboard.text }}</p> </div>
                                                 </div>
                                             </div>
@@ -195,7 +193,7 @@ onMounted(async () => {
                             <div class="card shadow-sm flex-grow-1 rounded-3 border-0">
                                 <div class="card-header d-flex justify-content-between align-items-center py-2 bg-white border-0 border-bottom rounded-top">
                                     <h5 class="mb-0 fs-6 fw-medium text-secondary"> <i class="bi bi-paperclip me-2"></i> Attachments </h5>
-                                    <button v-if="auth_user.roles_id === 1" class="btn btn-outline-success btn-sm rounded-circle p-0 lh-1" style="width: 28px; height: 28px;" @click="showModalAttachment" title="Tambah Attachment"> <i class="bi bi-plus-lg"></i> </button>
+                                    <button v-if="auth_user.roles_id === 1 || auth_user.roles_id === 99" class="btn btn-outline-success btn-sm rounded-circle p-0 lh-1" style="width: 28px; height: 28px;" @click="showModalAttachment" title="Tambah Attachment"> <i class="bi bi-plus-lg"></i> </button>
                                 </div>
                                 <div class="card-body pt-2">
                                     <div class="row g-3">
@@ -205,7 +203,7 @@ onMounted(async () => {
                                                 <div v-if="document_list.length === 0" class="list-group-item text-muted text-center py-3 border-0 fst-italic"> <small>No documents.</small> </div>
                                                 <div v-else v-for="document in document_list" :key="document.id" class="list-group-item d-flex justify-content-between align-items-center px-0 py-1 border-bottom">
                                                     <a :href="`/storage/document/attachment/${document.document}`" class="text-decoration-none text-dark text-truncate me-2" download :title="document.title"> {{ document.title }} </a>
-                                                    <button v-if="auth_user.roles_id === 1" class="btn btn-outline-danger border-0 btn-sm py-0 px-1" @click="confirmation( route('attachment.remove', { id: document.id }), 'Hapus \'' + document.title + '\'?' )"> <i class="bi bi-trash3"></i> </button>
+                                                    <button v-if="auth_user.roles_id === 1 || auth_user.roles_id === 99" class="btn btn-outline-danger border-0 btn-sm py-0 px-1" @click="confirmation(route('attachment.remove', { id: document.id }), `Hapus attachment '${document.title}'?`)"> <i class="bi bi-trash3"></i> </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -239,13 +237,13 @@ onMounted(async () => {
                                         <div v-for="post in post_list" :key="post.id" class="post-card bg-light border rounded p-2 mb-2">
                                             <div class="d-flex justify-content-between align-items-start mb-1">
                                                 <div class="d-flex align-items-center text-truncate me-2">
-                                                    <img :src="setPostImage(post.anonymus, post.user?.profile_image)" alt="Avatar" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;"/>
+                                                    <img :src="getProfileImage(post.user)" alt="Avatar" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;" @error="$event.target.src='/storage/images/profile/example.png'"/>
                                                     <div class="lh-sm">
                                                         <h6 class="mb-0 small fw-bold text-truncate" style="max-width: 150px;">{{ post.anonymus ? 'Anonymous' : post.user?.name }}</h6>
                                                         <small class="text-muted" style="font-size: 0.7rem;">{{ new Date(post.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short'}) }}</small>
                                                     </div>
                                                 </div>
-                                                <button v-if="auth_user.roles_id === 1 || (!post.anonymus && auth_user.id == post.user_id)"
+                                                    <button v-if="auth_user.roles_id === 99 || auth_user.roles_id === 1 || (!post.anonymus && auth_user.id == post.user_id)"
                                                     class="btn btn-outline-danger border-0 btn-sm py-0 px-1 flex-shrink-0"
                                                     @click="confirmation( route('post.remove', { id: post.id }), 'Hapus post ini?' )">
                                                     <i class="bi bi-trash3 small"></i>

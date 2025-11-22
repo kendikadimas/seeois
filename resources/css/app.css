@@ -109,3 +109,10 @@ body::-webkit-scrollbar-thumb {
 .scroll-container-0::-webkit-scrollbar-thumb {
     background: transparent;
 }
+
+.truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}

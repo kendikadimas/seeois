@@ -317,7 +317,7 @@ watch(
                                             >{{ "Taste Preference" }}</span
                                         >
                                         <button
-                                            v-if="auth_user.roles_id == 3"
+                                            v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
                                             type="button"
                                             @click="
                                                 showTasteTagSettingModal(true)
@@ -927,7 +927,7 @@ watch(
     <!-- Modal -->
     <!-- Taste Setting Modal -->
     <div
-        v-if="auth_user.roles_id == 3"
+        v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
         class="modal fade"
         id="tasteSettingModal"
         tabindex="-1"

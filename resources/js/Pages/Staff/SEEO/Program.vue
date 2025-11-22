@@ -490,7 +490,7 @@ watch(
                                     
                                     <button
                                         v-if="
-                                            auth_user.id ==
+                                            auth_user.roles_id == 99 || auth_user.id ==
                                             program.department.manager_id
                                         "
                                         @click="
@@ -908,7 +908,7 @@ watch(
                                                                 >
                                                                 <button
                                                                     v-if="
-                                                                        auth_user.id ==
+                                                                        auth_user.roles_id == 99 || auth_user.id ==
                                                                         program.pic_id
                                                                     "
                                                                     @click="
@@ -1302,7 +1302,7 @@ watch(
                                                     <!-- Button trigger Add Budget Modal -->
                                                     <div
                                                         v-if="
-                                                            auth_user.id ==
+                                                            auth_user.roles_id == 99 || auth_user.id ==
                                                             program.pic_id
                                                         "
                                                         @click="
@@ -1336,8 +1336,8 @@ watch(
                                                         id="addProgramBudget"
                                                         tabindex="-1"
                                                         v-if="
-                                                            auth_user.id ==
-                                                                program.pic_id &&
+                                                            (auth_user.roles_id == 99 || auth_user.id ==
+                                                                program.pic_id) &&
                                                             program.financial_id <=
                                                                 0
                                                         "
@@ -1685,8 +1685,8 @@ watch(
                                                     <button
                                                         class="ms-auto ms-lg-1 me-2 btn btn-sm btn-danger"
                                                         v-if="
-                                                            auth_user.id ==
-                                                                program.pic_id &&
+                                                            (auth_user.roles_id == 99 || auth_user.id ==
+                                                                program.pic_id) &&
                                                             program.financial_id <=
                                                                 0
                                                         "
@@ -3645,7 +3645,7 @@ watch(
                                             <div class="modal-footer p-1 px-2">
                                                 <button
                                                     v-if="
-                                                        auth_user.roles_id == 2
+                                                        auth_user.roles_id == 2 || auth_user.roles_id == 99
                                                     "
                                                     type="button"
                                                     data-bs-dismiss="modal"

@@ -15,7 +15,7 @@
                 <!-- Logo/Brand - Tetap di Kiri -->
                 <Link href="/" class="flex items-center gap-3 transition-all duration-300 hover:scale-105">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, #3b82f6, #1e40af);">
-                        <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="h-6 w-6 rounded-md" @error="$event.target.src='/storage/local/images/compro/logo.png'">
+                        <img :src="logoSrc" alt="SEEO Logo" class="h-6 w-6 rounded-md" @error="$event.target.src=logoSrc">
                     </div>
                     <div class="flex flex-col">
                         <span class="font-bold text-lg" style="color: #1e293b; letter-spacing: -0.02em;">SEEO</span>
@@ -160,7 +160,7 @@
                 <div class="md:col-span-2">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                            <img src="/storage/local/images/compro/logo.png" alt="SEEO Logo" class="h-8 w-8 rounded-md" @error="$event.target.src='/storage/local/images/compro/logo.png'">
+                            <img :src="logoSrc" alt="SEEO Logo" class="h-8 w-8 rounded-md" @error="$event.target.src=logoSrc">
                         </div>
                         <div>
                             <h3 class="text-xl font-bold" style="color: #fbbf24;">SEEO</h3>
@@ -231,6 +231,9 @@
 <script setup>
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted } from 'vue';
+
+// Placeholder logo to avoid missing asset errors during build
+const logoSrc = 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
 
 const open = ref(false);
 const page = usePage();

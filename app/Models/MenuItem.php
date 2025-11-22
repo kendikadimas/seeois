@@ -87,4 +87,12 @@ class MenuItem extends Model
     {
         return $this->belongsToMany(FoodsTag::class, 'pivot_food_menu_tag', 'menu_id', 'food_tag_id');
     }
+
+    /**
+     * Recipe components (ingredient usage) for this menu item.
+     */
+    public function recipeComponents(): HasMany
+    {
+        return $this->hasMany(RecipeComponent::class, 'menu_id');
+    }
 }

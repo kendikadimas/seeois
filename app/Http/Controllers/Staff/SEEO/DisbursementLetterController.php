@@ -19,7 +19,7 @@ class DisbursementLetterController extends Controller
         ]);
         $program = Program::find($id);
 
-        if (Auth::user()->id != $program->pic_id) {
+        if (!is_super_admin(Auth::user()) && Auth::user()->id != $program->pic_id) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not authorize. Only PIC of this program alowed to add new Disbursement Letter.']);
         }
 

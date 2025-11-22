@@ -17,12 +17,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
 use Inertia\Inertia;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+use App\Services\ProfitCalculator;
 
 
 class StandController extends Controller
@@ -63,13 +65,24 @@ class StandController extends Controller
         if (!$stand) {
             return redirect()->route('food.stand')->with('notif', ['type' => 'warning', 'message' => 'Stand not found. Choose available stand on this page.']);
         }
+        // Auto-recalculate profit using recipe components if available
+        $newProfit = \App\Services\ProfitCalculator::calculateStandProfit($stand->id);
+        if ($newProfit !== null && $newProfit != $stand->profit) {
+            $stand->profit = $newProfit;
+            $stand->save();
+        }
         // Retrieve or create session
         $income_session = session('stand_income', ['name' => null]);
         $expense_session = session('stand_expense', ['name' => null]);
         // Save session to database
         $request->session()->put('stand_income', $income_session);
         $request->session()->put('stand_expense', $expense_session);
-        $menu_list = MenuItem::where('stand_id', $stand->id)->with(['tags'])->orderBy('name', 'asc')->get()->groupBy('category');
+        // Include recipe components to allow frontend coverage indicator
+        $menu_list = MenuItem::where('stand_id', $stand->id)
+            ->with(['tags', 'recipeComponents'])
+            ->orderBy('name', 'asc')
+            ->get()
+            ->groupBy('category');
         $income_name = $income_session['name'];
         $income_list = $income_name !== null ?
             StandSales::where('stand_id', $stand->id)->orderByRaw("
@@ -101,7 +114,7 @@ class StandController extends Controller
                     WHEN name LIKE ? THEN 3
                     ELSE 4
                 END 
-            ", [$expense_name, "$expense_name%", "%$expense_name%"]) :
+            ", [$expense_name, "$expense_name%", "%$expense_name%"])->with(['operational'])->get() :
             StandExpense::where('stand_id', $stand->id)->orderBy('created_at', 'desc')->with(['operational'])->get();
         $food_tag_list = FoodsTag::all();
         $data = [
@@ -116,6 +129,19 @@ class StandController extends Controller
             'notif' => session('notif'),
             'errors' => session('errors') ? session('errors')->getBag('default')->getMessages() : [],
         ];
+        // Server-side debug snapshot to verify data retrieval
+        Log::debug('[StandController@stand] Data prepared', [
+            'stand_id' => $stand->id,
+            'stand_name' => $stand->name,
+            'menu_lock' => $stand->menu_lock,
+            'sale_validation' => $stand->sale_validation,
+            'production_count' => $stand->production->count(),
+            'cashier_count' => $stand->cashier->count(),
+            'menu_category_groups' => collect($menu_list)->keys(),
+            'income_list_count' => $income_list->count(),
+            'expense_list_count' => $expense_list->count(),
+            'food_tag_list_count' => $food_tag_list->count(),
+        ]);
         return Inertia::render('Staff/Business/StandDetail', $data);
     }
 
@@ -372,11 +398,10 @@ class StandController extends Controller
             // encod jpeg data
             $receipt_encoded = $receipt_image->toWebp(60);
             // Format receipt name
-            $reciept_name =  'SE' . $id . $last_id + 1 . '_receipt.webp';
-            // Checkk for env
-            $disk = config('app.env') === 'production' ? 'google' : 'public';
-            // store reciept file
-            Storage::disk($disk)->put('images/receipt/stand/expense/' . $reciept_name, $receipt_encoded);
+            // Correct filename generation: ensure arithmetic before concatenation and add underscore separator
+            $reciept_name = 'SE' . $id . '_' . ($last_id + 1) . '_receipt.webp';
+            // Always use google disk for receipt storage (unified across envs)
+            Storage::disk('google')->put('images/receipt/stand/expense/' . $reciept_name, $receipt_encoded);
         } else {
             $reciept_name = StandExpense::find($request->input('receipt_same'))->reciept;
         }
@@ -410,10 +435,8 @@ class StandController extends Controller
         }
         // update necessary data
         if (StandExpense::where('reciept', '=', $expenseItem->reciept)->get()->count() == 0) {
-            // Checkk for env
-            $disk = config('app.env') === 'production' ? 'google' : 'public';
-            // delete stand expense receipt
-            Storage::disk($disk)->delete('images/receipt/stand/expense/' . $expenseItem->reciept);
+            // Always delete from google disk (unified storage)
+            Storage::disk('google')->delete('images/receipt/stand/expense/' . $expenseItem->reciept);
         }
         if ($expenseItem->delete()) {
             return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success delete ' . $name . ' from Stand ' . $stand->name . ' Expense Item']);
@@ -465,7 +488,10 @@ class StandController extends Controller
         // set new expense value to model
         $foodsExpense->price = $updated_expense;
         $stand->expense = $updated_expense;
-        $stand->profit -= $new_expense;
+
+        // Recalculate profit using recipe components if available, else fallback
+        $recalc = ProfitCalculator::calculateStandProfit($stand->id);
+        $stand->profit = $recalc !== null ? $recalc : ($stand->income - $stand->expense);
 
         // save model
         $stand->updated_at = now();
@@ -615,9 +641,15 @@ class StandController extends Controller
     public function refreshProfit($stand_id)
     {
         $stand = Stand::find($stand_id);
-        $expense = $stand->expense()->where('operational_id', '!=', 0)->sum('total_price');
-        $income = $stand->sale()->sum('transaction');
-        $stand->profit = $income - $expense;
+        // Attempt detailed profit first
+        $detailed = ProfitCalculator::calculateStandProfit($stand_id);
+        if ($detailed !== null) {
+            $stand->profit = $detailed;
+        } else {
+            $expense = $stand->expense()->where('operational_id', '!=', 0)->sum('total_price');
+            $income = $stand->sale()->sum('transaction');
+            $stand->profit = $income - $expense;
+        }
         $stand->save();
         return back()->with('notif', ['type' => 'info', 'message' => $stand->name . ' Balance is updated.']);
     }

@@ -586,7 +586,7 @@ watch(
                                                 padding: 0.1rem;
                                             "
                                         >
-                                            <use href="/icons.svg#dana"></use>
+                                            <rect width="24" height="24" fill="#ccc" rx="4"></rect>
                                         </svg>
                                         {{ "Dana" }}
                                     </span>
