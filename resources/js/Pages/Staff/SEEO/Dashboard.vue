@@ -17,7 +17,7 @@ const props = defineProps({
 
 const auth_user = usePage().props.auth.user;
 const title = ref("Dashboard");
-const modalConfirmationRef = ref(null);
+const modalConfirmationRef =ref(null);
 const toastNotifRef = ref(null);
 
 // Refs untuk menyimpan instance Modal Bootstrap
