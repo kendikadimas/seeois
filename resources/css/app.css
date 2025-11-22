@@ -1,12 +1,12 @@
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
+/* Tailwind v4 syntax */
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
 
 /* Bootstrap */
 /* @import "bootstrap/dist/css/bootstrap.min.css";
 @import "sweetalert2/dist/sweetalert2.min.css"; */
 /* @import "style.css"; */
-@import "tailwindcss";
+/* Removed incorrect Tailwind v4 style @import. Using directives for JIT build. */
 
 body {
     font-family: 'Poppins', sans-serif;
