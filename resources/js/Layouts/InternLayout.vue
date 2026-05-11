@@ -1,4 +1,8 @@
 <template>
+  <Head>
+    <!-- Bootstrap Icons (CSS global via app.css, Icons via CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  </Head>
   <div class="internship-layout">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container-fluid">
@@ -41,7 +45,7 @@
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 </script>
 

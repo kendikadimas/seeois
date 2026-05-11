@@ -163,17 +163,17 @@ onMounted(async () => {
 
             <div class="col-12 d-flex flex-column bg-light overflow-hidden">
 
-                <main class="dashboard-content flex-grow-1 overflow-auto p-2 p-lg-3">
+                <main class="dashboard-content grow overflow-auto p-2 p-lg-3">
                     <div class="row gx-2 gy-3 gy-lg-3 gx-lg-3">
                         <div class="col-12 col-lg-9 d-flex flex-column">
-                            <div class="card shadow-sm mb-2 mb-lg-3 flex-shrink-0 rounded-3 border-0">
+                            <div class="card shadow-sm mb-2 mb-lg-3 shrink-0 rounded-3 border-0">
                                 <div class="card-body p-0 position-relative rounded-3 overflow-hidden">
                                     <div v-if="!billboard_list || billboard_list.length === 0" class="empty-billboard d-flex align-items-center justify-content-center p-4" style="min-height: 200px; max-height: 360px; background-color: #e9ecef;">
                                          <button class="btn btn-primary btn-lg" @click="showModalBillboard" v-if="auth_user.roles_id === 1 || auth_user.roles_id === 99"> <i class="bi bi-plus-circle me-2"></i> <span>Tambah Billboard</span> </button>
                                          <span v-else class="text-muted fs-5">Selamat Datang!</span>
                                     </div>
                                     <div v-else id="billboardCarousel" class="carousel slide" data-bs-ride="carousel" style="max-height: 360px;">
-                                        <div v-if="auth_user.roles_id === 1 || auth_user.roles_id === 99" class="position-absolute top-0 end-0 p-2" style="z-index: 20;">
+                                        <div v-if="auth_user.roles_id === 1 || auth_user.roles_id === 99" class="position-absolute top-0 inset-e-0 p-2" style="z-index: 20;">
                                             <button class="btn btn-sm btn-light me-1" @click="showModalBillboard" title="Tambah Billboard Baru"> <i class="bi bi-plus-lg"></i> </button>
                                         </div>
                                         <div class="carousel-inner rounded-3">
@@ -190,7 +190,7 @@ onMounted(async () => {
                                     </div>
                                 </div>
                             </div>
-                            <div class="card shadow-sm flex-grow-1 rounded-3 border-0">
+                            <div class="card shadow-sm grow rounded-3 border-0">
                                 <div class="card-header d-flex justify-content-between align-items-center py-2 bg-white border-0 border-bottom rounded-top">
                                     <h5 class="mb-0 fs-6 fw-medium text-secondary"> <i class="bi bi-paperclip me-2"></i> Attachments </h5>
                                     <button v-if="auth_user.roles_id === 1 || auth_user.roles_id === 99" class="btn btn-outline-success btn-sm rounded-circle p-0 lh-1" style="width: 28px; height: 28px;" @click="showModalAttachment" title="Tambah Attachment"> <i class="bi bi-plus-lg"></i> </button>
@@ -228,12 +228,12 @@ onMounted(async () => {
                                     <button class="btn btn-light btn-sm rounded-circle p-0 lh-1" style="width: 28px; height: 28px;" @click="showModalPost" title="Buat Postingan"> <i class="bi bi-plus-lg text-primary"></i> </button>
                                 </div>
                                 <div class="card-body d-flex flex-column overflow-hidden p-2" style="max-height: calc(100vh - 180px);">
-                                    <div v-if="!post_list || post_list.length === 0" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center text-muted p-4">
+                                    <div v-if="!post_list || post_list.length === 0" class="grow d-flex flex-column align-items-center justify-content-center text-center text-muted p-4">
                                         <i class="bi bi-chat-square-dots display-5 mb-3 opacity-50"></i>
                                         <h6 class="mb-1 text-secondary">Belum Ada Postingan</h6>
                                         <p class="small mb-0 text-secondary">Jadilah yang pertama berbagi!</p>
                                     </div>
-                                    <div v-else class="posts-list flex-grow-1 overflow-auto pe-1">
+                                    <div v-else class="posts-list grow overflow-auto pe-1">
                                         <div v-for="post in post_list" :key="post.id" class="post-card bg-light border rounded p-2 mb-2">
                                             <div class="d-flex justify-content-between align-items-start mb-1">
                                                 <div class="d-flex align-items-center text-truncate me-2">
@@ -243,8 +243,8 @@ onMounted(async () => {
                                                         <small class="text-muted" style="font-size: 0.7rem;">{{ new Date(post.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short'}) }}</small>
                                                     </div>
                                                 </div>
-                                                    <button v-if="auth_user.roles_id === 99 || auth_user.roles_id === 1 || (!post.anonymus && auth_user.id == post.user_id)"
-                                                    class="btn btn-outline-danger border-0 btn-sm py-0 px-1 flex-shrink-0"
+                                                    <button v-if="auth_user.roles_id === 99 || auth_user.roles_id === 1 || auth_user.id == post.user_id"
+                                                    class="btn btn-outline-danger border-0 btn-sm py-0 px-1 shrink-0"
                                                     @click="confirmation( route('post.remove', { id: post.id }), 'Hapus post ini?' )">
                                                     <i class="bi bi-trash3 small"></i>
                                                 </button>

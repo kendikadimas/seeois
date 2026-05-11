@@ -1,10 +1,30 @@
 <template>
     <Head title="Events" />
     <PublicLayout>
-        <section class="bg-slate-100 py-20 lg:py-24">
-            <div class="container mx-auto px-6 text-center">
-                <h1 class="text-4xl lg:text-5xl font-extrabold text-slate-900">Events & Programs</h1>
-                <p class="mt-4 text-lg text-slate-500 max-w-2xl mx-auto">Temukan berbagai seminar, workshop, dan kompetisi yang kami selenggarakan untuk mengasah jiwa wirausaha Anda.</p>
+        <section class="relative bg-slate-900 min-h-[calc(100vh-5rem)] flex items-center justify-center overflow-hidden border-b border-slate-800">
+            <!-- Background Decoration -->
+            <div class="absolute inset-0 z-0">
+                <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px]"></div>
+                <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px]"></div>
+            </div>
+
+            <div class="container mx-auto px-6 relative z-10 text-center">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-medium mb-8 border border-blue-500/20">
+                    Programs & Calendars
+                </div>
+                <h1 class="text-5xl lg:text-7xl font-black text-white tracking-tight leading-tight mb-8">
+                    Discover Our <br />
+                    <span class="text-blue-500 italic">Signature</span> Events.
+                </h1>
+                <p class="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                    Temukan berbagai seminar, workshop, dan kompetisi yang kami selenggarakan untuk mengasah jiwa wirausaha Anda.
+                </p>
+
+                <!-- Scroll Indicator -->
+                <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50">
+                    <span class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Scroll to Explore</span>
+                    <div class="w-px h-12 bg-gradient-to-b from-blue-500 to-transparent"></div>
+                </div>
             </div>
         </section>
 

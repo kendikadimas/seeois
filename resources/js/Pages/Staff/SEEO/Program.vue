@@ -54,6 +54,10 @@ const next_tab = ref(0);
 const prev_tab = ref(0);
 const staffLogbookContainerRef = ref(null);
 const toastNotifRef = ref(null);
+const showGuide = ref(false);
+const toggleGuide = () => {
+    showGuide.value = !showGuide.value;
+};
 const selectedLogbookImage = ref(null);
 const disbursement_letter = ref({
     id: null,
@@ -489,6 +493,15 @@ watch(
                                     </Link>
                                     
                                     <button
+                                        @click="toggleGuide"
+                                        class="btn btn-sm btn-outline-info ms-2 mb-2 d-flex align-items-center gap-2"
+                                        style="text-decoration: none;"
+                                    >
+                                        <i class="bi bi-info-circle"></i>
+                                        <span class="d-none d-md-inline">Help</span>
+                                    </button>
+                                    
+                                    <button
                                         v-if="
                                             auth_user.roles_id == 99 || auth_user.id ==
                                             program.department.manager_id
@@ -677,23 +690,71 @@ watch(
                     </div>
                 </div>
             </div>
+            <!-- Help/Tip Section -->
+            <transition name="fade">
+                <div v-if="showGuide" class="row mt-3">
+                    <div class="col-12">
+                        <div class="card border-info border-opacity-25 bg-info bg-opacity-10 p-3 shadow-sm rounded-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-info bg-opacity-25 p-2 rounded-3 me-3">
+                                    <i class="bi bi-lightbulb-fill text-info fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 text-info-emphasis fw-bold">Tips: Alur Penggunaan Fitur Disbursement</h6>
+                                    <small class="text-secondary">Ikuti langkah-langkah di bawah untuk menggunakan fitur pencairan dana.</small>
+                                </div>
+                                <button @click="showGuide = false" class="btn-close ms-auto btn-sm shadow-none"></button>
+                            </div>
+                            <div class="row g-4">
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-start">
+                                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 28px; height: 28px; flex-shrink: 0; font-size: 0.85rem; font-weight: 600;">1</div>
+                                        <div>
+                                            <p class="mb-1 fw-semibold text-dark" style="font-size: 0.95rem;">Upload Surat</p>
+                                            <p class="mb-0 text-secondary" style="font-size: 0.85rem; line-height: 1.4;">Buka tab <strong>Disbursement</strong>, lalu unggah surat disbursement pada bagian "Disbursement Letter".</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-start">
+                                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 28px; height: 28px; flex-shrink: 0; font-size: 0.85rem; font-weight: 600;">2</div>
+                                        <div>
+                                            <p class="mb-1 fw-semibold text-dark" style="font-size: 0.95rem;">Finance ACC</p>
+                                            <p class="mb-0 text-secondary" style="font-size: 0.85rem; line-height: 1.4;">Tunggu pihak Finance untuk memberikan persetujuan (ACC) pada surat yang telah Anda unggah.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-start">
+                                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 28px; height: 28px; flex-shrink: 0; font-size: 0.85rem; font-weight: 600;">3</div>
+                                        <div>
+                                            <p class="mb-1 fw-semibold text-dark" style="font-size: 0.95rem;">Tambah Item</p>
+                                            <p class="mb-0 text-secondary" style="font-size: 0.85rem; line-height: 1.4;">Setelah surat di-ACC, klik tombol <strong>+</strong> pada tab Disbursement untuk menambah item pencairan.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
             <div class="row gx-4">
                 <div class="col-lg-6 col-12">
                     <!-- Logbook -->
                     <div class="row mt-4">
                         <div class="col-12">
-                            <div class="card p-2">
+                            <div class="card program-logbook-card p-2">
                                 <div
-                                    class="d-flex border-bottom mx-2 border-primary py-1"
+                                    class="d-flex border-bottom mx-2 border-primary py-1 align-items-center"
                                 >
                                     <span class="h5 text-primary-emphasis my-1">
                                         {{ "Logbook" }}
                                     </span>
                                 </div>
-                                <div class="row gx-2 mt-2">
-                                    <div class="col-2 col-lg-2 d-flex">
+                                <div class="row gx-2 mt-3 align-items-center">
+                                    <div class="col-12 col-lg-2 d-flex mb-2 mb-lg-0">
                                         <span
-                                            class="text-primary-emphasis text-nowrap my-auto ms-auto"
+                                            class="text-primary-emphasis text-nowrap my-auto ms-lg-auto fw-medium"
                                         >
                                             {{ "Staff " }}
                                             <span class="d-lg-inline d-none">
@@ -702,10 +763,11 @@ watch(
                                             {{ ": " }}
                                         </span>
                                     </div>
-                                    <div class="col-10 col-lg-10 d-flex">
+                                    <div class="col-12 col-lg-10 d-flex align-items-center">
                                         <button
                                             @click="scrollHorizontal(-100)"
-                                            class="btn btn-sm btn-outline-primary border-0 my-auto d-lg-block d-none px-0 me-1"
+                                            type="button"
+                                            class="btn btn-sm btn-outline-primary border-0 my-auto d-lg-block d-none px-1 me-2 staff-carousel-nav"
                                         >
                                             <i
                                                 class="bi bi-caret-left-fill"
@@ -713,14 +775,15 @@ watch(
                                         </button>
                                         <div
                                             ref="staffLogbookContainerRef"
-                                            class="scroll-container-horizontal-lg scroll-container-horizontal bg-body-tertiary rounded px-2 me-2 me-lg-0"
+                                            class="scroll-container-horizontal-lg scroll-container-horizontal staff-carousel-track rounded-4 px-2 py-2 me-2 me-lg-0"
                                         >
                                             <button
+                                                type="button"
                                                 :class="
-                                                    'btn btn-sm card shadow-sm my-1 me-2 card-bg-hover d-inline-block ' +
+                                                    'btn btn-sm staff-carousel-item shadow-sm my-1 me-2 d-inline-flex align-items-center ' +
                                                     (staff.employee.id ==
                                                     selected_user.id
-                                                        ? 'bg-secondary bg-opacity-25'
+                                                        ? 'is-selected'
                                                         : '')
                                                 "
                                                 v-for="staff in staff_list"
@@ -730,13 +793,14 @@ watch(
                                                     )
                                                 "
                                             >
-                                                <span class="mx-1 text-nowrap">
+                                                <span class="text-nowrap px-1">
                                                     {{ staff.employee.name }}
                                                 </span>
                                             </button>
                                         </div>
                                         <button
-                                            class="btn btn-sm btn-outline-primary border-0 my-auto d-lg-block d-none px-0 ms-1 me-2"
+                                            type="button"
+                                            class="btn btn-sm btn-outline-primary border-0 my-auto d-lg-block d-none px-1 ms-2 me-2 staff-carousel-nav"
                                             @click="scrollHorizontal(100)"
                                         >
                                             <i
@@ -745,18 +809,12 @@ watch(
                                         </button>
                                     </div>
                                 </div>
-                                <div class="row mt-2">
+                                <div class="row mt-3">
                                     <div class="col-12">
-                                        <div
-                                            class="d-flex border-bottom border-1 mx-2"
-                                        >
-                                            <span
-                                                class="h6 text-primary-emphasis mx-auto"
-                                                >{{
-                                                    selected_user.name ??
-                                                    "Select Staff"
-                                                }}</span
-                                            >
+                                        <div class="logbook-selected-staff mx-2 px-2 py-2">
+                                            <span class="h6 text-primary-emphasis mb-0">
+                                                {{ selected_user.name ?? "Select Staff" }}
+                                            </span>
                                             <a
                                                 v-if="selected_user.id"
                                                 :href="
@@ -765,7 +823,7 @@ watch(
                                                         selected_user.id
                                                     )
                                                 "
-                                                class="text-decoration-none me-2 d-flex"
+                                                class="text-decoration-none ms-auto d-flex"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >
@@ -784,14 +842,12 @@ watch(
                                 </div>
                                 <div class="row">
                                     <div class="col-12 d-flex">
-                                        <div
-                                            class="scroll-container-lg-2 scroll-container-2 mx-2"
-                                        >
+                                        <div class="scroll-container-lg-2 scroll-container-2 mx-2 program-logbook-list">
                                             <ul
                                                 class="list-group list-group-flush"
                                             >
                                                 <li
-                                                    class="list-group-item px-0"
+                                                    class="list-group-item px-0 program-logbook-item"
                                                     v-for="logbook in active_logbook"
                                                 >
                                                     <div class="d-flex w-100">
@@ -807,7 +863,7 @@ watch(
                                                                     logbook.image
                                                                 "
                                                                 alt="image"
-                                                                class="rounded border border-1 border-secondary-subtle"
+                                                                class="rounded border-secondary-subtle"
                                                                 data-bs-target="#modalLogbookImage"
                                                                 data-bs-toggle="modal"
                                                                 @click="
@@ -966,7 +1022,7 @@ watch(
                                                                         logbook.validated ==
                                                                             0
                                                                     "
-                                                                    class="my-1 border-start border-1 mx-1"
+                                                                    class="my-1 border-start mx-1"
                                                                 ></div>
                                                                 <button
                                                                     v-if="
@@ -1012,7 +1068,7 @@ watch(
                                                             <img
                                                                 :src="'/storage/local/images/apps/logo.png'"
                                                                 alt="image"
-                                                                class="rounded border border-1 border-secondary-subtle"
+                                                                class="rounded border-secondary-subtle"
                                                             />
                                                         </div>
                                                         <div class="w-100">
@@ -1629,7 +1685,7 @@ watch(
                                                                 0
                                                             "
                                                             :style="'font-size:0.5rem;'"
-                                                            class="bi bi-circle-fill position-absolute top-0 end-0 text-danger"
+                                                            class="bi bi-circle-fill position-absolute top-0 inset-e-0 text-danger"
                                                         ></i>
                                                     </button>
                                                 </div>
@@ -2632,7 +2688,7 @@ watch(
                                                         </i>
                                                     </button>
                                                     <div
-                                                        class="border-start border-1 h-100 mx-1"
+                                                        class="border-start h-100 mx-1"
                                                     ></div>
                                                     <!-- {{-- Receipt Trigger Button --}} -->
                                                     <button
@@ -2657,7 +2713,7 @@ watch(
                                                             ]['trashed'] !==
                                                                 'trashed'
                                                         "
-                                                        class="border-start border-1 h-100 me-1"
+                                                        class="border-start h-100 me-1"
                                                     ></div>
                                                     <!-- {{-- Delete Button --}} -->
                                                     <button
@@ -3450,7 +3506,7 @@ watch(
                                                             auth_user.id ==
                                                             program.pic_id
                                                         "
-                                                        class="border-start border-1 border-secondary-subtle me-1 my-1"
+                                                        class="border-start border-secondary-subtle me-1 my-1"
                                                     ></div>
                                                     <!-- {{-- Delete Button --}} -->
                                                     <div
@@ -4069,7 +4125,7 @@ watch(
                                                             "
                                                             alt="image"
                                                             :class="
-                                                                'rounded-circle position-absolute top-0 start-0 w-100 h-100 ' +
+                                                                'rounded-circle position-absolute top-0 inset-s-0 w-100 h-100 ' +
                                                                 placeholder
                                                             "
                                                             :style="{
@@ -4174,6 +4230,79 @@ watch(
 /* Internship Button Styles */
 .btn-outline-primary {
     transition: all 0.3s ease !important;
+}
+        
+/* Logbook + Staff Selector */
+.program-logbook-card {
+    border: 1px solid rgba(13, 110, 253, 0.12);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.staff-carousel-track {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+}
+
+.staff-carousel-track > .staff-carousel-item {
+    scroll-snap-align: start;
+    white-space: nowrap;
+    min-height: 2.25rem;
+    border: 1px solid rgba(13, 110, 253, 0.18);
+    border-radius: 999px;
+    background: #ffffff;
+    color: #0d6efd;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.staff-carousel-track > .staff-carousel-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(13, 110, 253, 0.12);
+}
+
+.staff-carousel-track > .staff-carousel-item.is-selected {
+    background: linear-gradient(135deg, #0d6efd 0%, #2b8cff 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 8px 18px rgba(13, 110, 253, 0.22);
+}
+
+.staff-carousel-nav {
+    min-width: 2rem;
+    min-height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.15);
+}
+
+.logbook-selected-staff {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid rgba(13, 110, 253, 0.14);
+    background: linear-gradient(180deg, rgba(13, 110, 253, 0.04), rgba(255, 255, 255, 0));
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.program-logbook-list {
+    border-radius: 0.75rem;
+    padding-top: 0.25rem;
+}
+
+.program-logbook-item {
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    background: transparent;
+}
+
+.program-logbook-item:last-child {
+    border-bottom: 0;
 }
 
 .btn-outline-primary:hover {

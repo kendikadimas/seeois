@@ -131,7 +131,7 @@ class DepartmentController extends Controller
     {
         // Validating data
         $request->validate([
-            'name' => ['required'],
+            'name' => ['required', Rule::unique('department')->ignore($id)->whereNull('deleted_at')],
             'manager_id' => ['required', 'numeric'],
         ]);
 
@@ -167,32 +167,41 @@ class DepartmentController extends Controller
      */
     public function deleteDepartment(Request $request, $id)
     {
-        // Authorization check
-        if (!Hash::check($request->input('password'), Auth::user()->password)) {
-            return back()->with('notif', ['type' => 'danger', 'message' => 'Your password is wrong.']);
-            dd();
+        $department = Department::find($id);
+        if (!$department) {
+            return back()->with('notif', ['type' => 'warning', 'message' => 'Department not found.']);
         }
 
+        // 1. Cek apakah ada budget/expense/disbursement
+        if ($department->budget > 0 || $department->expense > 0 || $department->disbursement > 0) {
+            return back()->with('notif', ['type' => 'warning', 'message' => 'Cannot delete department with active budget, expense, or disbursement. Please clear them first.']);
+        }
+
+        // 2. Authorization check
+        if (!Hash::check($request->input('password'), Auth::user()->password)) {
+            return back()->with('notif', ['type' => 'danger', 'message' => 'Your password is wrong.']);
+        }
+
+        $name = $department->name;
+
         // delete budget, disbursement, expense in the program
-        $programs = Program::where('department_id', $id);
+        $programs = Program::where('department_id', $id)->get();
         foreach ($programs as $program) {
             BudgetItem::where('program_id', $program->id)->delete();
             ExpenseItem::where('program_id', $program->id)->delete();
             DisbursementItem::where('program_id', $program->id)->delete();
+            $program->delete();
         }
 
-        // delete program in the department
-        $programs->delete();
-
         // delete department
-        $department = Department::find($id);
-        $name = $department->name;
-        $department->manager->department_id = null;
-        $department->manager->save();
+        if ($department->manager) {
+            $department->manager->department_id = null;
+            $department->manager->save();
+        }
 
         $department->delete();
 
-        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Department ' . $name . ' has been deleted.']);
+        return redirect()->route('structural')->with('notif', ['type' => 'info', 'message' => 'Department ' . $name . ' has been deleted.']);
     }
 
     /**

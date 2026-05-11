@@ -26,7 +26,7 @@ class StaffAuthorizationCheck
         }
 
         if ($user->roles_id == null) {
-            return redirect()->route('login')->with('notif', ['type' => 'warning', 'message' => 'Only SEEO Staff are allowed.']);
+            abort(403, 'Only SEEO Staff are allowed.');
         }
         return $next($request);
     }

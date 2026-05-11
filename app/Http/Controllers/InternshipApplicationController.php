@@ -146,27 +146,27 @@ class InternshipApplicationController extends Controller
      */
     public function store(Request $request)
     {
+        Log::info('Store method called', $request->all());
+
+        // Validasi dengan batasan per pengunjung (NIM dan phone_number harus unique)
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'nim' => 'required|string|max:20|unique:internship_applications,nim',
+            'phone_number' => 'required|string|max:15|unique:internship_applications,phone_number',
+            'krs_photo' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'email_username' => 'required|string|max:100',
+            'study_program' => 'required|string|max:255',
+            'division_choice_1' => 'required|string|max:255',
+            'reason_choice_1' => 'required|string',
+            'division_choice_2' => 'required|string|max:255|different:division_choice_1',
+            'reason_choice_2' => 'required|string',
+            'willing_to_be_placed_elsewhere' => 'required|boolean',
+        ], [
+            'nim.unique' => 'NIM ini sudah terdaftar. Setiap pengunjung hanya dapat mendaftar sekali.',
+            'phone_number.unique' => 'Nomor telepon ini sudah terdaftar. Setiap pengunjung hanya dapat mendaftar sekali.',
+        ]);
+
         try {
-            Log::info('Store method called', $request->all());
-            
-            // Validasi dengan batasan per pengunjung (NIM dan phone_number harus unique)
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
-                'nim' => 'required|string|max:20|unique:internship_applications,nim',
-                'phone_number' => 'required|string|max:15|unique:internship_applications,phone_number',
-                'krs_photo' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
-                'email_username' => 'required|string|max:100',
-                'study_program' => 'required|string|max:255',
-                'division_choice_1' => 'required|string|max:255',
-                'reason_choice_1' => 'required|string',
-                'division_choice_2' => 'required|string|max:255|different:division_choice_1',
-                'reason_choice_2' => 'required|string',
-                'willing_to_be_placed_elsewhere' => 'required|boolean',
-            ], [
-                'nim.unique' => 'NIM ini sudah terdaftar. Setiap pengunjung hanya dapat mendaftar sekali.',
-                'phone_number.unique' => 'Nomor telepon ini sudah terdaftar. Setiap pengunjung hanya dapat mendaftar sekali.',
-            ]);
-            
             Log::info('Validation passed');
                     
             $krsFile = $request->file('krs_photo');

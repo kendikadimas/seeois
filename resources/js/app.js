@@ -1,10 +1,11 @@
 import "./bootstrap";
-import "../css/app.css"; // Load Tailwind + custom utilities globally
+import "../css/app.css"; // Load Tailwind utilities globally (NO Preflight to avoid Bootstrap conflict)
 import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import imageHelperPlugin from './plugins/imageHelper';
-import 'bootstrap/dist/css/bootstrap.min.css';
+// Bootstrap CSS diload via CDN di StaffLayout.vue <Head> (tidak di-import global)
+// agar tidak crash dengan Tailwind di public pages
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";

@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::table('internship_applications', function (Blueprint $table) {
             $table->unsignedBigInteger('program_id')->nullable()->after('id');
             $table->unsignedBigInteger('user_id')->nullable()->after('program_id');
+            $table->string('ip_address', 45)->nullable()->after('willing_to_be_placed_elsewhere');
             $table->foreign('program_id')->references('id')->on('program')->onDelete('set null');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
         });

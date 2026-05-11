@@ -1,326 +1,206 @@
 <template>
     <Head title="Soedirman Engineering Entrepreneurship Organization" />
     <PublicLayout>
-        <!-- Hero Section - Clean Professional Design -->
-        <header class="relative min-h-screen bg-white overflow-hidden">
-            <div class="max-w-7xl mx-auto px-6 sm:px-8">
-                <div class="grid lg:grid-cols-2 gap-12 items-center min-h-[90vh] py-14">
-                    <!-- Left Content -->
-                    <div class="space-y-8">
+        <!-- Hero Section -->
+        <!-- Hero Section -->
+        <header class="relative bg-white min-h-[calc(100vh-5rem)] flex items-center overflow-hidden">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 w-full">
+                <div class="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+                    <div class="max-w-2xl">
                         <!-- Badge -->
-                        <div class="inline-flex items-center px-4 py-2 bg-slate-100 text-slate-700 rounded-full text-sm font-medium">
-                            <span class="w-2 h-2 bg-yellow-600 rounded-full mr-3"></span>
+                        <!-- <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-8 border border-blue-100">
+                            <span class="flex h-2 w-2 relative">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                            </span>
                             Universitas Jenderal Soedirman
                         </div>
+                         -->
+                        <!-- Heading -->
+                        <h1 class="text-5xl sm:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight mb-8 leading-[1.1]">
+                            Soedirman Engineering <br />
+                            <span class="text-blue-600 italic">Entrepreneurship</span> Organization
+                        </h1>
                         
-                        <!-- Main Heading -->
-                        <div>
-                            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight mb-6">
-                                Soedirman Engineering
-                                <span class="text-blue-600">Entrepreneurship</span>
-                                Organization
-                            </h1>
-                            <p class="text-xl text-slate-600 leading-relaxed max-w-lg">
-                                Set Up Your Mind To Be An Entrepreneur!
-                            </p>
-                        </div>
+                        <!-- Copy -->
+                        <p class="text-xl text-slate-600 mb-10 leading-relaxed max-w-xl">
+                            Wadah resmi kemahasiswaan Fakultas Teknik UNSOED untuk berinovasi, berkolaborasi, dan mengembangkan potensi bisnis melalui pendekatan profesional yang terukur.
+                        </p>
                         
-                        <!-- CTA Buttons -->
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <Link href="/about" class="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200">
+                        <!-- Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-5">
+                            <Link href="/about" class="inline-flex justify-center items-center px-8 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition-all duration-300">
                                 Tentang SEEO
-                                <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                </svg>
                             </Link>
-                            <a href="/shop/home" target="_blank" class="inline-flex items-center justify-center px-8 py-4 border-2 border-amber-500 text-amber-600 rounded-lg font-semibold hover:bg-amber-50 transition-colors duration-200">
+                            <a href="/shop/home" target="_blank" class="inline-flex justify-center items-center px-8 py-4 bg-white text-slate-700 font-bold rounded-xl border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all duration-300">
                                 Kunjungi Blaterian
-                                <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                </svg>
                             </a>
                         </div>
                     </div>
                     
-                    <div class="relative">
-                        <div class="relative bg-slate-50 rounded-2xl overflow-hidden shadow-xl">
-                            <img :src="logoSrc" alt="SEEO Team" class="w-full h-96 lg:h-[500px] object-cover" @error="$event.target.src=logoSrc">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    <!-- Hero Image & Stats -->
+                    <div class="relative lg:ml-auto w-full max-w-lg lg:max-w-none hidden lg:block">
+                        <div class="aspect-[4/3] rounded-[2rem] bg-slate-50 overflow-hidden shadow-2xl border border-slate-100 relative">
+                            <img :src="logoSrc" alt="SEEO Kegiatan" class="w-full h-full object-cover" @error="$event.target.src=fallbackLogo" />
                         </div>
                         
-                        <div class="absolute -top-6 -right-6 bg-white rounded-xl p-4 shadow-lg border">
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-blue-600">8</div>
-                                <div class="text-sm text-slate-600">Departemen</div>
+                        <!-- Floating Stats -->
+                        <div class="absolute -bottom-6 -left-6 bg-white p-8 rounded-2xl shadow-2xl border border-slate-50 flex items-center gap-8">
+                            <div>
+                                <p class="text-4xl font-black text-blue-600">8</p>
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Departemen</p>
                             </div>
-                        </div>
-                        
-                        <div class="absolute -bottom-6 -left-6 bg-white rounded-xl p-4 shadow-lg border">
-                            <div class="text-center">
-                                <div class="text-2xl font-bold text-amber-600">44</div>
-                                <div class="text-sm text-slate-600">Pengurus Aktif</div>
+                            <div class="w-px h-12 bg-slate-100"></div>
+                            <div>
+                                <p class="text-4xl font-black text-amber-500">40+</p>
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Pengurus Aktif</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- Background Decoration -->
+            <div class="absolute top-0 right-0 -z-10 w-1/3 h-full bg-gradient-to-l from-slate-50 to-transparent hidden lg:block"></div>
         </header>
 
-        <!-- About Section - Clean & Simple -->
-        <section class="py-20 lg:py-32 bg-slate-50">
-            <div class="max-w-7xl mx-auto px-6">
-                <!-- Section Header -->
-                <div class="text-center mb-16">
-                    <div class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded-full mb-6">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Tentang SEEO
-                    </div>
-                    <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-6">
-                        Mengenal Kami <span class="text-blue-600">Lebih Dekat</span>
-                    </h2>
-                    <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-                        Unit Kegiatan Mahasiswa Fakultas Teknik UNSOED yang berkomitmen membangun ekosistem entrepreneurship
-                    </p>
+        <!-- Core Programs Section -->
+        <section class="py-24 bg-slate-50 border-t border-slate-100">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto mb-16">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-4">Pilar Program Kami</h2>
+                    <p class="text-lg text-slate-600 leading-relaxed">Fokus strategis organisasi kami dalam memfasilitasi dan mengembangkan ekosistem kewirausahaan yang profesional bagi mahasiswa.</p>
                 </div>
-                
-                <!-- Content Grid -->
-                <div class="grid lg:grid-cols-2 gap-16 items-center">
-                    <!-- Left: Image -->
-                    <div class="relative">
-                        <div class="bg-white rounded-2xl p-8 shadow-lg">
-                            <img :src="logoSrc" alt="SEEO Logo" class="w-full h-auto max-w-sm mx-auto" @error="$event.target.src=logoSrc"/>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Feature Card 1 -->
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200">
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 border border-blue-100">
+                            <!-- Bulb Icon -->
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11a3 3 0 106 0V8a3 3 0 00-6 0v3zm-4 8v1a2 2 0 002 2h10a2 2 0 002-2v-1M12 4v1m0 0a3 3 0 106 0 3 3 0 00-6 0zm-7 6h2m12 0h2m-2.121 4.243l1.414 1.414M4.929 15.243l1.414 1.414"></path></svg>
                         </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Inkubasi Bisnis</h3>
+                        <p class="text-slate-600 leading-relaxed">Penyediaan fasilitas operasional dan pendampingan fundamental untuk mengeksekusi ide bisnis dengan pendekatan yang terstruktur.</p>
                     </div>
-                    
-                    <!-- Right: Content -->
-                    <div class="space-y-6">
-                        <div>
-                            <p class="text-lg text-slate-700 leading-relaxed mb-4">
-                                Student Entrepreneur and Empowerment Organization (SEEO) adalah wadah bagi mahasiswa untuk 
-                                <strong class="text-blue-600">belajar, berinovasi, dan bertumbuh</strong> dalam dunia wirausaha.
-                            </p>
-                            <p class="text-lg text-slate-700 leading-relaxed">
-                                Kami fokus pada pengembangan dan pengelolaan bisnis, serta membina calon wirausahawan melalui 
-                                brand unggulan kami, <strong class="text-amber-600">Blaterian</strong>.
-                            </p>
+
+                    <!-- Feature Card 2 -->
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200">
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 border border-blue-100">
+                            <!-- Users / Network Icon -->
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                         </div>
-                        
-                        <!-- Features -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-white rounded-xl p-4 border">
-                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                                    </svg>
-                                </div>
-                                <h3 class="font-semibold text-slate-900 mb-1">Inovasi</h3>
-                                <p class="text-sm text-slate-600">Mengembangkan ide kreatif</p>
-                            </div>
-                            
-                            <div class="bg-white rounded-xl p-4 border">
-                                <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mb-3">
-                                    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    </svg>
-                                </div>
-                                <h3 class="font-semibold text-slate-900 mb-1">Kolaborasi</h3>
-                                <p class="text-sm text-slate-600">Membangun kemitraan</p>
-                            </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Kolaborasi & Relasi</h3>
+                        <p class="text-slate-600 leading-relaxed">Membangun jejaring yang kompeten antar civitas, praktisi ahli, dan alumni guna menciptakan dan menangkap peluang kemitraan strategis.</p>
+                    </div>
+
+                    <!-- Feature Card 3 -->
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200 md:col-span-2 lg:col-span-1">
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 border border-blue-100">
+                            <!-- Academic/Chart Icon -->
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                         </div>
-                        
-                        <!-- Action buttons -->
-                        <div class="flex flex-wrap gap-4 pt-4">
-                            <Link href="/structure" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200">
-                                <span>Struktur Organisasi</span>
-                                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                </svg>
-                            </Link>
-                            
-                            <Link href="/activity" class="inline-flex items-center px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors duration-200">
-                                <span>Lihat Kegiatan</span>
-                                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                                </svg>
-                            </Link>
-                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Peningkatan Kapasitas</h3>
+                        <p class="text-slate-600 leading-relaxed">Agenda pelatihan, workshop edukasi, dan seminar komprehensif yang spesifik bertujuan mengasah teknis manajemen serta daya saing sumber daya.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Blaterian Section - Simple & Clean -->
-        <section class="py-20 lg:py-32 bg-amber-50">
-            <div class="max-w-7xl mx-auto px-6">
-                <div class="grid lg:grid-cols-2 gap-16 items-center">
-                    <!-- Left: Logo -->
-                    <div class="order-2 lg:order-1">
-                        <div class="bg-white rounded-2xl p-12 shadow-lg">
-                            <img :src="logoSrc" alt="Blaterian Logo" class="w-full h-auto max-w-sm mx-auto" @error="$event.target.src=logoSrc"/>
+        <!-- Brand Showcase: Blaterian -->
+        <section class="py-24 bg-amber-50">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8">
+                <div class="bg-white rounded-3xl overflow-hidden flex flex-col lg:flex-row shadow-sm border border-amber-200">
+                    <div class="p-10 lg:p-16 lg:w-1/2 flex flex-col justify-center text-left">
+                        <div class="inline-flex items-center px-3 py-1 bg-amber-50 text-amber-700 text-sm font-semibold rounded-full mb-6 border border-amber-200 w-fit uppercase tracking-wider">
+                            Official Business Unit
                         </div>
+                        <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 mb-6">Blaterian Enterprise</h2>
+                        <p class="text-lg text-slate-700 mb-8 leading-relaxed font-light">
+                            Lini komersial kebanggaan SEEO FT UNSOED. Menyajikan kurasi produk <em class="text-slate-900 font-medium">merchandise</em> aparatus kampus dan <em class="text-slate-900 font-medium">food & beverages</em> dengan standar kualitas profesional dari karya orisinil mahasiswa.
+                        </p>
                         
-                        <!-- Product categories -->
-                        <div class="flex justify-center gap-4 mt-6">
-                            <div class="bg-white rounded-lg px-4 py-2 shadow-sm border">
-                                <span class="text-sm font-medium text-slate-700">🍽️ Blaterian Foods</span>
+                        <div class="flex flex-col sm:flex-row gap-4 mb-10">
+                            <div class="flex items-center gap-3 text-slate-700">
+                                <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center border border-amber-200">
+                                    <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                                </div>
+                                <span class="font-medium text-sm">Blaterian Goods</span>
                             </div>
-                            <div class="bg-white rounded-lg px-4 py-2 shadow-sm border">
-                                <span class="text-sm font-medium text-slate-700">🛍️ Blaterian Goods</span>
+                            <div class="flex items-center gap-3 text-slate-700">
+                                <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center border border-amber-200">
+                                    <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                                </div>
+                                <span class="font-medium text-sm">Blaterian Foods</span>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Right: Content -->
-                    <div class="order-1 lg:order-2">
-                        <!-- Badge -->
-                        <div class="inline-flex items-center px-4 py-2 bg-amber-100 text-amber-700 text-sm font-medium rounded-full mb-6">
-                            <span class="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
-                            Brand Unggulan SEEO
-                        </div>
                         
-                        <!-- Heading -->
-                        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-6">
-                            Blaterian
-                            <span class="block text-lg md:text-xl font-normal text-slate-600 mt-2">Karya Terbaik Kami</span>
-                        </h2>
-                        
-                        <!-- Description -->
-                        <div class="space-y-4 mb-8">
-                            <p class="text-lg text-slate-700 leading-relaxed">
-                                Brand kebanggaan SEEO yang menghadirkan produk berkualitas tinggi hasil inovasi dan dedikasi anggota kami.
-                            </p>
-                            <p class="text-slate-600">
-                                Dari makanan dan minuman segar hingga merchandise eksklusif, semua dibuat dengan standar kualitas terbaik.
-                            </p>
-                        </div>
-                        
-                        <!-- CTA -->
                         <div>
-                            <a href="/shop/home" target="_blank" class="inline-flex items-center px-8 py-4 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition-colors duration-200">
-                                Kunjungi Toko Online
-                                <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                </svg>
+                            <a href="/shop/home" target="_blank" class="inline-flex justify-center items-center px-6 py-3.5 bg-amber-500 text-slate-900 font-bold rounded-lg shadow hover:bg-amber-400 hover:shadow-md transition-all duration-200">
+                                Akses Katalog Portal
                             </a>
                         </div>
                     </div>
+                    
+                    <div class="lg:w-1/2 bg-amber-100 p-10 flex items-center justify-center relative min-h-[350px]">
+                        <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')] [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
+                        <div class="relative w-full max-w-sm aspect-square bg-white rounded-full border border-amber-200 shadow-xl flex items-center justify-center p-8">
+                            <img :src="logoSrc" alt="Blaterian Representatif" class="w-1/2 h-1/2 object-contain" @error="$event.target.src=fallbackLogo" />
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Activities Section - Clean & Professional -->
-        <section class="py-20 lg:py-32 bg-slate-900">
-            <div class="max-w-7xl mx-auto px-6">
-                <!-- Section Header -->
-                <div class="text-center mb-16">
-                    <div class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded-full mb-6">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Aktivitas & Program SEEO
+        <!-- Brief Activity Section -->
+        <section class="py-24 bg-slate-50 border-t border-slate-200">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+                    <div class="max-w-2xl">
+                        <h2 class="text-3xl font-bold text-slate-900 mb-4">Aktivitas Terkini Organisasi</h2>
+                        <p class="text-slate-600 text-lg leading-relaxed">Tinjauan dokumentatif pelaksanaan agenda internal dan eksternal kami dalam memvalidasi komitmen operasional.</p>
                     </div>
-                    <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-                        Kegiatan Unggulan Kami
-                    </h2>
-                    <p class="text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed">
-                        Program-program strategis yang dirancang untuk membangun ekosistem entrepreneurship yang berkelanjutan di Fakultas Teknik UNSOED
-                    </p>
-                </div>
-                
-                <!-- Activities Grid -->
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- EntClass Card -->
-                    <div class="bg-slate-800 rounded-xl overflow-hidden hover:bg-slate-700 transition-colors duration-300">
-                        <div class="h-48 overflow-hidden">
-                            <img :src="logoSrc" alt="EntClass I" class="w-full h-full object-cover" @error="$event.target.src=logoSrc">
-                        </div>
-                        
-                        <div class="p-6">
-                            <div class="mb-3">
-                                <span class="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full">
-                                    Human Resources
-                                </span>
-                            </div>
-                            <h3 class="text-xl font-bold text-white mb-3">
-                                EntClass I
-                            </h3>
-                            <p class="text-slate-300 mb-4 leading-relaxed">
-                                Program pelatihan wirausaha intensif yang fokus pada pengembangan keterampilan bisnis fundamental dan strategi inovasi.
-                            </p>
-                            <Link href="/activity" class="inline-flex items-center text-blue-400 font-medium hover:text-blue-300 transition-colors no-underline">
-                                Pelajari Lebih Lanjut
-                                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                </svg>
-                            </Link>
-                        </div>
-                    </div>
-                    
-                    <!-- Visitasi Card -->
-                    <div class="bg-slate-800 rounded-xl overflow-hidden hover:bg-slate-700 transition-colors duration-300">
-                        <div class="h-48 overflow-hidden">
-                            <img :src="logoSrc" alt="Visitasi I" class="w-full h-full object-cover" @error="$event.target.src=logoSrc">
-                        </div>
-                        
-                        <div class="p-6">
-                            <div class="mb-3">
-                                <span class="px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-full">
-                                    Public Relations
-                                </span>
-                            </div>
-                            <h3 class="text-xl font-bold text-white mb-3">
-                                Visitasi I
-                            </h3>
-                            <p class="text-slate-300 mb-4 leading-relaxed">
-                                Studi banding ke organisasi terkemuka untuk memperluas wawasan tentang best practices dalam kewirausahaan dan manajemen.
-                            </p>
-                            <Link href="/activity" class="inline-flex items-center text-green-400 font-medium hover:text-green-300 transition-colors no-underline">
-                                Lihat Dokumentasi
-                                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                </svg>
-                            </Link>
-                        </div>
-                    </div>
-                    
-                    <!-- Upgrading Card -->
-                    <div class="bg-slate-800 rounded-xl overflow-hidden hover:bg-slate-700 transition-colors duration-300 md:col-span-2 lg:col-span-1">
-                        <div class="h-48 overflow-hidden">
-                            <img :src="logoSrc" alt="Upgrading I" class="w-full h-full object-cover" @error="$event.target.src=logoSrc">
-                        </div>
-                        
-                        <div class="p-6">
-                            <div class="mb-3">
-                                <span class="px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-full">
-                                    Team Building
-                                </span>
-                            </div>
-                            <h3 class="text-xl font-bold text-white mb-3">
-                                Upgrading I
-                            </h3>
-                            <p class="text-slate-300 mb-4 leading-relaxed">
-                                Kegiatan team building yang dirancang untuk memperkuat soliditas tim dan meningkatkan chemistry antar anggota organisasi.
-                            </p>
-                            <Link href="/activity" class="inline-flex items-center text-red-400 font-medium hover:text-red-300 transition-colors no-underline">
-                                Jelajahi Kegiatan
-                                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                </svg>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- CTA Section -->
-                <div class="text-center mt-16">
-                    <Link href="/activity" class="inline-flex items-center px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200">
-                        Lihat Semua Kegiatan
-                        <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                        </svg>
+                    <Link href="/activity" class="inline-flex items-center text-blue-600 font-semibold hover:text-blue-800 transition-colors whitespace-nowrap bg-blue-50 px-4 py-2 rounded-lg">
+                        Seluruh Dokumentasi
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                     </Link>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Activity Card 1 -->
+                    <div class="group bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
+                        <div class="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+                            <img :src="logoSrc" alt="Pelatihan Bisnis" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out" @error="$event.target.src=fallbackLogo" />
+                        </div>
+                        <div class="p-6 flex-1 flex flex-col">
+                            <div class="text-[11px] font-bold text-blue-600 uppercase tracking-widest mb-3">Agenda Pelatihan</div>
+                            <h3 class="text-xl font-bold text-slate-900 mb-3">Entrepreneur Class</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed mb-4">Pelaksanaan kursus intensif berbasis studi kasus terkait manajemen administrasi serta penetrasi digital marketing yang efisien.</p>
+                        </div>
+                    </div>
+
+                    <!-- Activity Card 2 -->
+                    <div class="group bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
+                        <div class="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+                            <img :src="logoSrc" alt="Studi Banding" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out" @error="$event.target.src=fallbackLogo" />
+                        </div>
+                        <div class="p-6 flex-1 flex flex-col">
+                            <div class="text-[11px] font-bold text-blue-600 uppercase tracking-widest mb-3">Agenda Relasi Publik</div>
+                            <h3 class="text-xl font-bold text-slate-900 mb-3">Visitasi Kelembagaan</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed mb-4">Pertukaran insight prosedural serta wawasan manajerial ke berbagai inkubator lokal guna benchmarking sistem organisasi.</p>
+                        </div>
+                    </div>
+
+                    <!-- Activity Card 3 -->
+                    <div class="group bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
+                        <div class="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+                            <img :src="logoSrc" alt="Kapasitas Internal" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out" @error="$event.target.src=fallbackLogo" />
+                        </div>
+                        <div class="p-6 flex-1 flex flex-col">
+                            <div class="text-[11px] font-bold text-blue-600 uppercase tracking-widest mb-3">Kapasitas Internal</div>
+                            <h3 class="text-xl font-bold text-slate-900 mb-3">Team Upgrading</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed mb-4">Penguatan struktur kohesif internal antar anggota manajemen guna mempertahankan stabilitas sinergi pelaksanaan program kerja.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -330,164 +210,19 @@
 <script setup>
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref } from 'vue';
 
-const carousel = ref(null);
-const currentSlide = ref(0);
+// Fallback logic for generic images assuming Laravel's internal asset structure
+const logoSrc = ref('/storage/images/misc/logo.png');
+const fallbackLogo = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbGw9JyNlMmU4ZjAnLz48dGV4dCB4PSc1MCUnIHk9JzUwJScgZmlsbD0nI2EwYWJjMCcgZm9udC1zaXplPScxNScgZm9udC1mYW1pbHk9J3NhbnMtc2VyaWYnIGFsaWdubWVudC1iYXNlbGluZT0nbWlkZGxlJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJz5TQU1QTEUgSU1BR0U8L3RleHQ+PC9zdmc+';
 
-const scrollToCard = (index) => {
-    if (carousel.value) {
-        const cardWidth = carousel.value.children[0].offsetWidth + 16;
-        carousel.value.scrollTo({
-            left: cardWidth * index,
-            behavior: 'smooth'
-        });
-        currentSlide.value = index;
-    }
-};
-
-const updateCurrentSlide = () => {
-    if (carousel.value) {
-        const cardWidth = carousel.value.children[0].offsetWidth + 16;
-        const scrollLeft = carousel.value.scrollLeft;
-        currentSlide.value = Math.round(scrollLeft / cardWidth);
-    }
-};
-
-onMounted(() => {
-    if (carousel.value) {
-        carousel.value.addEventListener('scroll', updateCurrentSlide);
-    }
-});
-
-onUnmounted(() => {
-    if (carousel.value) {
-        carousel.value.removeEventListener('scroll', updateCurrentSlide);
-    }
-});
 </script>
 
-<style>
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
-
-/* Advanced Animations */
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-}
-
-@keyframes float-slow {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-30px) rotate(2deg); }
-}
-
-@keyframes float-slower {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-40px) rotate(-3deg); }
-}
-
-@keyframes pulse-slow {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.1) rotate(1deg); }
-}
-
-@keyframes gradient-shift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-@keyframes gradient-shift-slow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-@keyframes slide {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.animate-float {
-    animation: float 6s ease-in-out infinite;
-}
-
-.animate-float-slow {
-    animation: float-slow 8s ease-in-out infinite;
-}
-
-.animate-float-slower {
-    animation: float-slower 10s ease-in-out infinite;
-}
-
-.animate-pulse-slow {
-    animation: pulse-slow 4s ease-in-out infinite;
-}
-
-.animate-gradient-shift {
-    background-size: 400% 400%;
-    animation: gradient-shift 6s ease infinite;
-}
-
-.animate-gradient-shift-slow {
-    background-size: 400% 400%;
-    animation: gradient-shift-slow 8s ease infinite;
-}
-
-/* Hover Effects */
-.hover-lift {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.hover-lift:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-/* Glass Effect */
-.glass {
-    backdrop-filter: blur(16px);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Text Gradient */
-.text-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* Modern shadows */
-.shadow-colored {
-    box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 10px 10px -5px rgba(59, 130, 246, 0.04);
-}
-
-.shadow-colored-lg {
-    box-shadow: 0 20px 40px -12px rgba(59, 130, 246, 0.25), 0 8px 16px -8px rgba(59, 130, 246, 0.1);
-}
-
-/* Smooth transitions */
-.transition-smooth {
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Loading spinner for images */
-.image-loading {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
+<style scoped>
+/* 
+  Kini seluruh styling mengandalkan utility classes Tailwind murni yang minimalis.
+  Layout dibuat datar (flat architecture), shadow menggunakan pendekatan soft-shadow
+  yang ramah di mata, background yang terang (putih/slate-50),
+  serta menghilangkan semua micro-animation AI/berlebihan yang tidak esensial.
+*/
 </style>

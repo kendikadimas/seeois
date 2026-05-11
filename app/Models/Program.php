@@ -31,6 +31,9 @@ class Program extends Model
         'pic_id',
         'budget_approval',
         'expense_approval',
+        'budget',
+        'expense',
+        'disbursement',
     ];
 
     /**

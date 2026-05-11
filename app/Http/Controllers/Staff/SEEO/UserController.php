@@ -113,6 +113,11 @@ class UserController extends Controller
     {
 
         $user = User::find($id);
+
+        if (!$user) {
+            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'User not found!']);
+        }
+
         $user->roles_id = 4;
 
         // save new role

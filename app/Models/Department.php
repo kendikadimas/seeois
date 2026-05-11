@@ -25,10 +25,10 @@ class Department extends Model
      */
     protected $fillable = [
         'name',
-        'budget',
         'manager_id',
-        'disbursement',
+        'budget',
         'expense',
+        'disbursement',
     ];
 
     /**

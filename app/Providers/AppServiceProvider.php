@@ -25,6 +25,31 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
+        // Override Google Drive Storage Setup to Disable SSL Verify for Local (Laragon issue)
+        \Illuminate\Support\Facades\Storage::extend('google', function ($app, $config) {
+            $options = [];
+            if (! empty($config['teamDriveId'] ?? null)) {
+                $options['teamDriveId'] = $config['teamDriveId'];
+            }
+
+            $client = new \Google\Client;
+            $client->setClientId($config['clientId']);
+            $client->setClientSecret($config['clientSecret']);
+            // bypass ssl check for windows laragon environments
+            $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+            $client->refreshToken($config['refreshToken']);
+
+            if (isset($config['accessToken'])) {
+                $client->setAccessToken($config['accessToken']);
+            }
+
+            $service = new \Google\Service\Drive($client);
+            $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $config['folder'] ?? '/', $options);
+            $driver = new \League\Flysystem\Filesystem($adapter);
+
+            return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter);
+        });
+
         // Force HTTPS in production
         if ($this->app->environment('production')) {
             \URL::forceScheme('https');

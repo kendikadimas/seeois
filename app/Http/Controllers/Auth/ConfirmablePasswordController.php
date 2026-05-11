@@ -28,7 +28,9 @@ class ConfirmablePasswordController extends Controller
             'email' => $request->user()->email,
             'password' => $request->password,
         ])) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Yoour credential is not match our record']);
+            throw ValidationException::withMessages([
+                'password' => __('auth.password'),
+            ]);
         }
 
         $request->session()->put('auth.password_confirmed_at', time());

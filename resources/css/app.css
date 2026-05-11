@@ -1,32 +1,132 @@
-/* Tailwind v4 syntax */
-@import "tailwindcss/preflight";
-@import "tailwindcss/utilities";
+/*
+ * =====================================================
+ * CSS LAYER ORDER — SANGAT PENTING!
+ * =====================================================
+ * Urutan layer menentukan prioritas (atas = terendah):
+ *   1. base     → Bootstrap CSS (di-reset oleh utilities jika konflik)
+ *   2. theme    → Tailwind CSS variables/tokens
+ *   3. utilities → Tailwind utilities (PRIORITAS TERTINGGI)
+ *
+ * Dengan cara ini:
+ *   ✅ Bootstrap bekerja di Login, Register, Staff Dashboard, dll.
+ *   ✅ Tailwind utilities (flex, grid, hidden, dll.) bisa override Bootstrap
+ *   ✅ Tidak perlu CDN Bootstrap di tiap layout
+ * =====================================================
+ */
 
-/* Bootstrap */
-/* @import "bootstrap/dist/css/bootstrap.min.css";
-@import "sweetalert2/dist/sweetalert2.min.css"; */
-/* @import "style.css"; */
-/* Removed incorrect Tailwind v4 style @import. Using directives for JIT build. */
+/* Deklarasikan urutan layer di awal */
+@layer base, theme, utilities;
 
-body {
-    font-family: 'Poppins', sans-serif;
+/* Bootstrap masuk ke layer `base` (prioritas paling rendah) */
+@import "bootstrap/dist/css/bootstrap.min.css" layer(base);
+
+/* Tailwind theme tokens dan utilities (prioritas lebih tinggi dari Bootstrap) */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/*
+ * =====================================================
+ * CUSTOM THEME TOKENS (Tailwind v4 pakai @theme di CSS,
+ * bukan tailwind.config.js)
+ * =====================================================
+ */
+@theme {
+  /* Custom Colors */
+  --color-primary: #4F46E5;
+  --color-primary-50: #EEF2FF;
+  --color-primary-100: #E0E7FF;
+  --color-primary-200: #C7D2FE;
+  --color-primary-300: #A5B4FC;
+  --color-primary-400: #818CF8;
+  --color-primary-500: #6366F1;
+  --color-primary-600: #4F46E5;
+  --color-primary-700: #4338CA;
+  --color-primary-800: #3730A3;
+  --color-primary-900: #312E81;
+
+  --color-secondary: #F59E0B;
+  --color-secondary-50: #FFFBEB;
+  --color-secondary-100: #FEF3C7;
+  --color-secondary-200: #FDE68A;
+  --color-secondary-300: #FCD34D;
+  --color-secondary-400: #FBBF24;
+  --color-secondary-500: #F59E0B;
+  --color-secondary-600: #D97706;
+  --color-secondary-700: #B45309;
+  --color-secondary-800: #92400E;
+  --color-secondary-900: #78350F;
+
+  --color-accent: #10B981;
+  --color-accent-50: #ECFDF5;
+  --color-accent-100: #D1FAE5;
+  --color-accent-200: #A7F3D0;
+  --color-accent-300: #6EE7B7;
+  --color-accent-400: #34D399;
+  --color-accent-500: #10B981;
+  --color-accent-600: #059669;
+  --color-accent-700: #047857;
+  --color-accent-800: #065F46;
+  --color-accent-900: #064E3B;
+
+  /* Custom Font */
+  --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
+
+  /* Custom Animations */
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-gradient: gradient 15s ease infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Custom gradient utilities */
+/*
+ * =====================================================
+ * MINIMAL RESET UNTUK PUBLIC PAGES
+ * Menggantikan Tailwind Preflight yang sengaja dimatikan.
+ * Scoped ke .public-page agar tidak merusak Bootstrap di Staff.
+ * =====================================================
+ */
+.public-page *,
+.public-page *::before,
+.public-page *::after {
+    box-sizing: border-box;
+}
+
+.public-page {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+}
+
+.public-page img,
+.public-page video {
+    max-width: 100%;
+    height: auto;
+}
+
+.public-page a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.public-page button {
+    cursor: pointer;
+}
+
+/* Custom Animation Utilities */
 @layer utilities {
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
-  
+
   .animate-gradient {
     animation: gradient 15s ease infinite;
     background-size: 200% 200%;
   }
-  
+
   .animate-pulse-slow {
     animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
-  
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -38,11 +138,11 @@ body {
 }
 
 @keyframes float {
-  0%, 100% { 
-    transform: translateY(0px); 
+  0%, 100% {
+    transform: translateY(0px);
   }
-  50% { 
-    transform: translateY(-20px); 
+  50% {
+    transform: translateY(-20px);
   }
 }
 
@@ -55,31 +155,32 @@ body {
   }
 }
 
-/* Scrollbar styling */
-body::-webkit-scrollbar {
+/* Scrollbar global (tipis dan netral agar tidak mengganggu Bootstrap) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #c1c9d2;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}
+
+/* Scrollbar public pages (berwarna sesuai brand) */
+.public-page::-webkit-scrollbar {
     width: 8px;
 }
 
-body::-webkit-scrollbar-thumb {
+.public-page::-webkit-scrollbar-thumb {
     background: linear-gradient(to bottom, #4F46E5, #F59E0B);
     border-radius: 4px;
 }
 
-/* Custom styles for public pages */
-body {
-    font-family: 'Poppins', sans-serif;
-}
-
-/* Scrollbar styling */
-body::-webkit-scrollbar {
-    width: 8px;
-}
-
-body::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 4px;
-}
-
+/* Scroll container utilities */
 .scroll-container {
     overflow-y: auto;
     scrollbar-width: thin;

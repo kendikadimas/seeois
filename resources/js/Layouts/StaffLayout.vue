@@ -44,6 +44,8 @@ const route = (name, params = {}) => {
         'billboard.add': '/billboard/add',
         'attachment.add': '/attachment/add',
         'post.add': '/dashboard/post/add',
+        'marketing.structures.index': '/marketing/structures',
+        'marketing.activities.index': '/marketing/activities',
     };
     if (routes[name]) {
         let url = routes[name];
@@ -87,6 +89,8 @@ route.current = (routeName) => {
         'Staff/Business/StandCashier': 'food.stand.cashier',
         'Staff/Business/GoodBalance': 'good.balance',
         'Staff/Business/GoodProduct': 'good.product',
+        'Staff/Marketing/Structures': 'marketing.structures',
+        'Staff/Marketing/Activities': 'marketing.activities',
     };
     const currentRouteBase = componentToRouteBase[currentComponent];
     if (!currentRouteBase) return false;
@@ -97,30 +101,42 @@ route.current = (routeName) => {
 const currentTime = ref('');
 const modalConfirmationRef = ref(null);
 // OPTIMIZED: Build nav_list ONCE saat initialization
-const nav_list = computed(() => ({
-    Organization: {
-        Dashboard: { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard" },
-        User: { route: route("role"), active: route.current("role"), title: "User" },
-        Structural: { route: route("structural"), active: route.current("structural") || route.current("department") || route.current("program"), title: "Structural" },
-        Finance: [
-            { route: route("finance"), active: route.current("finance"), title: "Cashflow" },
-            { route: route("finance.feature"), active: route.current("finance.feature"), title: "Feature" }
-        ],
-    },
-    Business: {
-        Insight: { route: route("blaterian.insight"), active: route.current("blaterian.insight"), title: "Insight" },
-        Foods: [
-            { route: route("food.stand"), active: route.current("food.stand"), title: "Stand" },
-        ],
-        Goods: [
-             { route: route('good.product'), active: route.current("good"), title: "Product (Coming Soon)" }
-        ],
-    },
-}));
+const nav_list = computed(() => {
+    let list = {
+        Organization: {
+            Dashboard: { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard" },
+            User: { route: route("role"), active: route.current("role"), title: "User" },
+            Structural: { route: route("structural"), active: route.current("structural") || route.current("department") || route.current("program"), title: "Structural" },
+            Finance: [
+                { route: route("finance"), active: route.current("finance"), title: "Cashflow" },
+                { route: route("finance.feature"), active: route.current("finance.feature"), title: "Feature" }
+            ],
+        },
+        Business: {
+            Insight: { route: route("blaterian.insight"), active: route.current("blaterian.insight"), title: "Insight" },
+            Foods: [
+                { route: route("food.stand"), active: route.current("food.stand"), title: "Stand" },
+            ],
+            Goods: [
+                 { route: route('good.product'), active: route.current("good"), title: "Product (Coming Soon)" }
+            ],
+        },
+    };
+    
+    const userRole = auth_user.value?.roles_id;
+    if (userRole === 1 || userRole === 99 || userRole === 100) {
+        list.Organization.Marketing = [
+            { route: route("marketing.structures.index"), active: route.current("marketing.structures"), title: "Struktur Organisasi" },
+            { route: route("marketing.activities.index"), active: route.current("marketing.activities"), title: "Berita & Kegiatan" }
+        ];
+    }
+    
+    return list;
+});
 
 const active_section = computed(() => {
     const current = page.component;
-    if (current.startsWith('Staff/SEEO')) return 'Organization';
+    if (current.startsWith('Staff/SEEO') || current.startsWith('Staff/Marketing')) return 'Organization';
     if (current.startsWith('Staff/Business')) return 'Business';
     return 'Organization';
 });
@@ -134,7 +150,7 @@ const active_group = computed(() => {
 });
 
 // Local UI state for collapses (prevent immediate hide after Bootstrap animation)
-const openedSection = ref(null);
+const openedSection = ref('Organization');
 const openedGroups = ref({}); // { SectionKey: GroupKey }
 
 function toggleSection(sectionKey) {
@@ -251,14 +267,14 @@ watch(() => page.component, () => {
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"> <!-- Ganti ke 5.3.2 jika perlu -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet"> <!-- Ganti ke 1.11 jika perlu -->
-        <!-- Bootstrap JS loaded via Vite in app.js; removed inline <script> to avoid Vue side-effect tag warning -->
+        <!-- Bootstrap CSS kini bundled via app.css; Bootstrap Icons tetap dari CDN -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+        <!-- Bootstrap JS loaded via Vite in app.js -->
     </Head>
 
     <!-- Removed overflow-hidden to prevent dropdown menu clipping; use overflow-x-hidden if horizontal clipping needed -->
     <div class="d-flex vh-100 overflow-x-hidden">
-        <div class="sidebar-desktop d-none d-lg-flex flex-column flex-shrink-0 bg-gradient-custom text-white">
+        <div class="sidebar-desktop d-none d-lg-flex flex-column shrink-0 bg-gradient-custom text-white">
              <div class="sidebar-content-inner p-3">
                 <div class="sidebar-logo mb-4">
                      <a :href="route('dashboard')" class="text-decoration-none">
@@ -272,7 +288,7 @@ watch(() => page.component, () => {
                         </div>
                      </a>
                 </div>
-                 <div class="navigation-menu flex-grow-1">
+                 <div class="navigation-menu grow">
                     <div v-for="(sectionContent, sectionKey) in nav_list" :key="sectionKey" class="nav-section mb-2">
                         <button
                             type="button"
@@ -280,39 +296,42 @@ watch(() => page.component, () => {
                             :class="{'active-section': active_section == sectionKey, 'open': openedSection === sectionKey}"
                             @click="() => { toggleSection(sectionKey); changeIcon('icon_nav_section_desktop_' + sectionKey.replace(/\s+/g, '')); }"
                         >
-                            <i :id="'icon_nav_section_desktop_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', active_section == sectionKey ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+                            <i :id="'icon_nav_section_desktop_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', openedSection === sectionKey ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                             <span class="fw-semibold">{{ sectionKey }}</span>
                         </button>
-                        <div :class="['collapse', { 'show': openedSection === sectionKey }]" :id="'nav_section_desktop_' + sectionKey.replace(/\s+/g, '')">
+                        <div v-show="openedSection === sectionKey" :id="'nav_section_desktop_' + sectionKey.replace(/\s+/g, '')">
                             <div class="nav-items pt-1 ps-3">
                                 <div v-for="(nav_group, nav_group_key) in sectionContent" :key="nav_group_key" class="mb-1">
-                                    <button v-if="Array.isArray(nav_group)"
-                                        type="button"
-                                        class="nav-item nav-group d-flex align-items-center btn text-start w-100"
-                                        :class="{'active-group': active_group == nav_group_key, 'open': openedGroups[sectionKey] === nav_group_key}"
-                                        @click="() => { toggleGroup(sectionKey, nav_group_key); changeIcon('icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')); }"
-                                    >
-                                        <i :id="'icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', active_group == nav_group_key ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
-                                        <span class="fw-medium">{{ nav_group_key }}</span>
-                                    </button>
-                                     <div v-if="Array.isArray(nav_group)"
-                                        :class="['collapse', { 'show': openedGroups[sectionKey] === nav_group_key }]"
-                                        :id="'nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
-                                    >
-                                         <a v-for="(nav, index) in nav_group"
-                                            :key="`${sectionKey}-${nav_group_key}-${index}`"
-                                            :href="nav.route"
-                                            :class="['nav-item', 'sub-item', 'd-block', nav.active ? 'active' : '']"
+                                    <template v-if="Array.isArray(nav_group)">
+                                        <button
+                                            type="button"
+                                            class="nav-item nav-group d-flex align-items-center btn text-start w-100"
+                                            :class="{'active-group': active_group == nav_group_key, 'open': openedGroups[sectionKey] === nav_group_key}"
+                                            @click="() => { toggleGroup(sectionKey, nav_group_key); changeIcon('icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')); }"
                                         >
-                                            {{ nav.title }}
+                                            <i :id="'icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', active_group == nav_group_key ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+                                            <span class="fw-medium">{{ nav_group_key }}</span>
+                                        </button>
+                                        <div v-show="openedGroups[sectionKey] === nav_group_key"
+                                            :id="'nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
+                                        >
+                                            <a v-for="(nav, index) in nav_group"
+                                                :key="`${sectionKey}-${nav_group_key}-${index}`"
+                                                :href="nav.route"
+                                                :class="['nav-item', 'sub-item', 'd-block', nav.active ? 'active' : '']"
+                                            >
+                                                {{ nav.title }}
+                                            </a>
+                                        </div>
+                                    </template>
+                                    <template v-if="!Array.isArray(nav_group) && typeof nav_group === 'object' && nav_group !== null && nav_group.route !== undefined">
+                                        <a
+                                            :href="nav_group.route"
+                                            :class="['nav-item', 'd-block', nav_group.active ? 'active' : '']"
+                                        >
+                                            {{ nav_group.title }}
                                         </a>
-                                    </div>
-                                    <a v-else-if="typeof nav_group === 'object' && nav_group !== null && nav_group.route !== undefined"
-                                        :href="nav_group.route"
-                                        :class="['nav-item', 'd-block', nav_group.active ? 'active' : '']"
-                                    >
-                                        {{ nav_group.title }}
-                                    </a>
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -335,7 +354,7 @@ watch(() => page.component, () => {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body sidebar-content-inner p-3">
-                 <div class="navigation-menu flex-grow-1">
+                 <div class="navigation-menu grow">
                      <div v-for="(sectionContent, sectionKey) in nav_list" :key="sectionKey + '-mobile'" class="nav-section mb-2">
                          <button
                             type="button"
@@ -343,39 +362,42 @@ watch(() => page.component, () => {
                             :class="{'active-section': active_section == sectionKey, 'open': openedSection === sectionKey}"
                             @click="() => { toggleSection(sectionKey); changeIcon('icon_nav_section_mobile_' + sectionKey.replace(/\s+/g, '')); }"
                         >
-                            <i :id="'icon_nav_section_mobile_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', active_section == sectionKey ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+                            <i :id="'icon_nav_section_mobile_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', openedSection === sectionKey ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                             <span class="fw-semibold">{{ sectionKey }}</span>
                         </button>
-                         <div :class="['collapse', { 'show': openedSection === sectionKey }]" :id="'nav_section_mobile_' + sectionKey.replace(/\s+/g, '')">
+                                   <div v-show="openedSection === sectionKey" :id="'nav_section_mobile_' + sectionKey.replace(/\s+/g, '')">
                             <div class="nav-items pt-1 ps-3">
                                  <div v-for="(nav_group, nav_group_key) in sectionContent" :key="nav_group_key + '-mobile'" class="mb-1">
-                                     <button v-if="Array.isArray(nav_group)"
-                                        type="button"
-                                        class="nav-item nav-group d-flex align-items-center btn text-start w-100"
-                                        :class="{'active-group': active_group == nav_group_key, 'open': openedGroups[sectionKey] === nav_group_key}"
-                                        @click="() => { toggleGroup(sectionKey, nav_group_key); changeIcon('icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')); }"
-                                    >
-                                         <i :id="'icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', active_group == nav_group_key ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
-                                         <span class="fw-medium">{{ nav_group_key }}</span>
-                                    </button>
-                                     <div v-if="Array.isArray(nav_group)"
-                                        :class="['collapse', { 'show': openedGroups[sectionKey] === nav_group_key }]"
-                                        :id="'nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
-                                    >
-                                         <a v-for="(nav, index) in nav_group"
-                                            :key="`${sectionKey}-${nav_group_key}-${index}-mobile`"
-                                            :href="nav.route"
-                                            :class="['nav-item', 'sub-item', 'd-block', nav.active ? 'active' : '']"
+                                     <template v-if="Array.isArray(nav_group)">
+                                         <button
+                                            type="button"
+                                            class="nav-item nav-group d-flex align-items-center btn text-start w-100"
+                                            :class="{'active-group': active_group == nav_group_key, 'open': openedGroups[sectionKey] === nav_group_key}"
+                                            @click="() => { toggleGroup(sectionKey, nav_group_key); changeIcon('icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')); }"
                                         >
-                                            {{ nav.title }}
+                                             <i :id="'icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', active_group == nav_group_key ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+                                             <span class="fw-medium">{{ nav_group_key }}</span>
+                                        </button>
+                                                     <div v-show="openedGroups[sectionKey] === nav_group_key"
+                                            :id="'nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
+                                        >
+                                             <a v-for="(nav, index) in nav_group"
+                                                :key="`${sectionKey}-${nav_group_key}-${index}-mobile`"
+                                                :href="nav.route"
+                                                :class="['nav-item', 'sub-item', 'd-block', nav.active ? 'active' : '']"
+                                            >
+                                                {{ nav.title }}
+                                            </a>
+                                        </div>
+                                     </template>
+                                     <template v-if="!Array.isArray(nav_group) && typeof nav_group === 'object' && nav_group !== null && nav_group.route !== undefined">
+                                        <a
+                                            :href="nav_group.route"
+                                            :class="['nav-item', 'd-block', nav_group.active ? 'active' : '']"
+                                        >
+                                            {{ nav_group.title }}
                                         </a>
-                                    </div>
-                                     <a v-else-if="typeof nav_group === 'object' && nav_group !== null && nav_group.route !== undefined"
-                                        :href="nav_group.route"
-                                        :class="['nav-item', 'd-block', nav_group.active ? 'active' : '']"
-                                    >
-                                        {{ nav_group.title }}
-                                    </a>
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -384,7 +406,7 @@ watch(() => page.component, () => {
             </div>
         </div>
 
-        <div class="main-content-wrapper flex-grow-1 d-flex flex-column overflow-hidden position-relative">
+        <div class="main-content-wrapper grow d-flex flex-column overflow-hidden position-relative">
 <header class="top-header bg-white border-bottom shadow-sm px-2 px-lg-3 py-2 position-relative z-dropdown" v-if="$slots.header">
                  <div class="d-flex justify-content-between align-items-center">
                     <button class="btn border-0 d-lg-none p-1 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
@@ -442,7 +464,7 @@ watch(() => page.component, () => {
                 </div>
             </header>
 
-            <main class="content-container flex-grow-1 overflow-auto">
+            <main class="content-container grow overflow-auto">
                 <slot />
             </main>
         </div>

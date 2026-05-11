@@ -16,8 +16,8 @@ export default {
 
       // For development, use direct path; for production, use /images/
       if (isDev) {
-        // In dev, try common locations
-        return `/images/${cleanPath}`;
+        // In dev, images are under /storage/images due to Laravel's public directory structure
+        return `/storage/images/${cleanPath}`;
       }
 
       // For production: /images/ folder in public

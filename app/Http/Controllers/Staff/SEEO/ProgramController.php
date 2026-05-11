@@ -26,7 +26,7 @@ class ProgramController extends Controller
         $program = Program::where('id', '=', $id)->with(['department', 'financial', 'user'])->first();
         // program not exist
         if ($program == null) {
-            return redirect()->route('department');
+            return redirect()->route('structural');
         }
 
         // Retrieve or create session
@@ -240,7 +240,13 @@ class ProgramController extends Controller
         }
         $department_id = $program->department_id;
         $pic = ProgramStaff::where('program_id', '=', $id)->first();
-        if ($program->delete() && $pic->delete()) {
+        
+        $deleted = $program->delete();
+        if ($pic) {
+            $pic->delete();
+        }
+
+        if ($deleted) {
             return redirect()->route('department', ['id' => $department_id])->with('notif', ['type' => 'info', 'message' => 'Succes delete ' . $name . ' Program.']);
         } else {
             return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Failed to delete ' . $name . ' Program. Please try again, or contact admin.']);

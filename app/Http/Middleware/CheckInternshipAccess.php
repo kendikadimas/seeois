@@ -69,13 +69,8 @@ class CheckInternshipAccess
             'program_pic_id' => $internshipProgram ? $internshipProgram->pic_id : null,
         ]);
         
-        if (!$internshipProgram) {
-            Log::warning('Internship program not found');
-            abort(404, 'Program Internship tidak ditemukan dalam database.');
-        }
-
-        // 5. Cek apakah user adalah PIC Internship
-        if ($user->id === $internshipProgram->pic_id) {
+        // 5. Cek apakah user adalah PIC Internship (hanya jika program ditemukan)
+        if ($internshipProgram && $user->id === $internshipProgram->pic_id) {
             Log::info('User is Internship PIC, access granted');
             return $next($request);
         }

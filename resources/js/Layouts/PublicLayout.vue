@@ -6,9 +6,9 @@
         <!-- Tailwind now loaded via compiled app.css; removed CDN to avoid duplication -->
     </Head>
 
-    <div class="min-h-screen" style="background: white; font-family: 'Poppins', sans-serif;">
+    <div class="public-page min-h-screen" style="background: white; font-family: 'Poppins', sans-serif;">
         <nav 
-            class="fixed top-0 w-full z-50 transition-all duration-500 px-6 py-4" 
+            class="fixed top-0 w-full z-50 transition-all duration-500 px-6 py-2" 
             :class="{ '-translate-y-full': isNavbarHidden }"
             style="background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);"
         >

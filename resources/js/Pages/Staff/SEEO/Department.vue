@@ -444,21 +444,13 @@ watch(
                                     }}</span>
                                 </ul>
                                 <ul
-                                    @click="
-                                        navigateToStaff(
-                                            'program_' + (program.id * 7 - 3)
-                                        )
-                                    "
+                                    @click.stop="$inertia.visit('/seeo/program/' + program.id)"
                                     class="list-group-item list-group-item-action mb-0 py-2 px-0"
                                     v-if="department.program.length > 0"
                                     v-for="(
                                         program, index
                                     ) in department.program"
                                 >
-                                    <a
-                                        :id="'program_' + (program.id * 7 - 3)"
-                                        :href="route('program', program.id)"
-                                    ></a>
                                     <div class="d-flex">
                                         <span
                                             class="text-secondary border-end border-2 pe-2 me-2"

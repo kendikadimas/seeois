@@ -175,7 +175,7 @@ watch(
         </template>
         <div class="container me-lg-0 mx-auto mb-5">
             <div class="row gx-4 mt-4 px-lg-0 px-2">
-                <div class="col-lg-5">
+                <div class="col-lg-6">
                     <!-- Tab Header -->
                     <div class="row mb-4">
                         <div class="col-12">
@@ -488,7 +488,7 @@ watch(
                         </div>
                     </transition>
                 </div>
-                <div class="col-lg-7">
+                <div class="col-lg-6">
                     <!-- Staff List -->
                     <transition
                         :name="isLargeScreen ? 'fade' : 'fade-slide-ltr'"
@@ -523,7 +523,7 @@ watch(
                                             @click="
                                                 handleEmployeeFilter('name')
                                             "
-                                            class="btn text-nowrap btn-sm btn-outline-secondary border-1 rounded-2 border-secondary-subtle py-0"
+                                            class="btn text-nowrap btn-sm btn-outline-secondary border rounded-2 border-secondary-subtle py-0"
                                         >
                                             {{ "Name" }}
                                             <i
@@ -543,7 +543,7 @@ watch(
                                             @click="
                                                 handleEmployeeFilter('roles_id')
                                             "
-                                            class="btn text-nowrap btn-sm btn-outline-secondary border-1 rounded-2 border-secondary-subtle py-0 ms-2"
+                                            class="btn text-nowrap btn-sm btn-outline-secondary border rounded-2 border-secondary-subtle py-0 ms-2"
                                         >
                                             {{ "Role" }}
                                             <i
@@ -703,7 +703,7 @@ watch(
                                             @click="
                                                 handleCustomerFilter('name')
                                             "
-                                            class="btn text-nowrap btn-sm btn-outline-secondary border-1 rounded-2 border-secondary-subtle py-0"
+                                            class="btn text-nowrap btn-sm btn-outline-secondary border rounded-2 border-secondary-subtle py-0"
                                         >
                                             {{ "Name" }}
                                             <i

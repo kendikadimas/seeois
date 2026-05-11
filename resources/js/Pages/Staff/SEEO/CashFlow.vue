@@ -14,6 +14,8 @@ import {
     defineExpose,
 } from "vue";
 
+import { formatIDR as _formatIDR, formatDate as _formatDate, showImage as _showImage } from "@/utils";
+
 const props = defineProps({
     default_contribution_id: Number,
     contribution_config: Object,
@@ -109,15 +111,15 @@ function confirmation(route, message) {
 }
 
 function show_image(event) {
-    utils.showImage(event);
+    _showImage(event);
 }
 
 function formatIDR(amount) {
-    return utils.formatIDR(amount);
+    return _formatIDR(amount);
 }
 
 function formatDate(date) {
-    return utils.formatDate(date);
+    return _formatDate(date);
 }
 
 watch(

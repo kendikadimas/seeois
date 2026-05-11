@@ -3,7 +3,11 @@
 use App\Models\User;
 
 test('profile page is displayed', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'roles_id' => 1,
+        'phone' => '081234567890',
+        'password' => bcrypt('password'),
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -13,13 +17,18 @@ test('profile page is displayed', function () {
 });
 
 test('profile information can be updated', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'roles_id' => 1,
+        'phone' => '081234567890',
+        'password' => bcrypt('password'),
+    ]);
 
     $response = $this
         ->actingAs($user)
-        ->patch('/profile', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        ->from('/profile')
+        ->post('/profile', [
+            'name' => 'Test User Long Name',
+            'phone' => '081234567891',
         ]);
 
     $response
@@ -28,30 +37,16 @@ test('profile information can be updated', function () {
 
     $user->refresh();
 
-    $this->assertSame('Test User', $user->name);
-    $this->assertSame('test@example.com', $user->email);
-    $this->assertNull($user->email_verified_at);
-});
-
-test('email verification status is unchanged when the email address is unchanged', function () {
-    $user = User::factory()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->patch('/profile', [
-            'name' => 'Test User',
-            'email' => $user->email,
-        ]);
-
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect('/profile');
-
-    $this->assertNotNull($user->refresh()->email_verified_at);
+    $this->assertSame('Test User Long Name', $user->name);
+    $this->assertSame('081234567891', $user->phone);
 });
 
 test('user can delete their account', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'roles_id' => 1,
+        'phone' => '081234567890',
+        'password' => bcrypt('password'),
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -64,11 +59,15 @@ test('user can delete their account', function () {
         ->assertRedirect('/');
 
     $this->assertGuest();
-    $this->assertNull($user->fresh());
+    $this->assertSoftDeleted($user);
 });
 
 test('correct password must be provided to delete account', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'roles_id' => 1,
+        'phone' => '081234567890',
+        'password' => bcrypt('password'),
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -78,7 +77,7 @@ test('correct password must be provided to delete account', function () {
         ]);
 
     $response
-        ->assertSessionHasErrors('password')
+        ->assertSessionHasErrors('password', null, 'userDeletion')
         ->assertRedirect('/profile');
 
     $this->assertNotNull($user->fresh());

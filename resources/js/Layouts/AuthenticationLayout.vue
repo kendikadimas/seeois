@@ -1,10 +1,6 @@
 <template>
     <Head>
-        <!-- Bootstrap CSS via CDN as fallback -->
-        <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-        />
+        <!-- Bootstrap Icons -->
         <link
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
@@ -16,6 +12,7 @@
             rel="stylesheet"
         />
     </Head>
+
 
     <div class="authentication-container">
         <div class="container-fluid">
@@ -58,19 +55,8 @@
 
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
-
-// Load Bootstrap CSS and JS dynamically
-onMounted(async () => {
-    // Load Bootstrap CSS
-    await import('../../css/bootstrap.css');
-    
-    // Load Bootstrap JS dynamically
-    if (!window.bootstrap) {
-        const bootstrap = await import('bootstrap/dist/js/bootstrap.bundle.min.js');
-        window.bootstrap = bootstrap;
-    }
-});
+// Bootstrap CSS kini di-load global via app.css (CSS layers)
+// Bootstrap JS sudah di-load via app.js (window.bootstrap)
 </script>
 
 <style scoped>

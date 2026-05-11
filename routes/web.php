@@ -33,6 +33,7 @@ use App\Http\Controllers\Staff\SEEO\UserController;
 use App\Http\Controllers\InternshipCertificateController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\StorageController;
+use App\Http\Controllers\GoogleDriveAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -67,12 +68,12 @@ Route::get('/shop/home/{tab?}', [ShopController::class, 'index'])->name('shop');
 // Internship Applications
 // Access: CEO, Co-CEO, HR Manager, dan PIC Internship
 Route::middleware(['auth', 'verified', 'staff', 'internship.access'])->group(function () {
-    Route::get('/internship-applications', [InternshipApplicationController::class, 'index'])->name('internship.applications.index');
+    Route::get('/internship', [InternshipApplicationController::class, 'index'])->name('internship.applications.index');
 });
 
 // form daftar internship
-// Route::get('/pendaftaran-internship', [InternshipApplicationController::class, 'create'])->name('internship.create');
-// Route::post('/pendaftaran-internship', [InternshipApplicationController::class, 'store'])->name('internship.store');
+Route::get('/internship/register', [InternshipApplicationController::class, 'create'])->name('internship.create');
+Route::post('/internship/register', [InternshipApplicationController::class, 'store'])->name('internship.store');
 
 // Authenticated customer
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -89,10 +90,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Authenticated staff
 Route::middleware(['auth', 'verified', 'staff'])->group(function () {
 
+    // Google Drive
+    Route::get('/google-drive/auth', [GoogleDriveAuthController::class, 'redirect'])->name('google.drive.auth');
+    Route::get('/google-drive/callback', [GoogleDriveAuthController::class, 'callback'])->name('google.drive.callback');
+
     // SEEO Management
     Route::get('/profile/{id?}', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/password/change', [ProfileController::class, 'changePassword'])->name('password.change');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logbook/add/{id?}', [LogbookController::class, 'insertLog'])->name('logbook.add');
     Route::post('/logbook/delete/{id?}', [LogbookController::class, 'deleteLog'])->name('logbook.delete');
     Route::post('/logbook/validate/{id?}', [LogbookController::class, 'validateLog'])->name('logbook.validate');
@@ -239,17 +245,30 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
     Route::post('/attachment/remove/{id?}', [DashboardController::class, 'removeAttachment'])->middleware('role:1')->name('attachment.remove');
 
     // Internship Certificates - For Interns (Any authenticated user)
-    Route::middleware('auth')->group(function(){
+    Route::middleware('auth')->group(function () {
         Route::get('/internship/certificates', [InternshipCertificateController::class, 'index'])->name('certificate.index');
         Route::get('/internship/certificate/download/{id}', [InternshipCertificateController::class, 'download'])->name('certificate.download');
     });
 
     // Internship Certificates Management - For Staff Only (HR Manager & PIC Internship)
-    Route::prefix('staff')->group(function(){
+    Route::prefix('staff')->group(function () {
         Route::get('/internship/certificates/manage', [InternshipCertificateController::class, 'manageIndex'])->name('certificate.manage');
         Route::post('/internship/certificate/store', [InternshipCertificateController::class, 'store'])->name('certificate.store');
         Route::post('/internship/certificate/update/{id}', [InternshipCertificateController::class, 'update'])->name('certificate.update');
         Route::delete('/internship/certificate/delete/{id}', [InternshipCertificateController::class, 'destroy'])->name('certificate.destroy');
+    });
+
+    // Marketing Medinfo Dashboard (Role ID: 100)
+    Route::middleware('role:100')->prefix('marketing')->group(function () {
+        Route::get('/structures', [\App\Http\Controllers\StructureController::class, 'index'])->name('marketing.structures.index');
+        Route::post('/structures', [\App\Http\Controllers\StructureController::class, 'store'])->name('marketing.structures.store');
+        Route::post('/structures/{structure}', [\App\Http\Controllers\StructureController::class, 'update'])->name('marketing.structures.update');
+        Route::delete('/structures/{structure}', [\App\Http\Controllers\StructureController::class, 'destroy'])->name('marketing.structures.destroy');
+
+        Route::get('/activities', [\App\Http\Controllers\ActivityController::class, 'index'])->name('marketing.activities.index');
+        Route::post('/activities', [\App\Http\Controllers\ActivityController::class, 'store'])->name('marketing.activities.store');
+        Route::post('/activities/{activity}', [\App\Http\Controllers\ActivityController::class, 'update'])->name('marketing.activities.update');
+        Route::delete('/activities/{activity}', [\App\Http\Controllers\ActivityController::class, 'destroy'])->name('marketing.activities.destroy');
     });
 });
 
