@@ -43,12 +43,13 @@ class SuperAdminController extends Controller
         $this->updateEnv('GOOGLE_DRIVE_CLIENT_SECRET', $data['google_client_secret']);
         $this->updateEnv('APP_URL', $data['app_url']);
 
-        // Clear cache
-        \Artisan::call('config:clear');
+        // Update current process environment so the redirect works correctly
+        putenv("GOOGLE_DRIVE_CLIENT_ID={$request->google_client_id}");
+        putenv("GOOGLE_DRIVE_CLIENT_SECRET={$request->google_client_secret}");
 
-        return back()->with('notif', [
+        return redirect()->back()->with('notif', [
             'type'    => 'success',
-            'message' => 'Konfigurasi sistem berhasil diperbarui!',
+            'message' => 'Configuration updated successfully! Your changes have been saved to the environment.',
         ]);
     }
 
