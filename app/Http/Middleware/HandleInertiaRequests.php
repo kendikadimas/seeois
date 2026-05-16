@@ -33,21 +33,19 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         return [
             ...parent::share($request),
+            'selected_year' => fn() => (int) $request->session()->get('selected_year', now()->year),
+            'available_years' => fn() => collect(range(now()->year, now()->year - 5))->values()->all(),
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'roles_id' => $user->roles_id,
-                    // Share resolved role_name for UI (avoids needing roles relationship everywhere)
-                    'role_name' => match ((int)$user->roles_id) {
-                        99 => 'Super Admin',
-                        1 => 'CEO',
-                        2 => 'Finance',
-                        3 => 'Operational',
-                        6 => 'HR Manager',
-                        default => 'Staff',
-                    },
+                    // Share resolved role_name for UI
+                    // Prefer DB-driven role name to avoid hardcoded role IDs drifting over time.
+                    'role_name' => (int) $user->roles_id === 99
+                        ? 'Super Admin'
+                        : ($user->roles?->name ?? 'Staff'),
                     'is_super_admin' => is_super_admin($user),
                 ] : null,
             ],

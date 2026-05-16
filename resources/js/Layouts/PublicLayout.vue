@@ -2,204 +2,143 @@
     <Head>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <!-- Tailwind now loaded via compiled app.css; removed CDN to avoid duplication -->
     </Head>
 
-    <div class="public-page min-h-screen" style="background: white; font-family: 'Poppins', sans-serif;">
+    <div class="public-page min-h-screen bg-white" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+        <!-- Modern Navbar -->
+        <!-- Modern Floating Navbar -->
         <nav 
-            class="fixed top-0 w-full z-50 transition-all duration-500 px-6 py-2" 
-            :class="{ '-translate-y-full': isNavbarHidden }"
-            style="background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);"
+            class="fixed top-4 lg:top-6 left-1/2 -translate-x-1/2 w-[92%] lg:w-[95%] max-w-7xl z-50 transition-all duration-500 px-3 md:px-5 lg:px-10 py-3 lg:py-4 rounded-2xl border border-white/10 shadow-2xl flex items-center justify-between" 
+            :class="{ 
+                '-translate-y-[150%]': isNavbarHidden, 
+                'bg-white/95 backdrop-blur-2xl border-gray-100': showScrollTopButton, 
+                'bg-white/10 backdrop-blur-md': !showScrollTopButton && page.component === 'Public/Homepage',
+                'bg-white shadow-xl': page.component !== 'Public/Homepage'
+            }"
         >
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <!-- Logo/Brand - Tetap di Kiri -->
-                <Link href="/" class="flex items-center gap-3 transition-all duration-300 hover:scale-105">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, #3b82f6, #1e40af);">
-                        <img :src="logoSrc" alt="SEEO Logo" class="h-6 w-6 rounded-md" @error="$event.target.src=logoSrc">
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="font-bold text-lg" style="color: #1e293b; letter-spacing: -0.02em;">SEEO</span>
-                        <!-- <span class="text-xs text-gray-500 -mt-1">Engineering</span> -->
-                    </div>
-                </Link>
-                
-                <!-- Navigation Menu (Desktop) - Center -->
-                <div class="hidden lg:flex items-center gap-1 px-2 py-1.5 rounded-2xl" style="background: rgba(241, 245, 249, 0.6); border: 1px solid rgba(226, 232, 240, 0.8);">
-                    <Link href="/" 
-                          :class="page.component === 'Public/Homepage' ? 'bg-white shadow-sm' : 'hover:bg-white hover:bg-opacity-60'"
-                          class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300"
-                          style="color: #334155;">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Beranda</span>
-                    </Link>
-                    
-                    <Link href="/structure" 
-                          :class="page.component === 'Public/Structure' ? 'bg-white shadow-sm' : 'hover:bg-white hover:bg-opacity-60'"
-                          class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300"
-                          style="color: #334155;">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Struktur</span>
-                    </Link>
-                    
-                    <Link href="/activity" 
-                          :class="page.component === 'Public/Activity' ? 'bg-white shadow-sm' : 'hover:bg-white hover:bg-opacity-60'"
-                          class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300"
-                          style="color: #334155;">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Kegiatan</span>
-                    </Link>
-                    
-                    <Link href="/contact" 
-                          :class="page.component === 'Public/Contact' ? 'bg-white shadow-sm' : 'hover:bg-white hover:bg-opacity-60'"
-                          class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300"
-                          style="color: #334155;">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Kontak</span>
-                    </Link>
-                </div>
-                
-                <!-- Login Button -->
-                <Link href="/login" class="hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm text-white transition-all duration-300 hover:shadow-lg hover:scale-105" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                    </svg>
-                    <span>Masuk</span>
-                </Link>
-
-                <!-- Mobile menu button -->
-                <button @click="open = !open" class="lg:hidden p-2.5 rounded-xl transition-all duration-300 hover:bg-gray-100" style="color: #1e293b;">
-                    <span v-if="!open">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                    </span>
-                    <span v-else>
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </span>
-                </button>
+            <!-- Logo Area -->
+            <Link href="/" class="flex items-center gap-2 lg:gap-3 transition-all duration-300 hover:scale-105 group shrink-0">
+                <img :src="logoSrc" alt="SEEO Logo" class="h-8 lg:h-10 w-8 lg:w-10 object-contain" @error="$event.target.src=logoSrc">
+                <span class="font-black text-xl lg:text-2xl tracking-tighter" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]'">SEEO</span>
+            </Link>
+            
+            <!-- Navigation Menu (Desktop Center) -->
+            <div class="hidden lg:flex items-center px-2 py-1.5 absolute left-1/2 -translate-x-1/2">
+                <Link href="/" class="px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:text-[#FFD700]" :style="page.component === 'Public/Homepage' ? 'color: #FFD700' : ''" :class="page.component !== 'Public/Homepage' ? (!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]') : ''">Home</Link>
+                <Link href="/about" class="px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:text-[#FFD700]" :style="page.component === 'Public/About' ? 'color: #FFD700' : ''" :class="page.component !== 'Public/About' ? (!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]') : ''">About</Link>
+                <Link href="/activity" class="px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:text-[#FFD700]" :style="page.component === 'Public/Activity' ? 'color: #FFD700' : ''" :class="page.component !== 'Public/Activity' ? (!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]') : ''">Blog</Link>
+                <Link href="/structure" class="px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:text-[#FFD700]" :style="page.component === 'Public/Structure' ? 'color: #FFD700' : ''" :class="page.component !== 'Public/Structure' ? (!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]') : ''">Structure</Link>
+                <Link href="/contact" class="px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:text-[#FFD700]" :style="page.component === 'Public/Contact' ? 'color: #FFD700' : ''" :class="page.component !== 'Public/Contact' ? (!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]') : ''">Contact</Link>
+            </div>
+            
+            <!-- Action Area (Right) -->
+            <div class="hidden lg:flex items-center gap-6 shrink-0">
+                <Link v-if="auth_user" href="/seeo/staff/dashboard" class="font-black text-[10px] uppercase tracking-widest hover:text-[#FFD700] transition-all" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]'">Dashboard</Link>
+                <Link v-else href="/login" class="font-black text-[10px] uppercase tracking-widest hover:text-[#FFD700] transition-all" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]'">Login</Link>
+                <Link href="/contact" class="bg-[#FFD700] text-[#004182] px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-white hover:scale-105 transition-all">Hubungi Kami</Link>
             </div>
 
-            <!-- Mobile Menu -->
+            <!-- Mobile menu button -->
+            <button @click="open = !open" class="lg:hidden p-2 rounded-full transition-colors bg-transparent border-0 outline-none shadow-none" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white hover:bg-white/10' : 'text-[#004182] hover:bg-gray-100'">
+                <i class="bi" :class="open ? 'bi-x-lg' : 'bi-list'" style="font-size: 1.5rem;"></i>
+            </button>
+
+            <!-- Mobile Menu (Inside Floating Nav) -->
             <Transition
-                enter-active-class="transition duration-200 ease-out"
-                enter-from-class="transform scale-95 opacity-0"
-                enter-to-class="transform scale-100 opacity-100"
-                leave-active-class="transition duration-150 ease-in"
-                leave-from-class="transform scale-100 opacity-100"
-                leave-to-class="transform scale-95 opacity-0"
+                enter-active-class="transition duration-300 ease-out"
+                enter-from-class="transform -translate-y-4 opacity-0 scale-95"
+                enter-to-class="transform translate-y-0 opacity-100 scale-100"
+                leave-active-class="transition duration-200 ease-in"
+                leave-from-class="transform translate-y-0 opacity-100 scale-100"
+                leave-to-class="transform -translate-y-4 opacity-0 scale-95"
             >
-                <div v-if="open" class="lg:hidden mt-4 p-3 rounded-2xl space-y-1 backdrop-filter backdrop-blur-xl" style="background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);">
-                    <Link href="/" 
-                          :class="page.component === 'Public/Homepage' ? 'bg-blue-50' : ''"
-                          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50" 
-                          style="color: #1e293b;">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Beranda</span>
-                    </Link>
-                    
-                    <Link href="/structure" 
-                          :class="page.component === 'Public/Structure' ? 'bg-blue-50' : ''"
-                          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50" 
-                          style="color: #1e293b;">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Struktur</span>
-                    </Link>
-                    
-                    <Link href="/activity" 
-                          :class="page.component === 'Public/Activity' ? 'bg-blue-50' : ''"
-                          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50" 
-                          style="color: #1e293b;">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Kegiatan</span>
-                    </Link>
-                    
-                    <Link href="/contact" 
-                          :class="page.component === 'Public/Contact' ? 'bg-blue-50' : ''"
-                          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50" 
-                          style="color: #1e293b;">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                        <span class="text-sm font-medium">Kontak</span>
-                    </Link>
-                    
-                    <div style="border-top: 1px solid rgba(226, 232, 240, 0.8); margin: 0.5rem 0;"></div>
-                    
-                    <Link href="/login" class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-white transition-all hover:shadow-md" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                        </svg>
-                        <span class="text-sm">Masuk</span>
-                    </Link>
+                <div v-if="open" class="lg:hidden absolute top-full left-0 right-0 mt-3 p-5 rounded-3xl bg-white shadow-2xl border border-gray-100 space-y-1">
+                    <Link href="/" class="block px-6 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all" :class="page.component === 'Public/Homepage' ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#004182]'">Home</Link>
+                    <Link href="/about" class="block px-6 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all" :class="page.component === 'Public/About' ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#004182]'">About</Link>
+                    <Link href="/activity" class="block px-6 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all" :class="page.component === 'Public/Activity' ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#004182]'">Blog</Link>
+                    <Link href="/structure" class="block px-6 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all" :class="page.component === 'Public/Structure' ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#004182]'">Structure</Link>
+                    <Link href="/contact" class="block px-6 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all" :class="page.component === 'Public/Contact' ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#004182]'">Contact</Link>
+                    <div class="pt-3 border-t border-gray-100 flex flex-col gap-2">
+                        <Link v-if="auth_user" href="/seeo/staff/dashboard" class="text-center py-2.5 font-black text-[#004182] uppercase tracking-widest text-[10px]">Dashboard</Link>
+                        <Link v-else href="/login" class="text-center py-2.5 font-black text-[#004182] uppercase tracking-widest text-[10px]" :class="page.component === 'Auth/Login' ? 'text-[#FFD700]' : 'text-[#004182]'">Login</Link>
+                        <Link href="/contact" class="bg-[#004182] text-white text-center py-3 rounded-2xl font-black shadow-lg uppercase tracking-widest text-[10px]">Hubungi Kami</Link>
+                    </div>
                 </div>
             </Transition>
         </nav>
 
-        <main class="pt-20">
+        <main :class="{ 'pt-0': page.component === 'Public/Homepage', 'pt-24': page.component !== 'Public/Homepage' }">
             <slot />
         </main>
         
-        <footer class="text-white pt-16 pb-10 px-6" style="background: linear-gradient(135deg, #1f2937, #111827);">
-            <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-8">
-                <div class="md:col-span-2">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                            <img :src="logoSrc" alt="SEEO Logo" class="h-8 w-8 rounded-md" @error="$event.target.src=logoSrc">
+        <!-- Modern Dark Footer -->
+        <footer class="bg-[#1a1a1a] text-white pt-20 pb-10 px-6 overflow-hidden">
+            <div class="max-w-7xl mx-auto">
+                <div class="grid lg:grid-cols-4 md:grid-cols-2 gap-12 mb-16">
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-3">
+                            <!-- <img :src="logoSrc" alt="Logo" class="h-12 w-12 brightness-0 invert" @error="$event.target.src=logoSrc"> -->
+                            <div class="flex flex-col">
+                                <span class="font-black text-xl tracking-tight text-white">SEEO</span>
+                                <!-- <span class="text-[10px] uppercase text-gray-400 tracking-[0.2em]">Engineering Entrepreneurship</span> -->
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="text-xl font-bold" style="color: #fbbf24;">SEEO</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed max-w-xs">
+                            Soedirman Engineering Entrepreneurship Organization. Wadah pengembangan minat bakat kewirausahaan mahasiswa Fakultas Teknik UNSOED.
+                        </p>
+                        <div class="flex gap-4">
+                            <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#FFD700] hover:text-[#004182] transition-all"><i class="bi bi-instagram"></i></a>
+                            <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#FFD700] hover:text-[#004182] transition-all"><i class="bi bi-linkedin"></i></a>
+                            <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#FFD700] hover:text-[#004182] transition-all"><i class="bi bi-youtube"></i></a>
+                            <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#FFD700] hover:text-[#004182] transition-all"><i class="bi bi-tiktok"></i></a>
                         </div>
                     </div>
-                    <p class="text-sm mb-6 max-w-md" style="color: #d1d5db; line-height: 1.6;">
-                        Bergabunglah dengan komunitas wirausahawan muda Fakultas Teknik UNSOED untuk membangun masa depan bisnis yang lebih cerah.
+                    
+                    <div>
+                        <h4 class="font-bold text-lg mb-8 text-white border-b-2 border-[#FFD700] w-fit pb-1">Site Menu</h4>
+                        <ul class="space-y-4 text-gray-400 text-sm">
+                            <li><Link href="/activity" class="hover:text-yellow-400 transition-colors">Blog</Link></li>
+                            <li><Link href="/structure" class="hover:text-yellow-400 transition-colors">Structure</Link></li>
+                            <li><Link href="/about" class="hover:text-yellow-400 transition-colors">About Us</Link></li>
+                            <li><Link href="/contact" class="hover:text-yellow-400 transition-colors">Contact</Link></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-lg mb-8 text-white border-b-2 border-[#FFD700] w-fit pb-1">Useful Links</h4>
+                        <ul class="space-y-4 text-gray-400 text-sm">
+                            <li><a href="https://unsoed.ac.id" target="_blank" class="hover:text-yellow-400 transition-colors">Universitas Jenderal Soedirman</a></li>
+                            <li><a href="https://ft.unsoed.ac.id" target="_blank" class="hover:text-yellow-400 transition-colors">Fakultas Teknik</a></li>
+                            <!-- <li><a href="https://if.ft.unsoed.ac.id" target="_blank" class="hover:text-yellow-400 transition-colors">Informatika Unsoed</a></li> -->
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-lg mb-8 text-white border-b-2 border-[#FFD700] w-fit pb-1">Contact Us</h4>
+                        <ul class="space-y-4 text-gray-400 text-sm">
+                            <li class="flex gap-3">
+                                <i class="bi bi-geo-alt text-[#FFD700]"></i>
+                                <span>Sekre FT Unsoed, Purbalingga</span>
+                            </li>
+                            <li class="flex gap-3">
+                                <i class="bi bi-envelope text-[#FFD700]"></i>
+                                <span>seeoftunsoed@gmail.com</span>
+                            </li>
+                            <li class="flex gap-3">
+                                <i class="bi bi-phone text-[#FFD700]"></i>
+                                <span>+62 812 3456 7890</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="pt-8 border-t border-white/5 text-center">
+                    <p class="text-xs text-gray-500 uppercase tracking-widest">
+                        &copy; 2026 SEEO UNSOED. Set Up Your Mind To Be An Entrepreneur
                     </p>
                 </div>
-                
-                <div>
-                    <h4 class="font-semibold mb-4 text-sm uppercase tracking-wider" style="color: #fbbf24;">Tautan Cepat</h4>
-                    <ul class="space-y-3 text-sm" style="color: #d1d5db;">
-                        <li><Link href="/" class="hover:text-yellow-400 transition-colors duration-200">Beranda</Link></li>
-                        <li><Link href="/structure" class="hover:text-yellow-400 transition-colors duration-200">Struktur</Link></li>
-                        <li><Link href="/activity" class="hover:text-yellow-400 transition-colors duration-200">Kegiatan</Link></li>
-                        <li><Link href="/contact" class="hover:text-yellow-400 transition-colors duration-200">Kontak</Link></li>
-                    </ul>
-                </div>
-                
-                <!-- Contact -->
-                <div>
-                    <h4 class="font-semibold mb-4 text-sm uppercase tracking-wider" style="color: #fbbf24;">Hubungi Kami</h4>
-                    <ul class="space-y-3 text-sm" style="color: #d1d5db;">
-                        <li>
-                            <a href="mailto:seeoftunsoed@gmail.com" class="hover:text-yellow-400 transition-colors duration-200">
-                                seeoftunsoed@gmail.com
-                            </a>
-                        </li>
-                        <li>Fakultas Teknik, UNSOED</li>
-                        <li>Purwokerto, Jawa Tengah</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <!-- Copyright -->
-            <div class="border-t mt-12 pt-6 text-center text-sm" style="border-color: #374151; color: #9ca3af;">
-                <p>&copy; 2025 Soedirman Entrepreneur Engineering Organization. All rights reserved.</p>
             </div>
         </footer>
 
@@ -227,17 +166,28 @@
             </button>
         </Transition>
     </div>
+
+    <!-- SEO Global -->
+    <Head>
+        <meta name="robots" content="index, follow">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="SEEO FT UNSOED">
+        <meta name="twitter:card" content="summary_large_image">
+        <link rel="canonical" :href="'https://seeo-unsoed.org' + usePage().url">
+    </Head>
 </template>
 
 <script setup>
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 
 // Placeholder logo to avoid missing asset errors during build
-const logoSrc = 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
+const logoSrc = ref('/images/assets/logo.png');
 
 const open = ref(false);
 const page = usePage();
+const auth_user = computed(() => page.props.auth?.user);
 const showScrollTopButton = ref(false);
 const isNavbarHidden = ref(false);
 let lastScrollY = 0;

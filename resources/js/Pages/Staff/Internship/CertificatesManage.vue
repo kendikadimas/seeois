@@ -259,13 +259,13 @@ const submitForm = async () => {
   isSubmitting.value = true
   errors.value = {}
 
-  form.post(route('certificate.store'), {
+  form.post('/seeo/staff/internship/certificate/store', {
     onSuccess: () => {
       form.reset()
       isSubmitting.value = false
       
       // Fetch updated certificates dari server
-      fetch(route('certificate.manage.index'))
+      fetch('/seeo/staff/internship/certificates/manage')
         .then(res => res.text())
         .then(html => {
           // Parse HTML dan extract cert data dari props
@@ -289,14 +289,14 @@ const submitForm = async () => {
 
 const downloadCertificate = (certId) => {
   // Simple direct download - let server handle the increment with cache
-  window.location.href = route('certificate.download', certId)
+  window.location.href = `/seeo/internship/certificate/download/${certId}`
 }
 
 const deleteCertificate = (certId) => {
   if (!confirm('Apakah Anda yakin ingin menghapus sertifikat ini?')) return
 
   const deleteForm = useForm({})
-  deleteForm.delete(route('certificate.destroy', certId), {
+  deleteForm.delete(`/seeo/staff/internship/certificate/delete/${certId}`, {
     onSuccess: () => {
       // Update list setelah hapus
       certs.value = certs.value.filter(c => c.id !== certId)

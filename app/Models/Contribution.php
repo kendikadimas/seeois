@@ -25,6 +25,7 @@ class Contribution extends Model
     protected $fillable = [
         'user_id',
         'months',
+        'year_id',
     ];
 
     /**

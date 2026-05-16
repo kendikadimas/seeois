@@ -6,8 +6,6 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
-
 beforeEach(function () {
     Program::create([
         'name' => 'Internship',
@@ -18,22 +16,22 @@ beforeEach(function () {
 
 describe('Internship Application - Index (Admin)', function () {
     test('guest cannot access internship index', function () {
-        $this->get('/internship')->assertRedirect('/login');
+        $this->get(STAFF_PREFIX . '/internship')->assertRedirect('/login');
     });
 
     test('normal staff cannot access internship index', function () {
         $user = User::factory()->create(['roles_id' => 4]); // Normal staff
-        $this->actingAs($user)->get('/internship')->assertStatus(403);
+        $this->actingAs($user)->get(STAFF_PREFIX . '/internship')->assertStatus(403);
     });
 
     test('CEO can access internship index', function () {
         $ceo = User::factory()->create(['roles_id' => 1]);
-        $this->actingAs($ceo)->get('/internship')->assertStatus(200);
+        $this->actingAs($ceo)->get(STAFF_PREFIX . '/internship')->assertStatus(200);
     });
 
     test('HR Manager can access internship index', function () {
         $hr = User::factory()->create(['roles_id' => 6]);
-        $this->actingAs($hr)->get('/internship')->assertStatus(200);
+        $this->actingAs($hr)->get(STAFF_PREFIX . '/internship')->assertStatus(200);
     });
 
     test('Internship PIC can access internship index', function () {
@@ -44,18 +42,18 @@ describe('Internship Application - Index (Admin)', function () {
             'pic_id' => $pic->id,
         ]);
 
-        $this->actingAs($pic)->get('/internship')->assertStatus(200);
+        $this->actingAs($pic)->get(STAFF_PREFIX . '/internship')->assertStatus(200);
     });
 });
 
 describe('Internship Application - Create Form (Public)', function () {
     test('public can access internship registration form', function () {
-        $this->get('/internship/register')->assertStatus(200);
+        $this->get('/seeo/internship/register')->assertStatus(200);
     });
 
     test('user who already submitted via session sees success state', function () {
         $response = $this->withSession(['internship_submitted' => true])
-            ->get('/internship/register');
+            ->get('/seeo/internship/register');
         
         $response->assertStatus(200);
         // Inertia prop assertion would go here in a full UI test
@@ -64,19 +62,20 @@ describe('Internship Application - Create Form (Public)', function () {
 
 describe('Internship Application - Store (Public)', function () {
     beforeEach(function () {
-        Storage::fake('google'); // Use the disk specified in controller
+        useFakeStorageDisks();
     });
 
     test('user can submit internship application', function () {
         $krsFile = UploadedFile::fake()->image('krs.jpg', 600, 800);
 
-        $response = $this->post('/internship/register', [
+        $response = $this->post('/seeo/internship/register', [
             'name' => 'Mahasiswa Magang',
             'nim' => 'H1A020001',
             'phone_number' => '081234567890',
             'krs_photo' => $krsFile,
             'email_username' => 'mahasiswa.magang',
             'study_program' => 'Informatika',
+            'internship_year' => now()->year,
             'division_choice_1' => 'Software Engineer',
             'reason_choice_1' => 'Ingin belajar coding',
             'division_choice_2' => 'UI/UX Designer',
@@ -112,13 +111,14 @@ describe('Internship Application - Store (Public)', function () {
 
         $krsFile = UploadedFile::fake()->image('krs.jpg');
 
-        $this->post('/internship/register', [
+        $this->post('/seeo/internship/register', [
             'name' => 'Another User',
             'nim' => 'H1A020002', // Duplicate
             'phone_number' => '08222222222',
             'krs_photo' => $krsFile,
             'email_username' => 'another.user',
             'study_program' => 'Informatika',
+            'internship_year' => now()->year,
             'division_choice_1' => 'SE',
             'reason_choice_1' => 'Alasan',
             'division_choice_2' => 'UI',
@@ -128,7 +128,7 @@ describe('Internship Application - Store (Public)', function () {
     });
 
     test('application fails if missing required fields', function () {
-        $this->post('/internship/register', [
+        $this->post('/seeo/internship/register', [
             'name' => 'Incomplete',
         ])->assertSessionHasErrors(['nim', 'phone_number', 'krs_photo', 'email_username']);
     });

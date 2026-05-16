@@ -12,7 +12,7 @@
 */
 
 pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->use(Illuminate\Foundation\Testing\DatabaseTransactions::class)
     ->in('Feature');
 
 /*
@@ -41,7 +41,64 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+const STAFF_PREFIX = '/seeo/staff';
+
+/**
+ * Create a verified staff user with a specific role id.
+ */
+function staffUser(int $roleId): \App\Models\User
 {
-    // ..
+    return \App\Models\User::factory()->create([
+        'roles_id'          => $roleId,
+        'email_verified_at' => now(),
+    ]);
+}
+
+/**
+ * Assert HTTP GET is allowed (200) for the given role.
+ */
+function assertStaffGetAllowed(int $roleId, string $path): void
+{
+    $user = staffUser($roleId);
+    test()->actingAs($user)->get($path)->assertOk();
+}
+
+/**
+ * Assert HTTP GET is denied (redirect back) for the given role.
+ */
+function assertStaffGetDenied(int $roleId, string $path): void
+{
+    $user = staffUser($roleId);
+    test()->actingAs($user)->get($path)->assertRedirect();
+}
+
+/**
+ * Use local fake disks for public + google (avoids real Google API in tests).
+ */
+function useFakeStorageDisks(): void
+{
+    $testingRoot = storage_path('framework/testing/disks');
+
+    config([
+        'filesystems.disks.public' => [
+            'driver'     => 'local',
+            'root'       => $testingRoot . '/public',
+            'visibility' => 'public',
+            'throw'      => false,
+        ],
+        'filesystems.disks.google' => [
+            'driver'     => 'local',
+            'root'       => $testingRoot . '/google',
+            'visibility' => 'public',
+            'throw'      => false,
+        ],
+    ]);
+
+    \Illuminate\Support\Facades\Storage::disk('public');
+    \Illuminate\Support\Facades\Storage::disk('google');
+}
+
+function fakeImageUpload(string $name = 'receipt.jpg'): \Illuminate\Http\UploadedFile
+{
+    return \Illuminate\Http\UploadedFile::fake()->image($name, 100, 100);
 }

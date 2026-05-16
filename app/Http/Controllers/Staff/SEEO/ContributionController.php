@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff\SEEO;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\ScopedByYear;
 use App\Models\CashInItem;
 use App\Models\Contribution;
 use App\Models\ContributionConfig;
@@ -18,6 +19,7 @@ use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class ContributionController extends Controller
 {
+    use ScopedByYear;
 
     /**
      * find and filter contribution.
@@ -33,11 +35,13 @@ class ContributionController extends Controller
 
     function setCashIn()
     {
+        [$activeYear, $yearId] = $this->activeYearScope();
         // set Contribution Charge in Cash In Item.
         return CashInItem::create([
             'name' => 'Contribution Charge',
             'price' => 0,
             'financial_id' => Auth::user()->id,
+            'year_id' => $yearId,
         ]);
     }
 
@@ -46,6 +50,7 @@ class ContributionController extends Controller
      */
     function insert(Request $request)
     {
+        [$activeYear, $yearId] = $this->activeYearScope();
         // Data Validation
         $request->validate([
             'month' => ['required', 'numeric'],
@@ -53,19 +58,26 @@ class ContributionController extends Controller
         ]);
 
         $month = $request->input(('month'));
-        $config = ContributionConfig::first();
-        $employee = User::select('id', 'name')->with('contribution')->find(Auth::user()->id);
+        $config = ContributionConfig::where('year_id', $yearId)->first();
+        if (!$config) {
+             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Contribution configuration for this year not found.']);
+        }
+        $employee = User::select('id', 'name')->with(['contribution' => function($q) use ($yearId) {
+            $q->where('year_id', $yearId);
+        }])->find(Auth::user()->id);
+        
         // check if input month greater than configuration period.
-        if ($employee->contribution && $employee->contribution->month + $month > $config->period) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You can not contribute more than ' . $config->period - $employee->contribution->month . ' month.']);
+        if ($employee->contribution && $employee->contribution->months + $month > $config->period) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You can not contribute more than ' . ($config->period - $employee->contribution->months) . ' month.']);
         }
         if (!$employee->contribution) {
             $contribution = new Contribution();
             $contribution->user_id = $employee->id;
             $contribution->months = 0;
+            $contribution->year_id = $yearId;
             $contribution->save();
         }
-        $contribution = User::select('id')->find($employee->id)->contribution;
+        $contribution = $employee->contribution ?: Contribution::where('user_id', $employee->id)->where('year_id', $yearId)->first();
         $updated_contribution = $contribution->receipt ? $contribution->receipt->count() : 0;
         $contribution_receipt = new ContributionReceipt();
         $contribution_receipt->contribution_id = $contribution->id;
@@ -118,12 +130,16 @@ class ContributionController extends Controller
      */
     function validation($id)
     {
+        [$activeYear, $yearId] = $this->activeYearScope();
         $receipt = ContributionReceipt::find($id);
         if (!$receipt) {
             return back()->with('notif', ['type' => 'warning', 'message' => 'Contribution Receipt not found. Please do not commit any changes to the application.']);
         }
-        $cash_in = CashInItem::where('name', '=', 'Contribution Charge')->first();
-        $config = ContributionConfig::first();
+        $cash_in = CashInItem::where('name', '=', 'Contribution Charge')->where('year_id', $yearId)->first();
+        if (!$cash_in) {
+            $cash_in = $this->setCashIn();
+        }
+        $config = ContributionConfig::where('year_id', $yearId)->first();
         $validate = $receipt->financial_id ? 'unvalidate' : 'validate';
         if (!$receipt->financial_id) {
             $receipt->financial_id = Auth::user()->id;
@@ -149,6 +165,7 @@ class ContributionController extends Controller
      */
     function updateContributionConfiguration(Request $request)
     {
+        [$activeYear, $yearId] = $this->activeYearScope();
         // Data Validation
         $request->validate([
             'price' => ['required', 'numeric'],
@@ -156,21 +173,25 @@ class ContributionController extends Controller
             'end' => ['required', 'numeric', ''],
         ]);
 
-        $contribution_config = ContributionConfig::first();
-        $is_same = $contribution_config->price == $request->input('price');
+        $contribution_config = ContributionConfig::where('year_id', $yearId)->first() ?? new ContributionConfig();
+        $is_same = $contribution_config->exists && $contribution_config->price == $request->input('price');
         $contribution_config->price = $request->input('price');
         $contribution_config->start = $request->input('start');
         $contribution_config->period = $request->input('end') - $request->input('start') + 1;
         $contribution_config->financial_id = Auth::user()->id;
-        $existed_contribution = Contribution::select(['id'])->get();
-        $existed_receipt = ContributionReceipt::select(['id'])->get();
+        $contribution_config->year_id = $yearId;
+
+        $existed_contribution = Contribution::where('year_id', $yearId)->select(['id'])->get();
+        $existed_receipt = ContributionReceipt::whereIn('contribution_id', $existed_contribution)->select(['id'])->get();
         $unvalidate = false;
-        if (!$is_same) {
+        if (!$is_same && $contribution_config->exists) {
             Contribution::whereIn('id', $existed_contribution)->update(['months' => 0]);
             ContributionReceipt::whereIn('id', $existed_receipt)->update(['financial_id' => null]);
-            $cash_in = CashInItem::where('name', '=', 'Contribution Charge')->first();
-            $cash_in->price = 0;
-            $cash_in->save();
+            $cash_in = CashInItem::where('name', '=', 'Contribution Charge')->where('year_id', $yearId)->first();
+            if ($cash_in) {
+                $cash_in->price = 0;
+                $cash_in->save();
+            }
             $unvalidate = true;
         }
 

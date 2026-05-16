@@ -1,228 +1,321 @@
 <template>
-    <Head title="Soedirman Engineering Entrepreneurship Organization" />
+    <Head>
+        <title>SEEO - Soedirman Engineering Entrepreneurship Organization</title>
+        <meta name="description" content="Wadah resmi mahasiswa Fakultas Teknik UNSOED untuk mengembangkan jiwa kepemimpinan dan kewirausahaan. Temukan berita, kegiatan, dan struktur organisasi SEEO di sini.">
+        <meta name="keywords" content="organisasi entrepreneur, ukm mahasiswa, website ukm, ukm kewirausahaan, kewirausahaan mahasiswa, organisasi kewirausahaan, ukm unsoed, ukm ft unsoed, SEEO, FT UNSOED">
+        <meta property="og:title" content="SEEO FT UNSOED - Empowering Engineers to Lead">
+        <meta property="og:description" content="Wadah resmi mahasiswa Fakultas Teknik UNSOED untuk mengembangkan jiwa kepemimpinan dan kewirausahaan.">
+    </Head>
     <PublicLayout>
-        <!-- Hero Section -->
-        <!-- Hero Section -->
-        <header class="relative bg-white min-h-[calc(100vh-5rem)] flex items-center overflow-hidden">
-            <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 w-full">
-                <div class="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-                    <div class="max-w-2xl">
-                        <!-- Badge -->
-                        <!-- <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-8 border border-blue-100">
-                            <span class="flex h-2 w-2 relative">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-                            </span>
-                            Universitas Jenderal Soedirman
-                        </div>
-                         -->
-                        <!-- Heading -->
-                        <h1 class="text-5xl sm:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight mb-8 leading-[1.1]">
-                            Soedirman Engineering <br />
-                            <span class="text-blue-600 italic">Entrepreneurship</span> Organization
-                        </h1>
-                        
-                        <!-- Copy -->
-                        <p class="text-xl text-slate-600 mb-10 leading-relaxed max-w-xl">
-                            Wadah resmi kemahasiswaan Fakultas Teknik UNSOED untuk berinovasi, berkolaborasi, dan mengembangkan potensi bisnis melalui pendekatan profesional yang terukur.
-                        </p>
-                        
-                        <!-- Buttons -->
-                        <div class="flex flex-col sm:flex-row gap-5">
-                            <Link href="/about" class="inline-flex justify-center items-center px-8 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition-all duration-300">
-                                Tentang SEEO
-                            </Link>
-                            <a href="/shop/home" target="_blank" class="inline-flex justify-center items-center px-8 py-4 bg-white text-slate-700 font-bold rounded-xl border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all duration-300">
-                                Kunjungi Blaterian
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <!-- Hero Image & Stats -->
-                    <div class="relative lg:ml-auto w-full max-w-lg lg:max-w-none hidden lg:block">
-                        <div class="aspect-[4/3] rounded-[2rem] bg-slate-50 overflow-hidden shadow-2xl border border-slate-100 relative">
-                            <img :src="logoSrc" alt="SEEO Kegiatan" class="w-full h-full object-cover" @error="$event.target.src=fallbackLogo" />
-                        </div>
-                        
-                        <!-- Floating Stats -->
-                        <div class="absolute -bottom-6 -left-6 bg-white p-8 rounded-2xl shadow-2xl border border-slate-50 flex items-center gap-8">
-                            <div>
-                                <p class="text-4xl font-black text-blue-600">8</p>
-                                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Departemen</p>
-                            </div>
-                            <div class="w-px h-12 bg-slate-100"></div>
-                            <div>
-                                <p class="text-4xl font-black text-amber-500">40+</p>
-                                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Pengurus Aktif</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- 1. Hero Section -->
+        <header class="relative h-[100vh]  flex items-center justify-center overflow-hidden bg-[#004182]">
+            <div class="absolute inset-0 z-0">
+                <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-[#FFD700] rounded-full blur-[150px] opacity-10"></div>
+                <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white rounded-full blur-[150px] opacity-10"></div>
             </div>
             
-            <!-- Background Decoration -->
-            <div class="absolute top-0 right-0 -z-10 w-1/3 h-full bg-gradient-to-l from-slate-50 to-transparent hidden lg:block"></div>
+            <div class="relative z-10 max-w-5xl mx-auto px-6 text-center text-white pt-24 pb-20 lg:py-20">
+                <h1 class="text-3xl md:text-7xl font-black mb-6 mt-24 tracking-tight leading-[1.2] animate-fade-in uppercase">
+                    Soedirman Engineering<br>
+                    <span class="text-[#FFD700]">Entrepreneurship </span>Organization
+                </h1>
+                <p class="text-lg md:text-xl font-medium mb-12 opacity-90 max-w-3xl mx-auto leading-relaxed">
+                    #Set Up Your Mind To Be An Entrepreneur!
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 lg:gap-6">
+                    <Link href="/about" class="w-full sm:w-auto bg-[#FFD700] hover:bg-[#FFC700] text-[#004182] px-8 py-3.5 lg:px-12 lg:py-5 rounded-full font-black text-sm lg:text-lg shadow-2xl transition-all hover:scale-105 uppercase tracking-widest">
+                        Tentang SEEO
+                    </Link>
+                    <Link href="/contact" class="w-full sm:w-auto bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 px-8 py-3.5 lg:px-12 lg:py-5 rounded-full font-black text-sm lg:text-lg transition-all hover:scale-105 uppercase tracking-widest">
+                        Mulai Kolaborasi
+                    </Link>
+                </div>
+            </div>
+
+            <div class="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
+                <i class="bi bi-chevron-down text-white text-3xl opacity-50"></i>
+            </div>
         </header>
 
-        <!-- Core Programs Section -->
-        <section class="py-24 bg-slate-50 border-t border-slate-100">
-            <div class="max-w-7xl mx-auto px-6 lg:px-8">
-                <div class="text-center max-w-2xl mx-auto mb-16">
-                    <h2 class="text-3xl font-bold text-slate-900 mb-4">Pilar Program Kami</h2>
-                    <p class="text-lg text-slate-600 leading-relaxed">Fokus strategis organisasi kami dalam memfasilitasi dan mengembangkan ekosistem kewirausahaan yang profesional bagi mahasiswa.</p>
+        <!-- 2. About SEEO Section -->
+        <section class="py-20 lg:py-32 bg-white relative overflow-hidden">
+            <div class="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                <div class="w-full lg:w-1/2 relative">
+                    <div class="absolute -top-10 -left-10 w-40 h-40 bg-[#004182]/5 rounded-full blur-3xl"></div>
+                    <div class="relative z-10 p-8 lg:p-12 bg-[#004182] rounded-3xl lg:rounded-[3rem] shadow-2xl transform lg:-rotate-3 hover:rotate-0 transition-transform duration-700">
+                        <img :src="logoSrc" alt="SEEO Logo" class="w-full h-auto opacity-90 brightness-200">
+                    </div>
                 </div>
-
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Feature Card 1 -->
-                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200">
-                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 border border-blue-100">
-                            <!-- Bulb Icon -->
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11a3 3 0 106 0V8a3 3 0 00-6 0v3zm-4 8v1a2 2 0 002 2h10a2 2 0 002-2v-1M12 4v1m0 0a3 3 0 106 0 3 3 0 00-6 0zm-7 6h2m12 0h2m-2.121 4.243l1.414 1.414M4.929 15.243l1.414 1.414"></path></svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3">Inkubasi Bisnis</h3>
-                        <p class="text-slate-600 leading-relaxed">Penyediaan fasilitas operasional dan pendampingan fundamental untuk mengeksekusi ide bisnis dengan pendekatan yang terstruktur.</p>
+                <div class="w-full lg:w-1/2 space-y-6 lg:space-y-8">
+                    <div class="inline-block px-6 py-2 bg-[#004182]/5 text-[#004182] font-black text-[10px] lg:text-xs  tracking-widest rounded-full border border-[#004182]/10">
+                        Since 2020
                     </div>
-
-                    <!-- Feature Card 2 -->
-                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200">
-                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 border border-blue-100">
-                            <!-- Users / Network Icon -->
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3">Kolaborasi & Relasi</h3>
-                        <p class="text-slate-600 leading-relaxed">Membangun jejaring yang kompeten antar civitas, praktisi ahli, dan alumni guna menciptakan dan menangkap peluang kemitraan strategis.</p>
-                    </div>
-
-                    <!-- Feature Card 3 -->
-                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200 md:col-span-2 lg:col-span-1">
-                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 border border-blue-100">
-                            <!-- Academic/Chart Icon -->
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3">Peningkatan Kapasitas</h3>
-                        <p class="text-slate-600 leading-relaxed">Agenda pelatihan, workshop edukasi, dan seminar komprehensif yang spesifik bertujuan mengasah teknis manajemen serta daya saing sumber daya.</p>
+                    <h2 class="text-4xl lg:text-6xl font-black text-[#004182] tracking-tight leading-tight uppercase">
+                        What is <span class="text-[#FFD700]">SEEO?</span>
+                    </h2>
+                    <p class="text-lg lg:text-xl text-gray-500 leading-relaxed font-medium">
+                        SEEO merupakan UKM Fakultas Teknik Unsoed yang didirikan sebagai representasi nyata dalam melahirkan talenta kreatif yang memiliki jiwa enterpreneurship. Kami adalah inkubator bisnis mahasiswa yang menggabungkan standar manajerial profesional dengan semangat inovasi teknik.
+                    </p>
+                    <div class="pt-6">
+                        <Link href="/about" class="inline-flex items-center gap-3 font-black text-[#004182] border-b-4 border-[#FFD700] pb-2 text-sm uppercase tracking-widest hover:gap-6 transition-all">
+                            Selengkapnya Tentang Kami <i class="bi bi-arrow-right"></i>
+                        </Link>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Brand Showcase: Blaterian -->
-        <section class="py-24 bg-amber-50">
-            <div class="max-w-7xl mx-auto px-6 lg:px-8">
-                <div class="bg-white rounded-3xl overflow-hidden flex flex-col lg:flex-row shadow-sm border border-amber-200">
-                    <div class="p-10 lg:p-16 lg:w-1/2 flex flex-col justify-center text-left">
-                        <div class="inline-flex items-center px-3 py-1 bg-amber-50 text-amber-700 text-sm font-semibold rounded-full mb-6 border border-amber-200 w-fit uppercase tracking-wider">
-                            Official Business Unit
-                        </div>
-                        <h2 class="text-3xl lg:text-4xl font-bold text-slate-900 mb-6">Blaterian Enterprise</h2>
-                        <p class="text-lg text-slate-700 mb-8 leading-relaxed font-light">
-                            Lini komersial kebanggaan SEEO FT UNSOED. Menyajikan kurasi produk <em class="text-slate-900 font-medium">merchandise</em> aparatus kampus dan <em class="text-slate-900 font-medium">food & beverages</em> dengan standar kualitas profesional dari karya orisinil mahasiswa.
-                        </p>
-                        
-                        <div class="flex flex-col sm:flex-row gap-4 mb-10">
-                            <div class="flex items-center gap-3 text-slate-700">
-                                <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center border border-amber-200">
-                                    <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                                </div>
-                                <span class="font-medium text-sm">Blaterian Goods</span>
-                            </div>
-                            <div class="flex items-center gap-3 text-slate-700">
-                                <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center border border-amber-200">
-                                    <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                                </div>
-                                <span class="font-medium text-sm">Blaterian Foods</span>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <a href="/shop/home" target="_blank" class="inline-flex justify-center items-center px-6 py-3.5 bg-amber-500 text-slate-900 font-bold rounded-lg shadow hover:bg-amber-400 hover:shadow-md transition-all duration-200">
-                                Akses Katalog Portal
-                            </a>
+        <!-- 3. About Blaterian Section -->
+        <section class="py-20 lg:py-32 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-1/3 h-full bg-[#FFD700]/5 -skew-x-12 translate-x-1/2"></div>
+            <div class="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-20">
+                <div class="w-full lg:w-1/2">
+                    <div class="relative rounded-3xl lg:rounded-[4rem] overflow-hidden shadow-2xl group">
+                        <img :src="'/images/assets/blaterian.png'" alt="Blaterian" class="w-full h-[350px] lg:h-[500px] object-contain p-12 lg:p-20 group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute bottom-10 left-10 z-20">
+                            <!-- <span class="bg-[#FFD700] text-[#004182] px-6 py-2 rounded-full font-black text-xs uppercase shadow-xl tracking-widest">FOOD & BEVERAGE</span> -->
                         </div>
                     </div>
+                </div>
+                <div class="w-full lg:w-1/2 space-y-6 lg:space-y-8">
+                    <!-- <div class="inline-block px-6 py-2 bg-[#FFD700]/10 text-[#004182] font-black text-[10px] lg:text-xs uppercase tracking-widest rounded-full border border-[#FFD700]/20">
+                        Strategic Business Unit
+                    </div> -->
+                    <h2 class="text-4xl lg:text-6xl font-black text-[#004182] tracking-tight leading-tight uppercase">
+                        Our Brand: <span class="text-[#FFD700]">Blaterian</span>
+                    </h2>
+                    <p class="text-lg lg:text-xl text-gray-500 leading-relaxed font-medium">
+                        Merek kuliner andalan SEEO yang berfokus pada penyediaan produk makanan, minuman dan produk inovatif. Blaterian bukan sekadar bisnis, melainkan laboratorium nyata tempat kami belajar manajemen produksi, pemasaran kreatif, dan kepuasan pelanggan secara profesional.
+                    </p>
                     
-                    <div class="lg:w-1/2 bg-amber-100 p-10 flex items-center justify-center relative min-h-[350px]">
-                        <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')] [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
-                        <div class="relative w-full max-w-sm aspect-square bg-white rounded-full border border-amber-200 shadow-xl flex items-center justify-center p-8">
-                            <img :src="logoSrc" alt="Blaterian Representatif" class="w-1/2 h-1/2 object-contain" @error="$event.target.src=fallbackLogo" />
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8 pt-8">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center shrink-0 text-[#004182]">
+                                <i class="bi bi-patch-check-fill text-2xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-black text-[#004182] mb-1 uppercase tracking-tight">Kualitas Tinggi</h4>
+                                <p class="text-sm text-gray-500 font-medium leading-tight">Standar rasa & produksi yang terjaga.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center shrink-0 text-[#004182]">
+                                <i class="bi bi-lightbulb-fill text-2xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-black text-[#004182] mb-1 uppercase tracking-tight">Inovasi Menu</h4>
+                                <p class="text-sm text-gray-500 font-medium leading-tight">Kreasi menu kreatif dari tangan mahasiswa.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Brief Activity Section -->
-        <section class="py-24 bg-slate-50 border-t border-slate-200">
-            <div class="max-w-7xl mx-auto px-6 lg:px-8">
-                <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <!-- 4. Article SEEO Section -->
+        <section v-if="activities && activities.length" class="py-32 bg-white">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
                     <div class="max-w-2xl">
-                        <h2 class="text-3xl font-bold text-slate-900 mb-4">Aktivitas Terkini Organisasi</h2>
-                        <p class="text-slate-600 text-lg leading-relaxed">Tinjauan dokumentatif pelaksanaan agenda internal dan eksternal kami dalam memvalidasi komitmen operasional.</p>
+                        <h2 class="text-[#004182] font-black text-3xl lg:text-6xl mb-6 uppercase tracking-tight">Berita <span class="text-[#FFD700]">&</span> Kegiatan</h2>
+                        <p class="text-gray-500 text-base lg:text-lg font-medium">Dokumentasi perjalanan kami dalam membangun ekosistem entrepreneurship.</p>
                     </div>
-                    <Link href="/activity" class="inline-flex items-center text-blue-600 font-semibold hover:text-blue-800 transition-colors whitespace-nowrap bg-blue-50 px-4 py-2 rounded-lg">
-                        Seluruh Dokumentasi
-                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    <Link href="/activity" class="bg-gray-100 hover:bg-[#FFD700] text-[#004182] px-8 py-3 rounded-full font-bold text-sm transition-all uppercase tracking-widest shadow-inner">
+                        Lihat Semua <i class="bi bi-arrow-up-right ml-2"></i>
                     </Link>
                 </div>
 
-                <div class="grid md:grid-cols-3 gap-8">
-                    <!-- Activity Card 1 -->
-                    <div class="group bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
-                        <div class="aspect-[4/3] bg-slate-100 relative overflow-hidden">
-                            <img :src="logoSrc" alt="Pelatihan Bisnis" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out" @error="$event.target.src=fallbackLogo" />
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+                    <div v-for="act in activities.slice(0, 3)" :key="act.id" class="group bg-white rounded-[2.5rem] lg:rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-50 flex flex-col h-full">
+                        <!-- Image Container -->
+                        <div class="relative aspect-[4/3] overflow-hidden">
+                            <img :src="act.image_url || '/images/placeholder.jpg'" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                            <div class="absolute top-4 lg:top-6 left-4 lg:left-6">
+                                <span class="px-4 lg:px-5 py-1.5 lg:py-2 bg-[#FFD700] text-[#004182] rounded-full text-[9px] lg:text-[10px] font-black uppercase tracking-widest shadow-lg">
+                                    {{ act.category || 'EVENT' }}
+                                </span>
+                            </div>
                         </div>
-                        <div class="p-6 flex-1 flex flex-col">
-                            <div class="text-[11px] font-bold text-blue-600 uppercase tracking-widest mb-3">Agenda Pelatihan</div>
-                            <h3 class="text-xl font-bold text-slate-900 mb-3">Entrepreneur Class</h3>
-                            <p class="text-slate-600 text-sm leading-relaxed mb-4">Pelaksanaan kursus intensif berbasis studi kasus terkait manajemen administrasi serta penetrasi digital marketing yang efisien.</p>
-                        </div>
-                    </div>
-
-                    <!-- Activity Card 2 -->
-                    <div class="group bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
-                        <div class="aspect-[4/3] bg-slate-100 relative overflow-hidden">
-                            <img :src="logoSrc" alt="Studi Banding" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out" @error="$event.target.src=fallbackLogo" />
-                        </div>
-                        <div class="p-6 flex-1 flex flex-col">
-                            <div class="text-[11px] font-bold text-blue-600 uppercase tracking-widest mb-3">Agenda Relasi Publik</div>
-                            <h3 class="text-xl font-bold text-slate-900 mb-3">Visitasi Kelembagaan</h3>
-                            <p class="text-slate-600 text-sm leading-relaxed mb-4">Pertukaran insight prosedural serta wawasan manajerial ke berbagai inkubator lokal guna benchmarking sistem organisasi.</p>
-                        </div>
-                    </div>
-
-                    <!-- Activity Card 3 -->
-                    <div class="group bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
-                        <div class="aspect-[4/3] bg-slate-100 relative overflow-hidden">
-                            <img :src="logoSrc" alt="Kapasitas Internal" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out" @error="$event.target.src=fallbackLogo" />
-                        </div>
-                        <div class="p-6 flex-1 flex flex-col">
-                            <div class="text-[11px] font-bold text-blue-600 uppercase tracking-widest mb-3">Kapasitas Internal</div>
-                            <h3 class="text-xl font-bold text-slate-900 mb-3">Team Upgrading</h3>
-                            <p class="text-slate-600 text-sm leading-relaxed mb-4">Penguatan struktur kohesif internal antar anggota manajemen guna mempertahankan stabilitas sinergi pelaksanaan program kerja.</p>
+                        
+                        <!-- Content -->
+                        <div class="p-8 lg:p-10 flex flex-col flex-grow">
+                            <div class="flex items-center gap-3 text-[9px] lg:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
+                                <i class="bi bi-calendar3 text-[#FFD700]"></i>
+                                {{ formatDate(act.date) }}
+                            </div>
+                            
+                            <h3 class="text-lg lg:text-xl font-black text-[#004182] mb-4 leading-tight group-hover:text-[#FFD700] transition-colors line-clamp-2 uppercase tracking-tight">
+                                {{ act.title }}
+                            </h3>
+                            
+                            <!-- Stripping HTML for excerpt -->
+                            <div class="text-gray-500 text-xs lg:text-sm leading-relaxed mb-8 line-clamp-3 font-medium overflow-hidden" 
+                                v-text="stripHtml(act.description)">
+                            </div>
+                            
+                            <div class="mt-auto pt-6 border-t border-gray-50">
+                                <Link :href="`/activity/${act.slug}`" class="inline-flex items-center gap-2 text-[10px] font-black text-[#004182] uppercase tracking-[0.2em] group/btn">
+                                    Read Article 
+                                    <i class="bi bi-arrow-right transition-transform group-hover/btn:translate-x-2"></i>
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- 5. Departments at SEEO Section -->
+        <section class="py-32 bg-[#004182] relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 border-4 border-[#FFD700]/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div class="max-w-7xl mx-auto px-6 relative z-10">
+                <div class="text-center mb-16 lg:mb-20">
+                    <h2 class="text-white font-black text-3xl lg:text-6xl mb-6 uppercase tracking-tight">Our <span class="text-[#FFD700]">Departments</span></h2>
+                    <p class="text-white/60 text-base lg:text-lg font-medium max-w-2xl mx-auto">Sinergi departemen yang menjalankan roda organisasi SEEO secara profesional.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                    <div v-for="(dept, name) in departments" :key="name" class="bg-white/5 backdrop-blur-xl p-8 lg:p-10 rounded-[2rem] lg:rounded-[3rem] border border-white/10 hover:border-[#FFD700]/50 transition-all group flex flex-col h-full">
+                        <div class="w-14 h-14 lg:w-16 lg:h-16 bg-[#FFD700] text-[#004182] rounded-2xl flex items-center justify-center mb-6 lg:mb-8 shadow-lg group-hover:scale-110 transition-transform">
+                            <i :class="getDeptIcon(name)" class="text-xl lg:text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg lg:text-xl font-black text-white mb-4 uppercase tracking-tight">{{ name }}</h4>
+                        <p class="text-white/60 text-xs lg:text-sm leading-relaxed mb-8">{{ getDeptDesc(name) }}</p>
+                        
+                        <div class="mt-auto flex items-center justify-between border-t border-white/5 pt-6">
+                            <div class="flex items-center gap-2 text-[10px] font-black text-[#FFD700] uppercase tracking-widest">
+                                <i class="bi bi-people-fill"></i> {{ dept.length }} Staff
+                            </div>
+                            <Link href="/structure" class="text-[9px] font-black text-white uppercase tracking-[0.2em] hover:text-[#FFD700] transition-colors">
+                                View Team <i class="bi bi-chevron-right ml-1"></i>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12 lg:mt-20 text-center">
+                    <Link href="/structure" class="inline-block bg-white text-[#004182] px-8 py-3.5 lg:px-10 lg:py-4 rounded-full font-black text-[10px] lg:text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-[#FFD700] hover:scale-105 transition-all">
+                        See All SEEO Staff <i class="bi bi-arrow-right-short ml-2"></i>
+                    </Link>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Video Profile Section -->
+        <section class="py-20 lg:py-32 bg-white">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-12 lg:mb-16">
+                    <h2 class="text-[#004182] font-black text-4xl lg:text-5xl mb-6 uppercase tracking-tight">Profile <span class="text-[#FFD700]">Video</span></h2>
+                    <p class="text-gray-500 font-medium">Visualisasi perjalanan dan semangat kami dalam satu video profil.</p>
+                </div>
+                <div class="relative aspect-video rounded-[2rem] lg:rounded-[4rem] overflow-hidden shadow-2xl group border-4 lg:border-8 border-gray-50">
+                    <div class="absolute inset-0 bg-[#004182]/40 z-10 group-hover:bg-[#004182]/20 transition-all"></div>
+                    <img :src="'/images/assets/hero.png'" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 flex items-center justify-center z-20">
+                        <button class="w-16 h-16 lg:w-24 lg:h-24 bg-[#FFD700] text-[#004182] rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform ring-4 lg:ring-8 ring-white/20">
+                            <i class="bi bi-play-fill text-3xl lg:text-5xl translate-x-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. CTA for Contact -->
+        <section class="py-20 lg:py-24 bg-[#004182] relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute bottom-10 left-10 w-64 h-64 lg:w-96 lg:h-96 border-[10px] lg:border-[20px] border-[#FFD700] rounded-full -translate-x-1/2 translate-y-1/2"></div>
+            </div>
+            <div class="max-w-4xl mx-auto px-6 text-center relative z-10">
+                <h2 class="text-3xl lg:text-6xl font-black text-white mb-8 lg:mb-10 leading-tight uppercase tracking-tight">
+                    Start Your <span class="text-[#FFD700]">Journey</span> <br> With Us
+                </h2>
+                <p class="text-white/70 text-base lg:text-lg mb-10 lg:mb-12 font-medium max-w-2xl mx-auto">
+                    Apakah Anda memiliki pertanyaan, ingin menjalin kemitraan, atau tertarik bergabung dalam perjalanan kami? Kami selalu terbuka untuk kolaborasi baru.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+                    <Link href="/contact" class="w-full sm:w-auto bg-[#FFD700] text-[#004182] px-8 py-3.5 lg:px-12 lg:py-5 rounded-full font-black text-sm lg:text-lg shadow-2xl hover:scale-105 transition-all uppercase tracking-widest text-center">Hubungi Kami</Link>
+                    <a href="mailto:seeoftunsoed@gmail.com" class="text-white font-bold text-xs lg:text-base flex items-center gap-3 hover:text-[#FFD700] transition-colors">
+                        <i class="bi bi-envelope-at text-xl lg:text-2xl"></i> seeoftunsoed@gmail.com
+                    </a>
+                </div>
+            </div>
+        </section>
+
     </PublicLayout>
 </template>
 
 <script setup>
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
-// Fallback logic for generic images assuming Laravel's internal asset structure
-const logoSrc = ref('/storage/images/misc/logo.png');
-const fallbackLogo = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbGw9JyNlMmU4ZjAnLz48dGV4dCB4PSc1MCUnIHk9JzUwJScgZmlsbD0nI2EwYWJjMCcgZm9udC1zaXplPScxNScgZm9udC1mYW1pbHk9J3NhbnMtc2VyaWYnIGFsaWdubWVudC1iYXNlbGluZT0nbWlkZGxlJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJz5TQU1QTEUgSU1BR0U8L3RleHQ+PC9zdmc+';
+const props = defineProps({
+    structures: { type: Array, default: () => [] },
+    activities: { type: Array, default: () => [] },
+    companyContents: { type: Array, default: () => [] },
+    activeSeminars: { type: Array, default: () => [] },
+});
 
+const logoSrc = ref('/images/assets/logo.png');
+
+// Helper to strip HTML for excerpt
+const stripHtml = (html) => {
+    if (!html) return '';
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
+};
+
+const formatDate = (dateStr) => {
+    if (!dateStr) return 'No Date';
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+};
+
+// Group departments from structures
+const departments = computed(() => {
+    const groups = {};
+    const members = props.structures.filter(s => !s.is_executive);
+    members.forEach(m => {
+        const dept = m.department_name || 'CEO Internal';
+        if (!groups[dept]) groups[dept] = [];
+        groups[dept].push(m);
+    });
+    return groups;
+});
+
+const getDeptIcon = (name) => {
+    const n = name.toLowerCase();
+    if (n.includes('ceo')) return 'bi bi-person-workspace';
+    if (n.includes('marketing')) return 'bi bi-megaphone-fill';
+    if (n.includes('production')) return 'bi bi-box-seam-fill';
+    if (n.includes('finance')) return 'bi bi-cash-stack';
+    if (n.includes('hrd')) return 'bi bi-people-fill';
+    if (n.includes('business')) return 'bi bi-graph-up-arrow';
+    return 'bi bi-briefcase-fill';
+};
+
+const getDeptDesc = (name) => {
+    const n = name.toLowerCase();
+    if (n.includes('ceo')) return 'Bertanggung jawab atas koordinasi internal dan manajemen operasional harian organisasi.';
+    if (n.includes('marketing')) return 'Mengelola strategi branding, promosi, dan hubungan media untuk seluruh lini bisnis SEEO.';
+    if (n.includes('production')) return 'Fokus pada pengembangan produk, kontrol kualitas, dan manajemen rantai pasok bisnis.';
+    if (n.includes('finance')) return 'Mengatur administrasi keuangan, budgeting, dan pelaporan profitabilitas organisasi.';
+    if (n.includes('hrd')) return 'Mengelola pengembangan sumber daya manusia dan menjaga budaya kerja profesional.';
+    if (n.includes('business')) return 'Mengeksplorasi peluang kemitraan baru dan pengembangan ekspansi model bisnis.';
+    return 'Mendukung kelancaran operasional organisasi melalui tugas-tugas departemen spesifik.';
+};
 </script>
 
 <style scoped>
-/* 
-  Kini seluruh styling mengandalkan utility classes Tailwind murni yang minimalis.
-  Layout dibuat datar (flat architecture), shadow menggunakan pendekatan soft-shadow
-  yang ramah di mata, background yang terang (putih/slate-50),
-  serta menghilangkan semua micro-animation AI/berlebihan yang tidak esensial.
-*/
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+    animation: fade-in 1s ease-out forwards;
+}
 </style>

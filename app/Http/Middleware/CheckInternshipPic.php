@@ -38,8 +38,8 @@ class CheckInternshipPic
             return $next($request);
         }
 
-        // 3. CEO (roles_id = 1) selalu bisa akses
-        if ($user->roles_id === 1 || is_super_admin($user)) {
+        // 3. CEO (roles_id = 1) dan Intern PIC (15) selalu bisa akses
+        if ($user->roles_id === 1 || $user->roles_id === 15 || is_super_admin($user)) {
             Log::info('User is CEO, access granted');
             return $next($request);
         }

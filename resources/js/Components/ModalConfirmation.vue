@@ -23,7 +23,15 @@ function showModal(route, message) {
 
 function handleSubmitConfirmation(route) {
     form_confirmation.post(route, {
-        onSuccess: () => hideModal(),
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            hideModal();
+            // Force a reload of the current page data to ensure reactivity
+            import("@inertiajs/vue3").then((m) => {
+                m.router.reload({ preserveScroll: true, preserveState: true });
+            });
+        },
         onError: (e) => {
             console.error("submission error: " + e);
         },

@@ -3,8 +3,6 @@
 use App\Models\User;
 use App\Models\Role;
 
-uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
-
 // ============================================================
 // DASHBOARD
 // ============================================================
@@ -12,16 +10,16 @@ uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
 describe('Dashboard', function () {
     test('staff can access SEEO dashboard', function () {
         $user = User::factory()->create(['roles_id' => 1]); // CEO
-        $this->actingAs($user)->get('/seeo/dashboard')->assertStatus(200);
+        $this->actingAs($user)->get('/seeo/staff/dashboard')->assertStatus(200);
     });
 
     test('guest is redirected from dashboard to login', function () {
-        $this->get('/seeo/dashboard')->assertRedirect('/login');
+        $this->get('/seeo/staff/dashboard')->assertRedirect('/login');
     });
 
     test('user without role is blocked from staff dashboard', function () {
         $user = User::factory()->create(['roles_id' => null]);
-        $this->actingAs($user)->get('/seeo/dashboard')->assertStatus(403);
+        $this->actingAs($user)->get('/seeo/staff/dashboard')->assertStatus(403);
     });
 });
 
@@ -36,7 +34,7 @@ describe('Billboard', function () {
     });
 
     test('CEO can add text billboard', function () {
-        $response = $this->post('/billboard/add', [
+        $response = $this->post('/seeo/staff/billboard/add', [
             'billboard_title'    => 'Pengumuman Penting',
             'billboard_typeText' => '1',
             'billboard_text'     => 'Rapat mingguan pukul 14.00 WIB',
@@ -48,14 +46,14 @@ describe('Billboard', function () {
     });
 
     test('billboard creation fails without title', function () {
-        $this->post('/billboard/add', [
+        $this->post('/seeo/staff/billboard/add', [
             'billboard_typeText' => '1',
             'billboard_text'     => 'Isi teks',
         ])->assertSessionHasErrors('billboard_title');
     });
 
     test('billboard creation fails without selecting type', function () {
-        $response = $this->post('/billboard/add', [
+        $response = $this->post('/seeo/staff/billboard/add', [
             'billboard_title' => 'Judul',
         ]);
         // No type selected → warning notif
@@ -64,7 +62,7 @@ describe('Billboard', function () {
     });
 
     test('text billboard requires text when type is text', function () {
-        $this->post('/billboard/add', [
+        $this->post('/seeo/staff/billboard/add', [
             'billboard_title'    => 'Judul',
             'billboard_typeText' => '1',
             // billboard_text missing
@@ -78,14 +76,14 @@ describe('Billboard', function () {
             'text'  => 'Isi pengumuman',
         ]);
 
-        $response = $this->post("/billboard/delete/{$billboard->id}");
+        $response = $this->post("/seeo/staff/billboard/delete/{$billboard->id}");
 
         $response->assertRedirect();
         $this->assertSoftDeleted('billboard', ['id' => $billboard->id]);
     });
 
     test('delete non-existent billboard returns warning', function () {
-        $response = $this->post('/billboard/delete/9999');
+        $response = $this->post('/seeo/staff/billboard/delete/9999');
 
         $response->assertRedirect();
         $response->assertSessionHas('notif.type', 'warning');
@@ -103,7 +101,7 @@ describe('SEEO Post', function () {
     });
 
     test('staff can add a post', function () {
-        $response = $this->post('/dashboard/post/add', [
+        $response = $this->post('/seeo/staff/dashboard/post/add', [
             'post_text' => 'Ini adalah post baru dari staff',
         ]);
 
@@ -116,11 +114,11 @@ describe('SEEO Post', function () {
     });
 
     test('post creation fails without text', function () {
-        $this->post('/dashboard/post/add', [])->assertSessionHasErrors('post_text');
+        $this->post('/seeo/staff/dashboard/post/add', [])->assertSessionHasErrors('post_text');
     });
 
     test('post text cannot exceed 255 characters', function () {
-        $this->post('/dashboard/post/add', [
+        $this->post('/seeo/staff/dashboard/post/add', [
             'post_text' => str_repeat('a', 256),
         ])->assertSessionHasErrors('post_text');
     });
@@ -131,18 +129,18 @@ describe('SEEO Post', function () {
             'text'    => 'Post yang akan dihapus',
         ]);
 
-        $response = $this->post("/dashboard/post/remove/{$post->id}");
+        $response = $this->post("/seeo/staff/dashboard/post/remove/{$post->id}");
         $response->assertRedirect();
         $this->assertSoftDeleted('post', ['id' => $post->id]);
     });
 
     test('deleting non-existent post returns warning', function () {
-        $response = $this->post('/dashboard/post/remove/9999');
+        $response = $this->post('/seeo/staff/dashboard/post/remove/9999');
         $response->assertSessionHas('notif.type', 'warning');
     });
 
     test('anonymous post flag is stored correctly', function () {
-        $this->post('/dashboard/post/add', [
+        $this->post('/seeo/staff/dashboard/post/add', [
             'post_text'     => 'Post anonim',
             'post_username' => 'on',
         ]);

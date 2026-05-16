@@ -14,7 +14,7 @@
   --color-slate-500: #64748b; /* Teks Body/Muted */
   --color-slate-200: #e2e8f0; /* Garis/Border */
   --color-slate-100: #f1f5f9; /* Latar Belakang Section */
-  --color-slate-50: #f8fafc;   /* Latar Belakang Utama */
+  --color-slate-50: #f7f7ff;   /* Latar Belakang Utama */
 
   /* Tipografi */
   /* Anda bisa menambahkan Google Fonts di <head> app.blade.php jika mau */

@@ -35,8 +35,8 @@ class CheckInternshipAccess
         ]);
 
         // 2. Definisi role yang diizinkan akses:
-        // 1 = CEO, 5 = Co-CEO, 6 = HR Manager
-        $allowedRoles = [1, 5, 6, 99]; // CEO, Co-CEO, HR Manager (+ Super Admin bypass)
+        // 1 = CEO, 5 = Co-CEO, 6 = HR Manager, 15 = Intern PIC
+        $allowedRoles = [1, 5, 6, 15, 99]; // CEO, Co-CEO, HR Manager, Intern PIC (+ Super Admin bypass)
         
         // 3. Cek apakah user memiliki role yang diizinkan
         // Super admin bypass

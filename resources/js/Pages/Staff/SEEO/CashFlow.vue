@@ -51,7 +51,7 @@ const form_cash_out_filter = useForm({
 });
 
 function handleAddCashIn() {
-    form_add_cash_in.post(route("cashIn.add"), {
+    form_add_cash_in.post("/seeo/staff/cash_in_item/item/add", {
         onSuccess: () => {
             showAddCashInModal(false);
             form_add_cash_in.reset();
@@ -72,7 +72,7 @@ function handleCashInFilter(category) {
                 : "asc"
             : "desc";
     form_cash_in_filter.category = category;
-    form_cash_in_filter.post(route("cashIn.filter"));
+    form_cash_in_filter.post("/seeo/staff/cashflow/in");
 }
 
 function handleCashOutFilter(category) {
@@ -83,7 +83,7 @@ function handleCashOutFilter(category) {
                 : "asc"
             : "desc";
     form_cash_out_filter.category = category;
-    form_cash_out_filter.post(route("cashOut.filter"));
+    form_cash_out_filter.post("/seeo/staff/cashflow/out");
 }
 
 const handleFileAddCashIn = (event) => {
@@ -439,7 +439,7 @@ watch(
                                             </div>
                                             <div class="d-flex mt-2">
                                                 <span
-                                                    class="text-primary border-end border-secondary-subtle border-3 pe-3 me-3 my-auto"
+                                                    class="text-primary pe-3 me-3 my-auto"
                                                     >{{ "Filter" }}</span
                                                 >
                                                 <button
@@ -582,10 +582,7 @@ watch(
                                                                         class="text-decoration-none btn btn-sm btn-outline-secondary border-0 my-auto"
                                                                         @click="
                                                                             confirmation(
-                                                                                route(
-                                                                                    'cashIn.delete',
-                                                                                    item.id
-                                                                                ),
+                                                                                `/seeo/staff/cash_in_item/item/delete/${item.id}`,
                                                                                 'Please confirm to delete ' +
                                                                                     item.name +
                                                                                     ' from Cash In item list.'
@@ -634,10 +631,7 @@ watch(
                                                                         class="btn btn-sm btn-outline-danger border-0"
                                                                         @click="
                                                                             confirmation(
-                                                                                route(
-                                                                                    'cashIn.validate',
-                                                                                    item.id
-                                                                                ),
+                                                                                `/seeo/staff/cash_in_item/item/validate/${item.id}`,
                                                                                 'Click the button to confirm that ' +
                                                                                     item.name +
                                                                                     ' price is valid for ' +
@@ -731,7 +725,7 @@ watch(
                                             </div>
                                             <div class="d-flex mt-2">
                                                 <span
-                                                    class="text-primary border-end border-secondary-subtle border-3 pe-3 me-3 my-auto"
+                                                    class="text-primary pe-3 me-3 my-auto"
                                                     >{{ "Filter" }}</span
                                                 >
                                                 <button
@@ -836,10 +830,7 @@ watch(
                                                                     <a
                                                                         class="btn btn-sm btn-outline-primary border-0 text-decoration-none py-0 d-flex"
                                                                         :href="
-                                                                            route(
-                                                                                'department',
-                                                                                item.department_id
-                                                                            )
+                                                                            `/seeo/staff/department/${item.department_id}`
                                                                         "
                                                                     >
                                                                         <i

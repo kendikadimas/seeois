@@ -20,7 +20,7 @@ class AddHRManagerRoleSeeder extends Seeder
         echo "\n========== ADDING HR MANAGER ROLE ==========\n";
 
         // Option 1: Update existing user to HR Manager role
-        // This is the SAFE approach - assign existing user to role 5
+        // This is the SAFE approach - assign existing user to role 6
 
         echo "\n1️⃣ CURRENT USERS:\n";
         $users = DB::table('users')->whereIn('roles_id', [4, 5, 6])->get();
@@ -31,8 +31,8 @@ class AddHRManagerRoleSeeder extends Seeder
             foreach ($users as $user) {
                 $roleName = match($user->roles_id) {
                     4 => 'Co-CEO',
-                    5 => 'HR Manager',
-                    6 => 'PIC Internship',
+                    5 => 'Interns',
+                    6 => 'HR Manager',
                     default => 'Unknown'
                 };
                 echo "   - ID: {$user->id}, Name: {$user->name}, Role: {$user->roles_id} ({$roleName})\n";
@@ -77,8 +77,8 @@ class AddHRManagerRoleSeeder extends Seeder
                 2 => 'Financial Staff',
                 3 => 'Operational Staff',
                 4 => 'Co-CEO',
-                5 => 'HR Manager',
-                6 => 'PIC Internship',
+                5 => 'Interns',
+                6 => 'HR Manager',
                 default => 'Role ' . $candidate->roles_id
             };
             echo "   - ID: {$candidate->id}, Name: {$candidate->name}, Current Role: {$roleName}\n";

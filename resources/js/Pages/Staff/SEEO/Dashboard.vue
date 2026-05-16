@@ -54,8 +54,10 @@ function handleFormErrors(responseErrors, formErrors) {
      console.error("Form submission failed:", errorsToShow);
      if (toastNotifRef.value) {
          for (const key in errorsToShow) {
-             const message = Array.isArray(errorsToShow[key]) ? errorsToShow[key][0] : errorsToShow[key];
-             toastNotifRef.value.showToast('warning', message);
+             const messages = Array.isArray(errorsToShow[key]) ? errorsToShow[key] : [errorsToShow[key]];
+             messages.forEach(msg => {
+                 toastNotifRef.value.showToast('warning', msg);
+             });
          }
      }
 }
@@ -64,25 +66,37 @@ function handleSubmitBillboard() {
     if (!form_billboard.billboard_typeText && !form_billboard.billboard_typeImage) {
         toastNotifRef.value?.showToast('warning', 'Pilih minimal satu tipe billboard.'); return;
     }
-    form_billboard.post(route("billboard.add"), {
+    form_billboard.post("/seeo/staff/billboard/add", {
         preserveScroll: true,
         onSuccess: () => { form_billboard.reset(); modal_billboard_instance.value?.hide(); toastNotifRef.value?.showToast('info','Billboard ditambahkan.'); },
         onError: (errors) => { handleFormErrors(usePage().props.errors, form_billboard.errors); }
     });
 }
-function handleFileBillboard(event) { form_billboard.billboard_image = event.target.files[0] || null; }
+function handleFileBillboard(event) { 
+    const file = event.target.files[0];
+    if (file && file.size > 2 * 1024 * 1024) {
+        toastNotifRef.value?.showToast('warning', 'File terlalu besar! Batas upload server Anda saat ini adalah 2MB.');
+    }
+    form_billboard.billboard_image = file || null; 
+}
 
 function handleSubmitAttachment() {
-    form_attachment.post(route("attachment.add"), {
+    form_attachment.post("/seeo/staff/attachment/add", {
         preserveScroll: true,
         onSuccess: () => { form_attachment.reset(); modal_attachment_instance.value?.hide(); toastNotifRef.value?.showToast('info', 'Attachment ditambahkan.'); },
         onError: (errors) => { handleFormErrors(usePage().props.errors, form_attachment.errors); }
     });
 }
-function handleFileAttachment(event) { form_attachment.attachment_document = event.target.files[0] || null; }
+function handleFileAttachment(event) { 
+    const file = event.target.files[0];
+    if (file && file.size > 2 * 1024 * 1024) {
+        toastNotifRef.value?.showToast('warning', 'File terlalu besar! Batas upload server Anda saat ini adalah 2MB.');
+    }
+    form_attachment.attachment_document = file || null; 
+}
 
 function handleSubmitPost() {
-    form_post.post(route("post.add"), {
+    form_post.post("/seeo/staff/dashboard/post/add", {
         preserveScroll: true,
         onSuccess: () => { form_post.reset(); modal_post_instance.value?.hide(); toastNotifRef.value?.showToast('info', 'Post ditambahkan.'); },
         onError: (errors) => { handleFormErrors(usePage().props.errors, form_post.errors); }
@@ -179,7 +193,7 @@ onMounted(async () => {
                                         <div class="carousel-inner rounded-3">
                                              <div v-for="(billboard, index) in billboard_list" :key="billboard.id" :class="['carousel-item', index === 0 ? 'active' : '']">
                                                 <div class="billboard-wrapper position-relative">
-                                                    <button v-if="auth_user.roles_id == 1 || auth_user.roles_id === 99" class="btn btn-danger btn-sm rounded-circle p-0 lh-1 position-absolute m-2" style="z-index: 11; width: 28px; height: 28px; top: 0.35rem; right: 3rem;" @click="confirmation(route('billboard.remove', { id: billboard.id }), `Hapus billboard '${billboard.title}'?`)"> <i class="bi bi-x-lg small"></i> </button>
+                                                    <button v-if="auth_user.roles_id == 1 || auth_user.roles_id === 99" class="btn btn-danger btn-sm rounded-circle p-0 lh-1 position-absolute m-2" style="z-index: 11; width: 28px; height: 28px; top: 0.35rem; right: 3rem;" @click="confirmation(`/seeo/staff/billboard/delete/${billboard.id}`, `Hapus billboard '${billboard.title}'?`)"> <i class="bi bi-x-lg small"></i> </button>
                                                     <img v-if="billboard.image && billboard.full_image_url" :src="billboard.full_image_url" alt="Billboard" @error="$event.target.style.display='none'"/>
                                                     <div v-else-if="!billboard.image && billboard.text" class="d-flex flex-column justify-content-center align-items-center text-center p-4 bg-light w-100 h-100"> <h3 class="mb-2">{{ billboard.title }}</h3> <p class="mb-0">{{ billboard.text }}</p> </div>
                                                 </div>
@@ -193,7 +207,7 @@ onMounted(async () => {
                             <div class="card shadow-sm grow rounded-3 border-0">
                                 <div class="card-header d-flex justify-content-between align-items-center py-2 bg-white border-0 border-bottom rounded-top">
                                     <h5 class="mb-0 fs-6 fw-medium text-secondary"> <i class="bi bi-paperclip me-2"></i> Attachments </h5>
-                                    <button v-if="auth_user.roles_id === 1 || auth_user.roles_id === 99" class="btn btn-outline-success btn-sm rounded-circle p-0 lh-1" style="width: 28px; height: 28px;" @click="showModalAttachment" title="Tambah Attachment"> <i class="bi bi-plus-lg"></i> </button>
+                                    <button v-if="auth_user.roles_id === 1 || auth_user.roles_id === 8 || auth_user.roles_id === 99" class="btn btn-outline-success btn-sm rounded-circle p-0 lh-1" style="width: 28px; height: 28px;" @click="showModalAttachment" title="Tambah Attachment"> <i class="bi bi-plus-lg"></i> </button>
                                 </div>
                                 <div class="card-body pt-2">
                                     <div class="row g-3">
@@ -203,7 +217,7 @@ onMounted(async () => {
                                                 <div v-if="document_list.length === 0" class="list-group-item text-muted text-center py-3 border-0 fst-italic"> <small>No documents.</small> </div>
                                                 <div v-else v-for="document in document_list" :key="document.id" class="list-group-item d-flex justify-content-between align-items-center px-0 py-1 border-bottom">
                                                     <a :href="`/storage/document/attachment/${document.document}`" class="text-decoration-none text-dark text-truncate me-2" download :title="document.title"> {{ document.title }} </a>
-                                                    <button v-if="auth_user.roles_id === 1 || auth_user.roles_id === 99" class="btn btn-outline-danger border-0 btn-sm py-0 px-1" @click="confirmation(route('attachment.remove', { id: document.id }), `Hapus attachment '${document.title}'?`)"> <i class="bi bi-trash3"></i> </button>
+                                                    <button v-if="auth_user.roles_id === 1 || auth_user.roles_id === 8 || auth_user.roles_id === 99" class="btn btn-outline-danger border-0 btn-sm py-0 px-1" @click="confirmation(`/seeo/staff/attachment/delete/${document.id}`, `Hapus attachment '${document.title}'?`)"> <i class="bi bi-trash3"></i> </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -213,7 +227,7 @@ onMounted(async () => {
                                                  <div v-if="link_list.length === 0" class="list-group-item text-muted text-center py-3 border-0 fst-italic"> <small>No links.</small> </div>
                                                 <div v-else v-for="link in link_list" :key="link.id" class="list-group-item d-flex justify-content-between align-items-center px-0 py-1 border-bottom">
                                                     <a :href="link.link" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-primary text-truncate me-2" :title="link.title"> {{ link.title }} </a>
-                                                    <button v-if="auth_user.roles_id === 1" class="btn btn-outline-danger border-0 btn-sm py-0 px-1" @click="confirmation( route('attachment.remove', { id: link.id }), 'Hapus \'' + link.title + '\'?' )"> <i class="bi bi-trash3"></i> </button>
+                                                    <button v-if="auth_user.roles_id === 1 || auth_user.roles_id === 8 || auth_user.roles_id === 99" class="btn btn-outline-danger border-0 btn-sm py-0 px-1" @click="confirmation(`/seeo/staff/attachment/delete/${link.id}`, 'Hapus \'' + link.title + '\'?')"> <i class="bi bi-trash3"></i> </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -237,7 +251,7 @@ onMounted(async () => {
                                         <div v-for="post in post_list" :key="post.id" class="post-card bg-light border rounded p-2 mb-2">
                                             <div class="d-flex justify-content-between align-items-start mb-1">
                                                 <div class="d-flex align-items-center text-truncate me-2">
-                                                    <img :src="getProfileImage(post.user)" alt="Avatar" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;" @error="$event.target.src='/storage/images/profile/example.png'"/>
+                                                    <img :src="post.full_profile_image_url || getProfileImage(post.user)" alt="Avatar" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;" @error="$event.target.src='/storage/images/profile/example.png'"/>
                                                     <div class="lh-sm">
                                                         <h6 class="mb-0 small fw-bold text-truncate" style="max-width: 150px;">{{ post.anonymus ? 'Anonymous' : post.user?.name }}</h6>
                                                         <small class="text-muted" style="font-size: 0.7rem;">{{ new Date(post.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short'}) }}</small>
@@ -245,7 +259,7 @@ onMounted(async () => {
                                                 </div>
                                                     <button v-if="auth_user.roles_id === 99 || auth_user.roles_id === 1 || auth_user.id == post.user_id"
                                                     class="btn btn-outline-danger border-0 btn-sm py-0 px-1 shrink-0"
-                                                    @click="confirmation( route('post.remove', { id: post.id }), 'Hapus post ini?' )">
+                                                    @click="confirmation(`/seeo/staff/dashboard/post/remove/${post.id}`, 'Hapus post ini?')">
                                                     <i class="bi bi-trash3 small"></i>
                                                 </button>
                                             </div>
@@ -343,7 +357,7 @@ onMounted(async () => {
 
     /* Container Konten Kanan */
     .dashboard-content {
-        background-color: #f8fafc; /* Warna latar belakang */
+        background-color: #f7f7ff; /* Warna latar belakang */
     }
 
     /* Tinggi Kolom dan Scroll Utama */

@@ -29,6 +29,7 @@ class Stand extends Model
         'place',
         'date',
         'pic_id',
+        'year_id',
         'menu_lock',
         'sale_validation',
         'expense',
@@ -90,7 +91,7 @@ class Stand extends Model
     /**
      * The expenses that belong to the stand.
      */
-    public function expense(): HasMany
+    public function expenseItems(): HasMany
     {
         return $this->hasMany(StandExpense::class);
     }

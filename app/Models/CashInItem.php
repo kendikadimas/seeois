@@ -27,6 +27,7 @@ class CashInItem extends Model
         'price',
         'financial_id',
         'reciept',
+        'year_id',
     ];
 
     /**

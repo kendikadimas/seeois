@@ -49,10 +49,6 @@ const default_selected_employee = {
     roles_id: 0,
 };
 
-const form_update_employee = useForm({
-    user_id: null,
-    roles_id: null,
-});
 
 const form_employee_filter = useForm({
     keyword: props.filter.staff.keyword,
@@ -90,19 +86,6 @@ function setSelectedEmployee(employee) {
     selected_employee.value = employee;
 }
 
-function handleUpdateEmployee() {
-    event.preventDefault();
-    form_update_employee.user_id = selected_employee.value.id;
-    console.log(form_update_employee);
-
-    form_update_employee.post(route("role.update"), {
-        onSuccess: () => {
-            form_update_employee.reset();
-        },
-        onError: (error) => console.error("update employee failed:", error),
-    });
-}
-
 function handleEmployeeFilter(category = null) {
     if (category) {
         form_employee_filter.order =
@@ -114,7 +97,7 @@ function handleEmployeeFilter(category = null) {
         form_employee_filter.category = category;
         form_employee_filter.keyword = null;
     }
-    form_employee_filter.post(route("role.filter"));
+    form_employee_filter.post("/seeo/staff/user");
 }
 
 function handleCustomerFilter(category = null) {
@@ -128,7 +111,7 @@ function handleCustomerFilter(category = null) {
         form_customer_filter.category = category;
         form_customer_filter.keyword = null;
     }
-    form_customer_filter.post(route("unemployee.filter"));
+    form_customer_filter.post("/seeo/staff/unemployee");
 }
 
 function confirmation(route, message) {
@@ -249,10 +232,7 @@ watch(
                                             <a
                                                 :href="
                                                     selected_employee.id > 0
-                                                        ? route(
-                                                              'profile.edit',
-                                                              selected_employee.id
-                                                          )
+                                                        ? `/seeo/staff/profile/${selected_employee.id}`
                                                         : ''
                                                 "
                                                 class="text-dark scroll-x-hidden d-block text-decoration-none"
@@ -304,64 +284,23 @@ watch(
                                             >
                                                 {{ "Role" }}
                                             </span>
-                                            <span
-                                                class="d-block"
-                                                v-if="
-                                                    !(selected_employee?.id > 0)
-                                                "
-                                            >
-                                                {{ " - " }}
-                                            </span>
-                                            <span
-                                                class="d-block"
-                                                v-if="
-                                                    auth_user.roles_id !== 1 &&
-                                                    selected_employee?.id > 0
-                                                "
-                                            >
-                                                {{
-                                                    selected_employee.roles.name
-                                                }}
-                                            </span>
                                             <div
-                                                class="d-flex"
-                                                v-if="
-                                                    (auth_user.roles_id == 1 || auth_user.roles_id == 99) &&
-                                                    selected_employee?.id > 0
-                                                "
+                                                class="d-flex align-items-center mt-1"
+                                                v-if="selected_employee?.id > 0"
                                             >
-                                                <v-select
-                                                    class="bg-white text-nowrap w-100"
-                                                    :options="roles"
-                                                    label="name"
-                                                    :reduce="(role) => role.id"
-                                                    v-model="
-                                                        form_update_employee.roles_id
-                                                    "
-                                                    placeholder="Select role"
-                                                />
-                                                <button
-                                                    @click="
-                                                        handleUpdateEmployee
-                                                    "
-                                                    class="btn btn-outline-primary border-0 py-0"
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-bold">
+                                                    {{ selected_employee.roles?.name || '-' }}
+                                                </span>
+                                                <a 
+                                                    v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
+                                                    :href="'/seeo/staff/ceo/panel'" 
+                                                    class="btn btn-sm btn-link text-decoration-none ms-auto"
+                                                    title="Manage in CEO Panel"
                                                 >
-                                                    <i
-                                                        class="bi bi-check-lg"
-                                                    ></i>
-                                                </button>
+                                                    <i class="bi bi-gear-fill me-1"></i>
+                                                    CEO Panel
+                                                </a>
                                             </div>
-                                            <InputError
-                                                v-if="
-                                                    (auth_user.roles_id == 1 || auth_user.roles_id == 99) &&
-                                                    selected_employee?.id > 0
-                                                "
-                                                :message="
-                                                    form_update_employee.errors
-                                                        .roles_id
-                                                "
-                                                class="mt-2"
-                                            />
                                         </div>
                                     </div>
                                     <div
@@ -374,10 +313,7 @@ watch(
                                         <button
                                             @click="
                                                 confirmation(
-                                                    route(
-                                                        'role.remove',
-                                                        selected_employee.id
-                                                    ),
+                                                    `/seeo/staff/user/role/remove/${selected_employee.id}`,
                                                     'Are you sure want to remove ' +
                                                         selected_employee.name +
                                                         ' from SEEO Staff?'
@@ -463,26 +399,16 @@ watch(
                                             </span>
                                         </div>
                                     </div>
-                                    <button
-                                        v-if="
-                                            (auth_user.roles_id == 1 || auth_user.roles_id == 99) &&
-                                            selected_customer?.id > 0
-                                        "
-                                        @click="
-                                            confirmation(
-                                                route(
-                                                    'employee.add',
-                                                    selected_customer.id
-                                                ),
-                                                'Are you sure want to recruit ' +
-                                                    selected_customer.name +
-                                                    ' to SEEO Staff?'
-                                            )
-                                        "
-                                        class="btn btn-sm btn-primary w-100 text-decoration-none mt-2"
+                                    <div 
+                                        v-if="(auth_user.roles_id == 1 || auth_user.roles_id == 99) && selected_customer?.id > 0"
+                                        class="alert alert-info mt-3 mb-0 py-2 border-0 shadow-none d-flex align-items-center"
                                     >
-                                        {{ "Recruit" }}
-                                    </button>
+                                        <i class="bi bi-info-circle-fill me-2"></i>
+                                        <small>Gunakan <b>CEO Panel</b> untuk merekrut staff baru.</small>
+                                        <a :href="'/seeo/staff/ceo/panel'" class="btn btn-sm btn-primary ms-auto">
+                                            CEO Panel
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -516,7 +442,7 @@ watch(
                                     </div>
                                     <div class="d-flex mt-2">
                                         <span
-                                            class="text-primary border-end border-secondary-subtle border-3 pe-3 me-3 my-auto"
+                                            class="text-primary pe-3 me-3 my-auto"
                                             >{{ "Filter" }}</span
                                         >
                                         <button
@@ -620,7 +546,7 @@ watch(
                                                     "
                                                 >
                                                     <span
-                                                        class="me-2 border-end border-secondary-subtle border-2 text-secondary fw-normal pe-2"
+                                                        class="me-2 text-secondary fw-normal pe-2"
                                                         >{{
                                                             employees.indexOf(
                                                                 employee
@@ -649,11 +575,7 @@ watch(
                                                         <span
                                                             class="text-nowrap"
                                                             >{{
-                                                                employee.roles_id
-                                                                    ? employee
-                                                                          .roles
-                                                                          .name
-                                                                    : ""
+                                                                employee.roles?.name || ""
                                                             }}</span
                                                         >
                                                     </span>
@@ -696,7 +618,7 @@ watch(
                                     </div>
                                     <div class="d-flex mt-2">
                                         <span
-                                            class="text-primary border-end border-secondary-subtle border-3 pe-3 me-3 my-auto"
+                                            class="text-primary pe-3 me-3 my-auto"
                                             >{{ "Filter" }}</span
                                         >
                                         <button
@@ -776,7 +698,7 @@ watch(
                                             >
                                                 <span class="d-flex">
                                                     <span
-                                                        class="mx-2 border-end border-secondary-subtle border-2 text-secondary pe-2"
+                                                        class="mx-2 text-secondary pe-2"
                                                         >{{
                                                             unemployees.indexOf(
                                                                 employee

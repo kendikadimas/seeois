@@ -21,6 +21,12 @@ class InternshipApplication extends Model
         'division_choice_2',
         'reason_choice_2',
         'willing_to_be_placed_elsewhere',
+        'internship_year',
+        'status',
+        'reviewed_by',
+        'reviewed_at',
+        'decision_note',
+        'announcement_sent_at',
         'ip_address',
         'program_id',
         'user_id',
@@ -28,6 +34,8 @@ class InternshipApplication extends Model
     
     protected $casts = [
         'willing_to_be_placed_elsewhere' => 'boolean',
+        'reviewed_at' => 'datetime',
+        'announcement_sent_at' => 'datetime',
     ];
 
     /**

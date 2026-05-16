@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\CompanyProfileController;
 use App\Http\Controllers\InternshipApplicationController;
+use App\Http\Controllers\PinnedDocController;
 use App\Http\Controllers\Shop\CustomerController;
 use App\Http\Controllers\Staff\SEEO\PayrollController;
 use App\Http\Controllers\Shop\ShopController;
@@ -15,6 +16,8 @@ use App\Http\Controllers\Staff\Business\GoodInsightController;
 use App\Http\Controllers\Staff\Business\GoodOrderController;
 use App\Http\Controllers\Staff\Business\GoodSaleController;
 use App\Http\Controllers\Staff\Business\InsightController;
+use App\Http\Controllers\Staff\Business\MenuBoardController;
+use App\Http\Controllers\Staff\Business\ProductionPanelController;
 use App\Http\Controllers\Staff\Business\SalesController;
 use App\Http\Controllers\Staff\Business\StandController;
 use App\Http\Controllers\Staff\Business\ExpenseReceiptController;
@@ -25,11 +28,20 @@ use App\Http\Controllers\Staff\SEEO\DepartmentController;
 use App\Http\Controllers\Staff\SEEO\DisbursementItemController;
 use App\Http\Controllers\Staff\SEEO\DisbursementLetterController;
 use App\Http\Controllers\Staff\SEEO\ExpenseItemController;
+use App\Http\Controllers\Staff\SEEO\OperatingPanelController;
 use App\Http\Controllers\Staff\SEEO\LogbookController;
 use App\Http\Controllers\Staff\SEEO\ProfileController;
 use App\Http\Controllers\Staff\SEEO\ProgramController;
 use App\Http\Controllers\Staff\SEEO\ContributionController;
+use App\Http\Controllers\Staff\SEEO\FinancePanelController;
+use App\Http\Controllers\Staff\SEEO\HrBirthdayController;
+use App\Http\Controllers\Staff\SEEO\IwpPanelController;
+use App\Http\Controllers\PublicRelation\SeminarRegistrationController;
+use App\Http\Controllers\Staff\SEEO\CeoPanelController;
+use App\Http\Controllers\Staff\Marketing\MarketingCmsController;
 use App\Http\Controllers\Staff\SEEO\UserController;
+use App\Http\Controllers\Staff\SEEO\YearController;
+use App\Http\Controllers\Staff\SEEO\SuperAdminController;
 use App\Http\Controllers\InternshipCertificateController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\StorageController;
@@ -50,8 +62,11 @@ Route::get('/storage/{path?}', [StorageController::class, 'show'])->where('path'
 Route::get('/', [CompanyProfileController::class, 'homepage'])->name('homepage');
 Route::get('/structure', [CompanyProfileController::class, 'structure'])->name('structure');
 Route::get('/activity', [CompanyProfileController::class, 'activity'])->name('activity');
+Route::get('/activity/{activity:slug}', [CompanyProfileController::class, 'activityDetail'])->name('activity.detail');
 Route::get('/contact', [CompanyProfileController::class, 'contact'])->name('contact');
 Route::get('/about', [CompanyProfileController::class, 'about'])->name('about');
+Route::get('/seminar/nasional/register/{event:slug}', [SeminarRegistrationController::class, 'create'])->name('seminar.registration.create');
+Route::post('/seminar/nasional/register/{event:slug}', [SeminarRegistrationController::class, 'store'])->name('seminar.registration.store');
 
 // Route::get('/', [WelcomeController::class, 'index'])->name('intro');
 Route::get('/bingo', function () {
@@ -64,16 +79,9 @@ Route::get('/google/auth/callback', [GoogleController::class, 'callback']);
 // Customer
 Route::get('/shop/home/{tab?}', [ShopController::class, 'index'])->name('shop');
 
-
-// Internship Applications
-// Access: CEO, Co-CEO, HR Manager, dan PIC Internship
-Route::middleware(['auth', 'verified', 'staff', 'internship.access'])->group(function () {
-    Route::get('/internship', [InternshipApplicationController::class, 'index'])->name('internship.applications.index');
-});
-
 // form daftar internship
-Route::get('/internship/register', [InternshipApplicationController::class, 'create'])->name('internship.create');
-Route::post('/internship/register', [InternshipApplicationController::class, 'store'])->name('internship.store');
+Route::get('/seeo/internship/register', [InternshipApplicationController::class, 'create'])->name('internship.create');
+Route::post('/seeo/internship/register', [InternshipApplicationController::class, 'store'])->name('internship.store');
 
 // Authenticated customer
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -87,37 +95,55 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/customer/voucher/redeem/{voucher_id}', [CustomerController::class, 'redeemVoucher'])->name('customer.redeem.voucher');
 });
 
-// Authenticated staff
-Route::middleware(['auth', 'verified', 'staff'])->group(function () {
+    // Backward-compatible stand detail redirect for old links
+    Route::get('/blaterian/foods/stand_detail/{id?}', function ($id = null) {
+        $path = '/seeo/staff/blaterian/foods/stand_detail' . ($id ? '/' . $id : '');
+        return redirect($path);
+    })->whereNumber('id');
 
-    // Google Drive
-    Route::get('/google-drive/auth', [GoogleDriveAuthController::class, 'redirect'])->name('google.drive.auth');
-    Route::get('/google-drive/callback', [GoogleDriveAuthController::class, 'callback'])->name('google.drive.callback');
+// Authenticated staff - Unified Group
+Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(function () {
+
+    // Internship Applications
+    // Access: CEO, Co-CEO, HR Manager, dan PIC Internship
+    Route::middleware(['internship.access'])->group(function () {
+        Route::get('/internship', [InternshipApplicationController::class, 'index'])->name('internship.applications.index');
+        Route::post('/internship/review/{internshipApplication}', [InternshipApplicationController::class, 'updateDecision'])->middleware('role:1,5,6,15,99')->name('internship.applications.decision');
+    });
+
+    // Super Admin Panel
+    Route::middleware(['role:99'])->group(function () {
+        Route::get('/super-admin', [SuperAdminController::class, 'index'])->name('super.admin.panel');
+        Route::post('/super-admin/google-drive', [SuperAdminController::class, 'saveConfig'])->name('super.admin.save_config');
+    });
 
     // SEEO Management
     Route::get('/profile/{id?}', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::post('/password/change', [ProfileController::class, 'changePassword'])->name('password.change');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [ProfileController::class, 'changePassword'])->name('password.change');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logbook/add/{id?}', [LogbookController::class, 'insertLog'])->name('logbook.add');
     Route::post('/logbook/delete/{id?}', [LogbookController::class, 'deleteLog'])->name('logbook.delete');
     Route::post('/logbook/validate/{id?}', [LogbookController::class, 'validateLog'])->name('logbook.validate');
-    Route::get('/seeo/dashboard/{advance?}', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/{advance?}', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/post/add', [DashboardController::class, 'addPost'])->name('post.add');
-    Route::get('/seeo/user', [UserController::class, 'index'])->name('role');
+    Route::get('/user', [UserController::class, 'index'])->name('role');
     Route::post('/user', [UserController::class, 'filterEmployee'])->name('role.filter');
+    Route::post('/user/role/update', [UserController::class, 'update'])->name('role.update');
+    Route::post('/user/role/remove/{id}', [UserController::class, 'delete'])->name('role.remove');
+    Route::post('/user/recruit/{id}', [UserController::class, 'addEmployee'])->name('employee.add');
     Route::post('/user/level/add', [UserController::class, 'addOrEditLevel'])->name('level.add.edit');
     Route::post('/payroll/balance/add', [UserController::class, 'setPayrollBalance'])->name('payroll.balance.add');
-    Route::get('/seeo/structural/{id?}', [DepartmentController::class, 'structural'])->name('structural');
+    Route::get('/structural/{id?}', [DepartmentController::class, 'structural'])->name('structural');
     Route::post('/structural', [DepartmentController::class, 'filterDepartment'])->name('structural.filter');
-    Route::get('/seeo/department/{id}', [DepartmentController::class, 'department'])->name('department');
+    Route::get('/department/{id}', [DepartmentController::class, 'department'])->name('department');
     Route::post('/unemployee', [UserController::class, 'filterUnmployee'])->name('unemployee.filter');
-    Route::get('/seeo/finance', [CashFlowController::class, 'index'])->name('finance');
-    Route::get('/seeo/finance_feature', [CashFlowController::class, 'feature'])->name('finance.feature');
-    Route::get('/seeo/contribution/{id}', [CashFlowController::class, 'showMyContribution'])->name('checkContribution');
+    Route::get('/finance', [CashFlowController::class, 'index'])->name('finance');
+    Route::get('/finance_feature', [CashFlowController::class, 'feature'])->name('finance.feature');
+    Route::get('/contribution/{id}', [CashFlowController::class, 'showMyContribution'])->name('checkContribution');
     Route::post('/cashflow/in', [CashFlowController::class, 'filterCashIn'])->name('cashIn.filter');
     Route::post('/cashflow/out', [CashFlowController::class, 'filterCashOut'])->name('cashOut.filter');
-    Route::get('/seeo/program/{id}', [ProgramController::class, 'program'])->name('program');
+    Route::get('/program/{id}', [ProgramController::class, 'program'])->name('program');
     Route::get('/program/{program_id}/logbook/{logbook_id}', [ProgramController::class, 'showMyLogbook'])->name('checkLogbook');
     Route::post('/program/expense/item/add/{id}', [ExpenseItemController::class, 'insertExpenseItem'])->name('program.expense.add');
     Route::post('/program/expense/item/delete/{id}', [ExpenseItemController::class, 'deleteExpenseItem'])->name('program.expense.delete');
@@ -149,15 +175,18 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
     Route::get('/blaterian/foods/balance/{default_tab?}/{refresh?}', [BlaterianFoodBalanceController::class, 'balance'])->name('food.balance');
     Route::get('/blaterian/foods/stand', [StandController::class, 'index'])->name('food.stand');
     Route::get('/blaterian/foods/stand_detail/{id?}', [StandController::class, 'stand'])->name('food.stand.detail');
-    // Alias/typo redirect: some links might mistakenly use the route name in path
+    
+    // Alias/typo redirect
     Route::get('/blaterian/foods/food.stand.detail/{id?}', function ($id = null) {
-        $path = '/blaterian/foods/stand_detail' . ($id ? '/' . $id : '');
+        $path = '/seeo/staff/blaterian/foods/stand_detail' . ($id ? '/' . $id : '');
         return redirect($path);
     });
+
     Route::get('/blaterian/goods/balance/{default_tab?}/{refresh?}', [BlaterianGoodBalanceController::class, 'balance'])->name('good.balance');
     Route::get('/blaterian/goods/product', [GoodController::class, 'product'])->name('good.product');
     Route::get('/blaterian/goods/product/detail/{id}', [GoodDetailController::class, 'detail'])->name('good.product.detail');
     Route::get('/blaterian/goods/insight/detail', [GoodInsightController::class, 'insight'])->name('good.insight');
+    
     Route::post('/food/stand/production/{stand_id}', [StandController::class, 'setProductionStaff'])->name('update.stand.production_staff');
     Route::post('/food/stand/cashier/{stand_id}', [StandController::class, 'setCashierStaff'])->name('update.stand.cashier_staff');
     Route::post('/food/stand/filter', [StandController::class, 'filterStand'])->name('food.stand.filter');
@@ -165,23 +194,28 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
     Route::post('/food/stand/expense/filter', [StandController::class, 'filterStandExpense'])->name('stand.expense.filter');
     Route::post('/food/stand/expense/add/{id}', [StandController::class, 'insertStandExpense'])->name('stand.expense.add');
     Route::post('/food/stand/expense/delete/{id}', [StandController::class, 'deleteStandExpenseItem'])->name('stand.expense.delete');
-    // Stream expense receipt image directly from Google Drive (always google disk)
+    
+    // Stream expense receipt
     Route::get('/food/stand/expense/receipt/{filename}', [ExpenseReceiptController::class, 'showExpenseReceipt'])
-        // Allow both patterns: SE<stand>_<expense>_receipt.webp (new) and SE<digits>_receipt.webp (legacy)
         ->where('filename', '(SE\d+_\d+_receipt\.webp|SE\d+_receipt\.webp)')
         ->name('stand.expense.receipt');
+        
     Route::post('/food/stand/menu/filter/{id}', [StandController::class, 'filterStandMenu'])->name('stand.menu.filter');
     Route::post('/food/stand/menu/add/{id}', [StandController::class, 'insertMenu'])->name('stand.menu.add');
     Route::post('/food/stand/menu/delete/{id}', [StandController::class, 'deleteMenu'])->name('stand.menu.delete');
     Route::post('/food/stand/menu/stock/update', [StandController::class, 'updateStock'])->name('stand.menu.stock.update');
     Route::post('/food/stand/menu/image/update/{id}', [StandController::class, 'updateImage'])->name('stand.menu.image.update');
     Route::post('/food/stand/menu/recipe/store/{menu_id}', [\App\Http\Controllers\Staff\Business\RecipeComponentController::class, 'store'])->name('stand.menu.recipe.store');
+    Route::post('/food/stand/menu/update/{id}', [\App\Http\Controllers\Staff\Business\StandController::class, 'updateMenu'])->name('stand.menu.update');
+    
     Route::post('/food/stand/sales/customer/add/{id}', [SalesController::class, 'insertCustomer'])->name('sale.customer.add');
     Route::post('/food/stand/sales/add/{id}', [SalesController::class, 'insertSale'])->name('stand.sale.add');
     Route::post('/food/stand/sales/filter', [SalesController::class, 'filterStandIncome'])->name('stand.income.filter');
     Route::post('/food/stand/sales/delete/{id}', [SalesController::class, 'deleteSale'])->name('stand.sale.delete');
+    
     Route::post('/shop/transaction/finish', [SalesController::class, 'finishTransaction'])->name('shop.transaction.finish');
     Route::post('/shop/transaction/cancel/{id}', [SalesController::class, 'cancelTransaction'])->name('shop.transaction.cancel');
+    
     Route::post('/good/balance/cash_in', [BlaterianGoodBalanceController::class, 'filterCashIn'])->name('good.balance.filter.cash_in');
     Route::post('/good/balance/cash_out', [BlaterianGoodBalanceController::class, 'filterCashOut'])->name('good.balance.filter.cash_out');
     Route::post('/good/product/filter', [GoodController::class, 'filterProduct'])->name('good.product.filter');
@@ -198,12 +232,12 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
     Route::post('/good/transaction/cancel/{id?}', [GoodSaleController::class, 'cancelTransaction'])->name('good.transaction.cancel');
 
     // Operational Only Feature
-    Route::post('/food/stand/add/new', [StandController::class, 'insertStand'])->middleware('role:3')->name('food.stand.insert');
+    Route::post('/food/stand/add/new', [StandController::class, 'insertStand'])->middleware('role:3,99')->name('food.stand.insert');
     Route::post('/food/stand/delete/{id}', [StandController::class, 'deleteStand'])->middleware('role:3')->name('food.stand.delete');
-    Route::post('/food/stand/expense/validate/{id}', [StandController::class, 'validateExpenseReceipt'])->middleware('role:3')->name('stand.expense.validate');
-    Route::post('/food/stand/menu/lock/{id}', [StandController::class, 'lockMenu'])->middleware('role:3')->name('stand.menu.validate');
-    Route::post('/food/stand/sales/validate/{id}', [SalesController::class, 'validateSales'])->middleware('role:3')->name('stand.income.validate');
-    Route::post('/food/balance/send', [BlaterianFoodBalanceController::class, 'withdrawBalance'])->middleware('role:3')->name('food.balance.withdraw');
+    Route::post('/food/stand/expense/validate/{id}', [StandController::class, 'validateExpenseReceipt'])->middleware('role:3,99')->name('stand.expense.validate');
+    Route::post('/food/stand/menu/lock/{id}', [StandController::class, 'lockMenu'])->middleware('role:3,10,99')->name('stand.menu.validate');
+    Route::post('/food/stand/sales/validate/{id}', [SalesController::class, 'validateSales'])->middleware('role:3,99')->name('stand.income.validate');
+    Route::post('/food/balance/send', [BlaterianFoodBalanceController::class, 'withdrawBalance'])->middleware('role:3,99')->name('food.balance.withdraw');
     Route::post('/good/product/add', [GoodController::class, 'insertProduct'])->middleware('role:3')->name('good.product.add');
     Route::post('/good/product/delete/{id}', [GoodController::class, 'deleteProduct'])->middleware('role:3')->name('good.product.delete');
     Route::post('/good/product/transaction/status/{id}', [GoodDetailController::class, 'productStatus'])->middleware('role:3')->name('good.product.transaction.status');
@@ -214,6 +248,31 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
     Route::post('/shop/voucher/add', [VoucherController::class, 'addVoucher'])->middleware('role:3')->name('shop.voucher.add');
     Route::post('/shop/payment/dana/set', [ShopController::class, 'setDanaContact'])->middleware('role:3')->name('shop.payment.dana.set');
     Route::post('/shop/voucher/delete/{voudher_id}', [VoucherController::class, 'deleteVoucher'])->middleware('role:3')->name('shop.voucher.delete');
+
+    // Sales Distribution & Production
+    Route::get('/sales-distribution', [MenuBoardController::class, 'index'])->middleware('role:10,99')->name('staff.sales-distribution.index');
+    Route::post('/sales-distribution/menu', [MenuBoardController::class, 'storeMenu'])->middleware('role:10,99')->name('staff.sales-distribution.menu.store');
+    Route::post('/sales-distribution/menu/{menu}/recipe', [MenuBoardController::class, 'attachRecipe'])->middleware('role:10,99')->name('staff.sales-distribution.menu.recipe.store');
+    Route::post('/sales-distribution/menu/{menu}/publish', [MenuBoardController::class, 'togglePublish'])->middleware('role:10,99')->name('staff.sales-distribution.menu.publish');
+    Route::post('/sales-distribution/order/{sale}/deliver', [MenuBoardController::class, 'toggleDelivery'])->middleware('role:10,99')->name('staff.sales-distribution.order.deliver');
+
+    Route::get('/production/panel', [ProductionPanelController::class, 'index'])->middleware('role:11,99')->name('staff.production.panel.index');
+    Route::post('/production/panel/menu/{menu}/stock', [ProductionPanelController::class, 'updateStock'])->middleware('role:11,99')->name('staff.production.panel.stock.update');
+    Route::post('/production/panel/menu/{menu}/publish', [ProductionPanelController::class, 'togglePublish'])->middleware('role:11,99')->name('staff.production.panel.publish');
+
+    Route::get('/operating/panel', [OperatingPanelController::class, 'index'])->middleware('role:3,99')->name('operating.panel');
+
+    // Seminar Registration Management (Relations)
+    Route::get('/seminar/registrations', [SeminarRegistrationController::class, 'index'])->middleware('role:12,99')->name('staff.seminar.registrations.index');
+    Route::post('/seminar/registrations/events', [SeminarRegistrationController::class, 'storeEvent'])->middleware('role:12,99')->name('staff.seminar.registrations.store_event');
+    Route::post('/seminar/registrations/events/{event}/toggle', [SeminarRegistrationController::class, 'toggleEvent'])->middleware('role:12,99')->name('staff.seminar.registrations.toggle_event');
+    Route::delete('/seminar/registrations/events/{event}', [SeminarRegistrationController::class, 'destroyEvent'])->middleware('role:12,99')->name('staff.seminar.registrations.destroy_event');
+    
+    // Per Event Registrations
+    Route::get('/seminar/registrations/event/{event}', [SeminarRegistrationController::class, 'viewRegistrations'])->middleware('role:12,99')->name('staff.seminar.registrations.view');
+    Route::get('/seminar/registrations/event/{event}/export', [SeminarRegistrationController::class, 'export'])->middleware('role:12,99')->name('staff.seminar.registrations.export');
+    Route::delete('/seminar/registrations/event/{event}/clear', [SeminarRegistrationController::class, 'clearAll'])->middleware('role:12,99')->name('staff.seminar.registrations.clear');
+    Route::delete('/seminar/registrations/registration/{registration}', [SeminarRegistrationController::class, 'destroy'])->middleware('role:12,99')->name('staff.seminar.registrations.destroy');
 
     // Financial Only Feature
     Route::post('/program/budget/validate/{id}/{valid}', [ProgramController::class, 'validateBudget'])->middleware('role:2')->name('program.budget.validate');
@@ -237,29 +296,58 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
     Route::post('/department/delete/{id}', [DepartmentController::class, 'deleteDepartment'])->middleware('role:1')->name('department.delete');
     Route::post('/department/update/{id}', [DepartmentController::class, 'updateDepartment'])->middleware('role:1')->name('department.update');
     Route::post('/department/add', [DepartmentController::class, 'insertDepartment'])->middleware('role:1')->name('department.add');
-    Route::post('/employee/add/{id}', [UserController::class, 'addEmployee'])->middleware('role:1')->name('employee.add');
-    Route::post('/role/update', [UserController::class, 'update'])->middleware('role:1')->name('role.update');
-    Route::post('/user/delete/{id?}', [UserController::class, 'delete'])->middleware('role:1')->name('role.remove');
     Route::post('/billboard/delete/{id?}', [DashboardController::class, 'removeBillboard'])->middleware('role:1')->name('billboard.remove');
-    Route::post('/attachment/add', [DashboardController::class, 'addAttachment'])->middleware('role:1')->name('attachment.add');
-    Route::post('/attachment/remove/{id?}', [DashboardController::class, 'removeAttachment'])->middleware('role:1')->name('attachment.remove');
 
-    // Internship Certificates - For Interns (Any authenticated user)
-    Route::middleware('auth')->group(function () {
-        Route::get('/internship/certificates', [InternshipCertificateController::class, 'index'])->name('certificate.index');
-        Route::get('/internship/certificate/download/{id}', [InternshipCertificateController::class, 'download'])->name('certificate.download');
+    // CEO Panel — Governance Year & Staff Management (role:1,99)
+    Route::middleware('role:1,99')->prefix('ceo')->group(function () {
+        Route::get('/panel',                           [CeoPanelController::class, 'index'])->name('ceo.panel');
+        Route::post('/year',                           [CeoPanelController::class, 'storeYear'])->name('ceo.year.store');
+        Route::post('/year/{governanceYear}/toggle',   [CeoPanelController::class, 'toggleYear'])->name('ceo.year.toggle');
+        Route::post('/user/{user}/promote',            [CeoPanelController::class, 'promoteUser'])->name('ceo.user.promote');
+        Route::post('/user/{user}/role',               [CeoPanelController::class, 'assignRole'])->name('ceo.user.role');
+        Route::post('/user/{user}/demote',             [CeoPanelController::class, 'demoteUser'])->name('ceo.user.demote');
+    });
+
+    // CEO/Admin: pinned-doc (Attachment) management
+    Route::post('/attachment/add', [DashboardController::class, 'addAttachment'])->middleware('role:1,8,99')->name('attachment.add');
+    Route::post('/attachment/delete/{id?}', [DashboardController::class, 'removeAttachment'])->middleware('role:1,8,99')->name('attachment.remove');
+
+    // CEO/Admin: year switch
+    Route::post('/year', [YearController::class, 'set'])->middleware('role:1,8')->name('staff.year.set');
+
+    // Finance monitoring panel (pending validation documents)
+    Route::get('/finance/pending-docs', [FinancePanelController::class, 'index'])->middleware('role:2,99')->name('finance.pending');
+
+    // IWP receipt validation panel
+    Route::get('/iwp/receipts', [IwpPanelController::class, 'index'])->middleware('role:13')->name('iwp.receipts');
+    Route::post('/iwp/receipts/{id}/validate', [IwpPanelController::class, 'validateReceipt'])->middleware('role:13')->name('iwp.receipts.validate');
+
+    // HR birthday panel
+    Route::get('/hr/birthdays', [HrBirthdayController::class, 'index'])->middleware('role:6,99')->name('hr.birthdays');
+    Route::post('/hr/birthdays/{id}', [HrBirthdayController::class, 'update'])->middleware('role:6,99')->name('hr.birthdays.update');
+
+    // CEO/Admin: pinned-doc management
+    Route::middleware('role:1,8')->group(function () {
+        Route::get('/pinned-docs', [PinnedDocController::class, 'index'])->name('pinneddoc.index');
+        Route::post('/pinned-docs', [PinnedDocController::class, 'store'])->name('pinneddoc.store');
+        Route::post('/pinned-docs/{pinnedDoc}', [PinnedDocController::class, 'update'])->name('pinneddoc.update');
+        Route::delete('/pinned-docs/{pinnedDoc}', [PinnedDocController::class, 'destroy'])->name('pinneddoc.destroy');
     });
 
     // Internship Certificates Management - For Staff Only (HR Manager & PIC Internship)
-    Route::prefix('staff')->group(function () {
+    Route::group([], function () {
         Route::get('/internship/certificates/manage', [InternshipCertificateController::class, 'manageIndex'])->name('certificate.manage');
         Route::post('/internship/certificate/store', [InternshipCertificateController::class, 'store'])->name('certificate.store');
         Route::post('/internship/certificate/update/{id}', [InternshipCertificateController::class, 'update'])->name('certificate.update');
         Route::delete('/internship/certificate/delete/{id}', [InternshipCertificateController::class, 'destroy'])->name('certificate.destroy');
     });
 
-    // Marketing Medinfo Dashboard (Role ID: 100)
-    Route::middleware('role:100')->prefix('marketing')->group(function () {
+    // Unified Marketing CMS Panel
+    Route::middleware('role:9,100,99')->get('/marketing/cms', [MarketingCmsController::class, 'index'])->name('marketing.cms');
+    Route::middleware('role:9,100,99')->post('/marketing/upload-image', [MarketingCmsController::class, 'uploadImage'])->name('marketing.upload.image');
+
+    // Marketing Medinfo Dashboard (Legacy routes kept for persistence logic)
+    Route::middleware('role:9,100,99')->prefix('marketing')->group(function () {
         Route::get('/structures', [\App\Http\Controllers\StructureController::class, 'index'])->name('marketing.structures.index');
         Route::post('/structures', [\App\Http\Controllers\StructureController::class, 'store'])->name('marketing.structures.store');
         Route::post('/structures/{structure}', [\App\Http\Controllers\StructureController::class, 'update'])->name('marketing.structures.update');
@@ -269,7 +357,19 @@ Route::middleware(['auth', 'verified', 'staff'])->group(function () {
         Route::post('/activities', [\App\Http\Controllers\ActivityController::class, 'store'])->name('marketing.activities.store');
         Route::post('/activities/{activity}', [\App\Http\Controllers\ActivityController::class, 'update'])->name('marketing.activities.update');
         Route::delete('/activities/{activity}', [\App\Http\Controllers\ActivityController::class, 'destroy'])->name('marketing.activities.destroy');
+
+        // Compro CMS (editable homepage content)
+        Route::get('/compro', [\App\Http\Controllers\ComproController::class, 'index'])->name('marketing.compro.index');
+        Route::post('/compro', [\App\Http\Controllers\ComproController::class, 'store'])->name('marketing.compro.store');
+        Route::post('/compro/{companyContent}', [\App\Http\Controllers\ComproController::class, 'update'])->name('marketing.compro.update');
+        Route::delete('/compro/{companyContent}', [\App\Http\Controllers\ComproController::class, 'destroy'])->name('marketing.compro.destroy');
     });
+});
+
+// Internship Certificates - For Interns (Any authenticated user)
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/seeo/internship/certificates', [InternshipCertificateController::class, 'index'])->name('certificate.index');
+    Route::get('/seeo/internship/certificate/download/{id}', [InternshipCertificateController::class, 'download'])->name('certificate.download');
 });
 
 require __DIR__ . '/auth.php';

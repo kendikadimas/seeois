@@ -64,7 +64,7 @@ class ProgramController extends Controller
         $employee_list = User::where('roles_id', '>', 0)->whereNotIn('id', $staff_list->pluck('user_id'))->select(['name', 'id'])->get();
         $logbook_list = Logbook::where('program_id', '=', $program->id)->orderBy('date_time', 'desc')->get();
         $data = [
-            'available_users' => User::where('roles_id', '!=', null)->get(),
+            'available_users' => User::select(['id', 'name'])->where('roles_id', '!=', null)->get(),
             'default_logbook_id' => $default_logbook_id ?? 0,
             'program' => $program,
             'budget_list' => $budget_list,
@@ -168,8 +168,8 @@ class ProgramController extends Controller
         ]);
 
         $department = Department::find($id);
-        // check manager
-        if ($auth_user->id != $department->manager_id) {
+        // check manager or super admin
+        if ($auth_user->roles_id != 99 && $auth_user->id != $department->manager_id) {
             return back()->with('notif', ['type' => 'info', 'message' => 'You are not allowed. Please contact the Manager.']);
         };
 
@@ -259,6 +259,9 @@ class ProgramController extends Controller
     public function validateBudget($id, $valid)
     {
         $program = Program::find($id);
+        if ($program === null) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Program not found.']);
+        }
         $program->financial_id = $valid == 0 ? 0 : Auth::user()->id;
         $program->updated_at = now();
         $validate = $valid == 0 ? 'unvalidate ' : 'validate ';
@@ -279,22 +282,17 @@ class ProgramController extends Controller
     public function refreshData(int $id)
     {
         $program = Program::find($id);
-        $budget_price = 0;
-        $expense_price = 0;
-        $disbursement_price = 0;
-        $budgets = BudgetItem::where('program_id', $id)->get();
-        foreach ($budgets as $budget) {
-            $budget_price += $budget->total_price;
-        }
-        $expenses = ExpenseItem::where('program_id', $id)->where('financial_id', '!=', null)->get();
-        foreach ($expenses as $expense) {
-            $expense_price += $expense->total_price;
-        }
-        $disbursements = DisbursementItem::where('program_id', $id)->get();
-        foreach ($disbursements as $disbursement) {
-            $disbursement_price += $disbursement->price;
-        }
-        $data = ['budget' => $budget_price, 'expense' => $expense_price, 'disbursement' => $disbursement_price];
+        
+        // OPTIMIZED: Use database aggregation instead of manual loops
+        $budget_price = BudgetItem::where('program_id', $id)->sum('total_price');
+        $expense_price = ExpenseItem::where('program_id', $id)->whereNotNull('financial_id')->sum('total_price');
+        $disbursement_price = DisbursementItem::where('program_id', $id)->sum('price');
+        
+        $data = [
+            'budget' => $budget_price, 
+            'expense' => $expense_price, 
+            'disbursement' => $disbursement_price
+        ];
 
         // also refresh department budget
         $department = new DepartmentController();

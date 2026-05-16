@@ -185,40 +185,40 @@ function handleSubmitBudgetFilter(event, route_name) {
     event.preventDefault();
 
     formBudgetFilter.order = order_inverse.value[formBudgetFilter.order];
-    formBudgetFilter.post(route_name, {
+    formBudgetFilter.post(`/seeo/staff/program/budget/filter/${props.program.id}`, {
         onError: (error) => console.log(error),
     });
 }
 function handleSubmitDisbursementFilter(event, route_name) {
     event.preventDefault();
-    formDisbursementFilter.post(route_name, {
+    formDisbursementFilter.post(`/seeo/staff/program/disbursement/filter/${props.program.id}`, {
         onError: (error) => console.log(error),
     });
 }
 function handleSubmitExpenseFilter(event, route_name) {
     event.preventDefault();
     formExpenseFilter.order = order_inverse.value[formExpenseFilter.order];
-    formExpenseFilter.post(route_name, {
+    formExpenseFilter.post(`/seeo/staff/program/expense/filter/${props.program.id}`, {
         onError: (error) => console.log(error),
     });
 }
 function handleSubmitStaffFilter(event, route_name) {
     event.preventDefault();
     formStaffFilter.order = order_inverse.value[formStaffFilter.order];
-    formStaffFilter.post(route_name, {
+    formStaffFilter.post(`/seeo/staff/program/staff/filter/${props.program.id}`, {
         onError: (error) => console.log(error),
     });
 }
 function handleSubmitAddBudget(event, route_name) {
     event.preventDefault();
-    formAddBudget.post(route_name, {
+    formAddBudget.post(`/seeo/staff/program/budget/item/add/${props.program.id}`, {
         onError: (error) =>
             console.log("formAddBudget error submission:", error),
     });
 }
 function handleSubmitAddDisbursement(event, route_name) {
     event.preventDefault();
-    formAddDisbursement.post(route_name, {
+    formAddDisbursement.post(`/seeo/staff/program/disbursement/add/${props.program.id}`, {
         onSuccess: () => {
             showAddDisbursementModal(false);
             formAddDisbursement.reset();
@@ -229,7 +229,7 @@ function handleSubmitAddDisbursement(event, route_name) {
 }
 function handleSubmitAddDisbursementLetter(event, route_name) {
     event.preventDefault();
-    formAddDisbursementLetter.post(route_name, {
+    formAddDisbursementLetter.post(`/seeo/staff/program/disbursement/letter/add/${props.program.id}`, {
         onSuccess: () => {
             showAddDisbursementLetterModal(false);
             formAddDisbursementLetter.reset();
@@ -240,7 +240,7 @@ function handleSubmitAddDisbursementLetter(event, route_name) {
 }
 function handleSubmitAddExpense(event, route_name) {
     event.preventDefault();
-    formAddExpense.post(route_name, {
+    formAddExpense.post(`/seeo/staff/program/expense/item/add/${props.program.id}`, {
         onSuccess: () => {
             showAddExpenseModal(false);
             formAddExpense.reset();
@@ -251,7 +251,7 @@ function handleSubmitAddExpense(event, route_name) {
 }
 function handleSubmitAddStaff(event, route_name) {
     event.preventDefault();
-    formAddStaff.post(route_name, {
+    formAddStaff.post(`/seeo/staff/program/staff/add/${props.program.id}`, {
         onSuccess: () => {
             showAddStaffModal(false);
             formAddStaff.reset();
@@ -452,14 +452,14 @@ watch(
         <ModalAlertNotification ref="modalAlertNotificationRef" />
         <template #header>
             <a
-                :href="route('structural')"
+                href="/seeo/staff/structural"
                 class="bg-opacity-0 text-decoration-none text-primary-emphasis"
             >
                 <span class="fw-light">{{ "Structural" }}</span>
             </a>
             <span class="ms-2">{{ "/" }}</span>
             <a
-                :href="route('department', program.department_id)"
+                :href="`/seeo/staff/department/${program.department_id}`"
                 class="bg-opacity-0 text-decoration-none text-primary-emphasis ms-2"
             >
                 <span class="fw-light">{{ "Department" }}</span>
@@ -483,7 +483,7 @@ watch(
 
                                     <Link
                                         v-if="showInternshipButton"
-                                        :href="route('internship.applications.index')"
+                                        :href="'/seeo/staff/internship'"
                                         class="btn btn-sm btn-outline-primary ms-auto me-2 d-flex align-items-center gap-2"
                                         style="text-decoration: none;"
                                     >
@@ -508,9 +508,7 @@ watch(
                                         "
                                         @click="
                                             confirmation(
-                                                route('program.delete', {
-                                                    id: program.id,
-                                                }),
+                                                `/program/delete/${program.id}`,
                                                 'Are you sure want to delete ' +
                                                     program.name +
                                                     ' Program?'
@@ -818,10 +816,7 @@ watch(
                                             <a
                                                 v-if="selected_user.id"
                                                 :href="
-                                                    route(
-                                                        'profile.edit',
-                                                        selected_user.id
-                                                    )
+                                                    `/seeo/staff/program/disbursement/filter/${props.program.id}`
                                                 "
                                                 class="text-decoration-none ms-auto d-flex"
                                                 target="_blank"
@@ -969,10 +964,7 @@ watch(
                                                                     "
                                                                     @click="
                                                                         confirmation(
-                                                                            route(
-                                                                                'logbook.validate',
-                                                                                logbook.id
-                                                                            ),
+                                                                            `/seeo/staff/program/logbook/validate/${logbook.id}`,
                                                                             'Are you sure this log book is ' +
                                                                                 (logbook.validated >
                                                                                 0
@@ -1034,10 +1026,7 @@ watch(
                                                                     class="btn btn-sm btn-outline-secondary border-0 py-0"
                                                                     @click="
                                                                         confirmation(
-                                                                            route(
-                                                                                'logbook.delete',
-                                                                                logbook.id
-                                                                            ),
+                                                                            `/seeo/staff/program/logbook/delete/${logbook.id}`,
                                                                             'Are you sure want to delete this log?'
                                                                         )
                                                                     "
@@ -1252,12 +1241,7 @@ watch(
                                             @submit.prevent="
                                                 handleSubmitBudgetFilter(
                                                     $event,
-                                                    route(
-                                                        'program.budget.filter',
-                                                        {
-                                                            id: program.id,
-                                                        }
-                                                    )
+                                                    `/seeo/staff/program/budget/filter/${program.id}`
                                                 )
                                             "
                                         ></form>
@@ -1435,12 +1419,7 @@ watch(
                                                                     @submit.prevent="
                                                                         handleSubmitAddBudget(
                                                                             $event,
-                                                                            route(
-                                                                                'program.budget.add',
-                                                                                {
-                                                                                    id: program.id,
-                                                                                }
-                                                                            )
+                                                                            `/seeo/staff/program/budget/add/${program.id}`
                                                                         )
                                                                     "
                                                                 >
@@ -1648,17 +1627,7 @@ watch(
                                                         "
                                                         @click="
                                                             confirmation(
-                                                                route(
-                                                                    'program.budget.validate',
-                                                                    {
-                                                                        id: program.id,
-                                                                        valid:
-                                                                            program.financial_id >
-                                                                            0
-                                                                                ? 0
-                                                                                : 1,
-                                                                    }
-                                                                ),
+                                                                `/seeo/staff/program/budget/validate/${program.id}/${program.financial_id > 0 ? 0 : 1}`,
                                                                 program.financial_id >
                                                                     0
                                                                     ? 'Are you sure want to UNPROVE ' +
@@ -1748,12 +1717,7 @@ watch(
                                                         "
                                                         @click="
                                                             confirmation(
-                                                                route(
-                                                                    'program.budget.delete',
-                                                                    {
-                                                                        id: budget.id,
-                                                                    }
-                                                                ),
+                                                                `/seeo/staff/program/budget/item/delete/${budget.id}`,
                                                                 'Are you sure want to delete ' +
                                                                     budget.name +
                                                                     ' from ' +
@@ -1826,10 +1790,7 @@ watch(
                                             @submit.prevent="
                                                 handleSubmitDisbursementFilter(
                                                     $event,
-                                                    route(
-                                                        'program.disbursement.filter',
-                                                        { id: program.id }
-                                                    )
+                                                    `/seeo/staff/program/disbursement/filter/${program.id}`
                                                 )
                                             "
                                         ></form>
@@ -2003,12 +1964,7 @@ watch(
                                                                     @submit.prevent="
                                                                         handleSubmitAddDisbursement(
                                                                             $event,
-                                                                            route(
-                                                                                'program.disbursement.add',
-                                                                                {
-                                                                                    id: program.id,
-                                                                                }
-                                                                            )
+                                                                            `/seeo/staff/program/disbursement/add/${program.id}`
                                                                         )
                                                                     "
                                                                 >
@@ -2434,12 +2390,7 @@ watch(
                                                                                     "
                                                                                     @click="
                                                                                         confirmation(
-                                                                                            route(
-                                                                                                'program.disbursement.letter.delete',
-                                                                                                {
-                                                                                                    id: disbursement_letter.id,
-                                                                                                }
-                                                                                            ),
+                                                                                            `/seeo/staff/program/disbursement/letter/delete/${disbursement_letter.id}`,
                                                                                             'Are you sure want to delete ' +
                                                                                                 disbursement_letter.letter +
                                                                                                 ' from disbursement letter list?'
@@ -2556,12 +2507,7 @@ watch(
                                                                     @submit.prevent="
                                                                         handleSubmitAddDisbursementLetter(
                                                                             $event,
-                                                                            route(
-                                                                                'program.disbursement.letter.add',
-                                                                                {
-                                                                                    id: program.id,
-                                                                                }
-                                                                            )
+                                                                            `/seeo/staff/program/disbursement/letter/add/${program.id}`
                                                                         )
                                                                     "
                                                                 >
@@ -2728,12 +2674,7 @@ watch(
                                                         "
                                                         @click="
                                                             confirmation(
-                                                                route(
-                                                                    'program.disbursement.delete',
-                                                                    {
-                                                                        id: disbursement.id,
-                                                                    }
-                                                                ),
+                                                                `/seeo/staff/program/disbursement/delete/${disbursement.id}`,
                                                                 'Are you sure want to delete ' +
                                                                     disbursement.name +
                                                                     ' from ' +
@@ -2910,10 +2851,7 @@ watch(
                                             @submit.prevent="
                                                 handleSubmitExpenseFilter(
                                                     $event,
-                                                    route(
-                                                        'program.expense.filter',
-                                                        { id: program.id }
-                                                    )
+                                                    `/seeo/staff/program/expense/filter/${program.id}`
                                                 )
                                             "
                                         ></form>
@@ -3133,12 +3071,7 @@ watch(
                                                                     @submit.prevent="
                                                                         handleSubmitAddExpense(
                                                                             $event,
-                                                                            route(
-                                                                                'program.expense.add',
-                                                                                {
-                                                                                    id: program.id,
-                                                                                }
-                                                                            )
+                                                                            `/seeo/staff/program/expense/add/${program.id}`
                                                                         )
                                                                     "
                                                                 >
@@ -3534,12 +3467,7 @@ watch(
                                                             "
                                                             @click="
                                                                 confirmation(
-                                                                    route(
-                                                                        'program.expense.delete',
-                                                                        {
-                                                                            id: expense.id,
-                                                                        }
-                                                                    ),
+                                                                    `/seeo/staff/program/expense/item/delete/${expense.id}`,
                                                                     'Are you sure want to delete ' +
                                                                         expense.name +
                                                                         ' from ' +
@@ -3715,12 +3643,7 @@ watch(
                                                     id="expense_receipt_button"
                                                     @click="
                                                         confirmation(
-                                                            route(
-                                                                'program.expense.validate',
-                                                                {
-                                                                    id: expense_receipt.id,
-                                                                }
-                                                            ),
+                                                            `/seeo/staff/program/expense/validate/${expense_receipt.id}`,
                                                             'Are you sure want to ' +
                                                                 (expense_receipt.valid
                                                                     ? 'Unvalidate'
@@ -3772,12 +3695,7 @@ watch(
                                             @submit.prevent="
                                                 handleSubmitStaffFilter(
                                                     $event,
-                                                    route(
-                                                        'program.staff.filter',
-                                                        {
-                                                            id: program.id,
-                                                        }
-                                                    )
+                                                    `/seeo/staff/program/staff/filter/${props.program.id}`
                                                 )
                                             "
                                         ></form>
@@ -3948,12 +3866,7 @@ watch(
                                                                     @submit.prevent="
                                                                         handleSubmitAddStaff(
                                                                             $event,
-                                                                            route(
-                                                                                'program.staff.add',
-                                                                                {
-                                                                                    id: program.id,
-                                                                                }
-                                                                            )
+                                                                            `/seeo/staff/program/staff/add/${props.program.id}`
                                                                         )
                                                                     "
                                                                 >
@@ -4137,16 +4050,7 @@ watch(
                                                 </div>
                                                 <div class="col d-flex my-1">
                                                     <a
-                                                        :href="
-                                                            route(
-                                                                'profile.edit',
-                                                                {
-                                                                    id: staff
-                                                                        ?.employee
-                                                                        ?.id,
-                                                                }
-                                                            )
-                                                        "
+                                                        :href="`/seeo/staff/profile/${staff?.employee?.id}`"
                                                         rel="noopener noreferrer"
                                                         class="text-decoration-none d-flex w-100"
                                                     >
@@ -4192,12 +4096,7 @@ watch(
                                                         class="ms-auto btn btn-sm btn-outline-danger border-0"
                                                         @click="
                                                             confirmation(
-                                                                route(
-                                                                    'program.staff.delete',
-                                                                    {
-                                                                        id: staff.id,
-                                                                    }
-                                                                ),
+                                                                `/seeo/staff/program/staff/delete/${staff.id}`,
                                                                 'Are you sure want to remove ' +
                                                                     staff
                                                                         .employee

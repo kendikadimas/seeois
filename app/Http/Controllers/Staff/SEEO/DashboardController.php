@@ -21,39 +21,50 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $billboard_list = Billboard::all()->map(function ($billboard) {
-            if ($billboard->image) {
-                $diskName = config('app.env') === 'production' ? 'google' : 'public';
+        $diskName = config('app.env') === 'production' ? 'google' : 'public';
+        $disk = null;
+        try {
+            $disk = Storage::disk($diskName);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to resolve storage disk', ['error' => $e->getMessage()]);
+        }
+
+        $billboard_list = Billboard::all()->map(function ($billboard) use ($disk) {
+            if ($billboard->image && $disk) {
                 try {
-                    // Guard: Storage::disk(...) can throw when misconfigured (e.g., missing Google creds)
-                    $disk = Storage::disk($diskName);
                     $billboard->full_image_url = $disk->url('images/billboard/' . $billboard->image);
                 } catch (\Throwable $e) {
-                    // Log the issue and gracefully fallback to public storage URL
-                    Log::warning('Failed to resolve storage disk for billboard image', [
-                        'disk' => $diskName,
-                        'billboard_id' => $billboard->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                    // Fallback: assume file exists in local public storage path
                     $billboard->full_image_url = '/storage/images/billboard/' . $billboard->image;
                 }
             }
             return $billboard;
         });
 
-        $post_list = Post::with('user')->orderBy('created_at', 'desc')->limit(50)->get()->map(function ($post) {
-            if ($post->user && $post->user->profile_image) {
+        // Resolve profile disk once
+        $profileDisk = null;
+        if (config('app.env') === 'production') {
+            try {
+                $profileDisk = Storage::disk('google');
+            } catch (\Throwable $e) {}
+        }
+
+        $post_list = Post::with('user')->orderBy('created_at', 'desc')->limit(50)->get()->map(function ($post) use ($profileDisk) {
+            if ($post->anonymus) {
+                $post->full_profile_image_url = '/storage/local/images/compro/anonymous.png'; // Path icon anonim
+                return $post;
+            }
+
+            $fallbackUrl = 'https://ui-avatars.com/api/?name=' . urlencode($post->user?->name ?? 'User') . '&color=7F9CF5&background=EBF4FF';
+            
+            if ($post->user && $post->user->profile_image && $profileDisk) {
                 try {
-                    $disk = Storage::disk('google');
-                    $post->user->full_profile_image_url = $disk->url('images/profile/' . $post->user->profile_image);
+                    $post->user->full_profile_image_url = $profileDisk->url('images/profile/' . $post->user->profile_image);
                 } catch (\Throwable $e) {
-                    Log::warning('Failed to resolve Google Drive URL for profile image', [
-                        'user_id' => $post->user->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                    // Fallback to a default or non-existent path if needed
-                    $post->user->full_profile_image_url = '/storage/images/profile/example.png';
+                    $post->user->full_profile_image_url = $fallbackUrl;
+                }
+            } else {
+                if ($post->user) {
+                    $post->user->full_profile_image_url = $fallbackUrl;
                 }
             }
             return $post;
@@ -76,7 +87,7 @@ class DashboardController extends Controller
         $request->validate([
             'billboard_title' => 'required',
             'billboard_text' => Rule::requiredIf($request->boolean('billboard_typeText')),
-            'billboard_image' => [Rule::requiredIf($request->boolean('billboard_typeImage')), File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024)],
+            'billboard_image' => ['nullable', Rule::requiredIf($request->boolean('billboard_typeImage')), File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024)],
         ]);
         $data = [
             'type' => ($request->input('billboard_typeImage') ? 1 : 0) + ($request->input('billboard_typeText') ? 2 : 0),
@@ -157,7 +168,8 @@ class DashboardController extends Controller
             $document = $request->file('attachment_document');
             $document_name =  'af_' . time() . '.' . $document->extension();
             // store image file
-            $document->storePubliclyAs('document/attachment/', $document_name, 'google');
+            $disk = config('app.env') === 'production' ? 'google' : 'public';
+            $document->storePubliclyAs('document/attachment/', $document_name, $disk);
             $data += [
                 'type' => 0,
                 'document' => $document_name
@@ -181,7 +193,8 @@ class DashboardController extends Controller
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Attachment doesn`t existed. Your action can damage the system.']);
         }
         if ($attachment->type == 0) {
-            Storage::disk('google')->delete('document/attachment/' . $attachment->document);        }
+            $disk = config('app.env') === 'production' ? 'google' : 'public';
+            Storage::disk($disk)->delete('document/attachment/' . $attachment->document);        }
         $attachment->delete();
         
         return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success remove ' . $attachment->title . ' from attachment list.']);

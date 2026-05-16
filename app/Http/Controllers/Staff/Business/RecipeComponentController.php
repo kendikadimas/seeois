@@ -31,8 +31,9 @@ class RecipeComponentController extends Controller
         }
         $standId = $menu->stand_id;
 
-        // Do not allow editing after stand validated sales (inactive)
-        if ($menu->stand && $menu->stand->sale_validation > 0) {
+        // Do not allow editing after stand validated sales (inactive), unless Super Admin
+        $auth_user = auth()->user();
+        if ($auth_user->roles_id != 99 && $menu->stand && $menu->stand->sale_validation > 0) {
             return back()->with('notif', ['type' => 'warning', 'message' => 'Stand is inactive. Cannot modify recipe components.']);
         }
 
@@ -58,6 +59,7 @@ class RecipeComponentController extends Controller
             if ($existing) {
                 $existing->quantity_used = $comp['quantity_used'];
                 $existing->unit_used = $expense->unit; // inherit unit from expense record
+                $existing->price = $expense->price; // SAVE PRICE HERE
                 $existing->save();
                 $updated++;
             } else {
@@ -66,6 +68,7 @@ class RecipeComponentController extends Controller
                     'stand_expense_id' => $expense->id,
                     'quantity_used' => $comp['quantity_used'],
                     'unit_used' => $expense->unit,
+                    'price' => $expense->price, // SAVE PRICE HERE
                 ]);
                 $created++;
             }

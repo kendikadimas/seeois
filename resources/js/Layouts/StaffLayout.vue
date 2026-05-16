@@ -1,6 +1,6 @@
 <script setup>
 import ModalConfirmation from "@/Components/ModalConfirmation.vue";
-import { Head, usePage } from "@inertiajs/vue3";
+import { Head, usePage, router } from "@inertiajs/vue3";
 import { ref, watch, computed, onMounted, defineProps, nextTick } from "vue";
 // Placeholder logo to prevent missing asset build failures
 const logoSrc = 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
@@ -16,36 +16,75 @@ const mainContentRef = ref(null); // Ref untuk main content (opsional, untuk bac
 const offcanvasInstance = ref(null); // Untuk instance Offcanvas Bootstrap
 
 const auth_user = computed(() => page.props.auth.user);
+const available_years = computed(() => page.props.available_years || []);
+const selected_year = ref(page.props.selected_year || new Date().getFullYear());
+
+watch(
+    () => page.props.selected_year,
+    (newYear) => {
+        if (newYear) selected_year.value = newYear;
+    }
+);
+
+const can_switch_year = computed(() => {
+    const roleId = auth_user.value?.roles_id;
+    return roleId === 1 || roleId === 8 || roleId === 99;
+});
+
+function submitYear() {
+    router.post("/seeo/staff/year", { year: selected_year.value }, { preserveScroll: true, preserveState: true });
+}
 
 // [FUNGSI ROUTE MANUAL ANDA - TIDAK DIUBAH]
 const route = (name, params = {}) => {
     const routes = {
-        'dashboard': '/seeo/dashboard',
-        'role': '/seeo/user',
-        'structural': '/seeo/structural',
-        'department': '/seeo/department',
-        'program': '/seeo/program',
-        'finance': '/seeo/finance',
-        'finance.feature': '/seeo/finance_feature',
-        'blaterian.insight': '/blaterian/insight',
-        'blaterian.insight.cashflow': '/blaterian/insight/cashflow',
-        'blaterian.insight.customer': '/blaterian/insight/customer',
-        'food.stand': '/blaterian/foods/stand',
-        'food.stand.detail': '/blaterian/foods/stand_detail',
-        'food.stand.cashier': '/blaterian/foods/cashier',
-            'stand.expense.receipt': '/food/stand/expense/receipt/{filename}',
-            'good.product': '/blaterian/goods/product',
-        'profile.edit': '/profile',
+        'dashboard': '/seeo/staff/dashboard',
+        'role': '/seeo/staff/user',
+        'structural': '/seeo/staff/structural',
+        'department': '/seeo/staff/department',
+        'program': '/seeo/staff/program',
+        'finance': '/seeo/staff/finance',
+        'finance.feature': '/seeo/staff/finance_feature',
+        'blaterian.insight': '/seeo/staff/blaterian/insight',
+        'blaterian.insight.cashflow': '/seeo/staff/blaterian/insight/cashflow',
+        'blaterian.insight.customer': '/seeo/staff/blaterian/insight/customer',
+        'food.stand': '/seeo/staff/blaterian/foods/stand',
+        'food.stand.detail': '/seeo/staff/blaterian/foods/stand_detail',
+        'food.stand.cashier': '/seeo/staff/blaterian/foods/cashier',
+        'stand.expense.receipt': '/seeo/staff/food/stand/expense/receipt/{filename}',
+        'good.product': '/seeo/staff/blaterian/goods/product',
+        'profile.edit': '/seeo/staff/profile',
         'logout': '/logout',
         'intro': '/intro',
-        'billboard.remove': '/billboard/delete',
-        'attachment.remove': '/attachment/remove',
-        'post.remove': '/dashboard/post/remove',
-        'billboard.add': '/billboard/add',
-        'attachment.add': '/attachment/add',
-        'post.add': '/dashboard/post/add',
-        'marketing.structures.index': '/marketing/structures',
-        'marketing.activities.index': '/marketing/activities',
+        'billboard.remove': '/seeo/staff/billboard/delete',
+        'attachment.remove': '/seeo/staff/attachment/delete',
+        'post.remove': '/seeo/staff/dashboard/post/remove',
+        'billboard.add': '/seeo/staff/billboard/add',
+        'attachment.add': '/seeo/staff/attachment/add',
+        'post.add': '/seeo/staff/dashboard/post/add',
+        'marketing.cms': '/seeo/staff/marketing/cms',
+        'marketing.structures.index': '/seeo/staff/marketing/structures',
+        'marketing.activities.index': '/seeo/staff/marketing/activities',
+        'marketing.compro.index': '/seeo/staff/marketing/compro',
+        'pinneddoc.index': '/seeo/staff/pinned-docs',
+        'finance.pending': '/seeo/staff/finance/pending-docs',
+        'iwp.receipts': '/seeo/staff/iwp/receipts',
+        'hr.birthdays': '/seeo/staff/hr/birthdays',
+        'staff.year.set': '/seeo/staff/year',
+        'ceo.panel': '/seeo/staff/ceo/panel',
+        'operating.panel': '/seeo/staff/operating/panel',
+        'staff.sales-distribution.index': '/seeo/staff/sales-distribution',
+        'staff.production.panel.index': '/seeo/staff/production/panel',
+        'staff.seminar.registrations.index': '/seeo/staff/seminar/registrations',
+        'staff.seminar.registrations.update_name': '/seeo/staff/seminar/registrations/event-name',
+        'staff.seminar.registrations.export': '/seeo/staff/seminar/registrations/export',
+        'staff.seminar.registrations.clear': '/seeo/staff/seminar/registrations/clear',
+        'staff.seminar.registrations.destroy': '/seeo/staff/seminar/registrations/{registration}',
+        'super.admin.panel': '/seeo/staff/super-admin',
+        'internship.applications.index': '/seeo/staff/internship',
+        'certificate.manage': '/seeo/staff/internship/certificates/manage',
+        'certificate.index': '/seeo/internship/certificates',
+        'certificate.download': '/seeo/internship/certificate/download/{id}',
     };
     if (routes[name]) {
         let url = routes[name];
@@ -81,6 +120,10 @@ route.current = (routeName) => {
         'Staff/SEEO/Program': 'program',
         'Staff/SEEO/CashFlow': 'finance',
         'Staff/SEEO/CashFlowFeature': 'finance.feature',
+        'Staff/SEEO/PinnedDocs': 'PinnedDocs',
+        'Staff/SEEO/FinancePanel': 'finance.pending',
+        'Staff/SEEO/IwpPanel': 'iwp.receipts',
+        'Staff/SEEO/Birthdays': 'hr.birthdays',
         'Staff/Business/Insight': 'blaterian.insight',
         'Staff/Business/InsightCashflow': 'blaterian.insight.cashflow',
         'Staff/Business/InsightCustomer': 'blaterian.insight.customer',
@@ -89,8 +132,15 @@ route.current = (routeName) => {
         'Staff/Business/StandCashier': 'food.stand.cashier',
         'Staff/Business/GoodBalance': 'good.balance',
         'Staff/Business/GoodProduct': 'good.product',
-        'Staff/Marketing/Structures': 'marketing.structures',
+        'Staff/Marketing/MarketingCms': 'marketing.cms',
+        'Staff/Marketing/Structures': 'marketing.structures.index',
         'Staff/Marketing/Activities': 'marketing.activities',
+        'Staff/SEEO/OperatingPanel': 'operating.panel',
+        'Staff/Business/MenuBoard': 'staff.sales-distribution.index',
+        'Staff/Business/ProductionPanel': 'staff.production.panel.index',
+        'Staff/SEEO/SeminarRegistrations': 'staff.seminar.registrations.index',
+        'Staff/SEEO/SuperAdminPanel': 'super.admin.panel',
+        'Public/SeminarRegister': 'seminar.registration.create',
     };
     const currentRouteBase = componentToRouteBase[currentComponent];
     if (!currentRouteBase) return false;
@@ -100,42 +150,107 @@ route.current = (routeName) => {
 
 const currentTime = ref('');
 const modalConfirmationRef = ref(null);
+
+const userRole = computed(() => Number(page.props.auth?.user?.roles_id || 0));
+const roleName = computed(() => page.props.auth?.user?.role_name || '');
+
 // OPTIMIZED: Build nav_list ONCE saat initialization
 const nav_list = computed(() => {
+    const role = userRole.value;
+    const name = roleName.value;
+    const isOperating = role === 3 || name.toLowerCase().includes('operating');
+    const isAdmin = role === 99 || name.toLowerCase().includes('admin');
+
     let list = {
+        Shortcuts: {},
         Organization: {
-            Dashboard: { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard" },
-            User: { route: route("role"), active: route.current("role"), title: "User" },
-            Structural: { route: route("structural"), active: route.current("structural") || route.current("department") || route.current("program"), title: "Structural" },
+            Dashboard: { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard", icon: "bi-speedometer2" },
+            User: { route: route("role"), active: route.current("role"), title: "User", icon: "bi-person-badge" },
+            Structural: { route: route("structural"), active: route.current("structural") || route.current("department") || route.current("program"), title: "Structural", icon: "bi-diagram-3" },
             Finance: [
-                { route: route("finance"), active: route.current("finance"), title: "Cashflow" },
-                { route: route("finance.feature"), active: route.current("finance.feature"), title: "Feature" }
+                { route: route("finance"), active: route.current("finance"), title: "Cashflow", icon: "bi-cash-coin" },
+                { route: route("finance.feature"), active: route.current("finance.feature"), title: "Feature", icon: "bi-stars" }
             ],
         },
         Business: {
-            Insight: { route: route("blaterian.insight"), active: route.current("blaterian.insight"), title: "Insight" },
+            Insight: { route: route("blaterian.insight"), active: route.current("blaterian.insight"), title: "Insight", icon: "bi-graph-up" },
             Foods: [
-                { route: route("food.stand"), active: route.current("food.stand"), title: "Stand" },
+                { route: route("food.stand"), active: route.current("food.stand"), title: "Stand", icon: "bi-shop" },
             ],
             Goods: [
-                 { route: route('good.product'), active: route.current("good"), title: "Product (Coming Soon)" }
+                 { route: route('good.product'), active: route.current("good.product"), title: "Product (Coming Soon)", icon: "bi-box" }
             ],
         },
     };
-    
-    const userRole = auth_user.value?.roles_id;
-    if (userRole === 1 || userRole === 99 || userRole === 100) {
-        list.Organization.Marketing = [
-            { route: route("marketing.structures.index"), active: route.current("marketing.structures"), title: "Struktur Organisasi" },
-            { route: route("marketing.activities.index"), active: route.current("marketing.activities"), title: "Berita & Kegiatan" }
-        ];
+
+    // Add Operating Menus
+    if (isOperating || isAdmin) {
+        list.Shortcuts.Operating = { route: route("operating.panel"), active: route.current("operating.panel"), title: "Operating Panel", icon: "bi-clipboard-check" };
+        list.Business.Foods.push({ route: route("operating.panel"), active: route.current("operating.panel"), title: "Operating Panel", icon: "bi-clipboard-check" });
+    }
+
+    // Add Sales Menus
+    if (role === 10 || isAdmin) {
+        list.Shortcuts.Sales = { route: route("staff.sales-distribution.index"), active: route.current("staff.sales-distribution.index"), title: "Sales Distribution", icon: "bi-cart-check" };
+        list.Business.Foods.push({ route: route("staff.sales-distribution.index"), active: route.current("staff.sales-distribution.index"), title: "Sales Distribution", icon: "bi-cart-check" });
+    }
+
+    // Add Production Menus
+    if (role === 11 || isAdmin) {
+        list.Shortcuts.Production = { route: route("staff.production.panel.index"), active: route.current("staff.production.panel.index"), title: "Production Panel", icon: "bi-tools" };
+        list.Business.Foods.push({ route: route("staff.production.panel.index"), active: route.current("staff.production.panel.index"), title: "Production Panel", icon: "bi-tools" });
+    }
+
+    // Add Seminar Menus
+    if (role === 12 || isAdmin) {
+        list.Shortcuts.Seminar = { route: route("staff.seminar.registrations.index"), active: route.current("staff.seminar.registrations.index"), title: "Seminar Registrations", icon: "bi-easel" };
+    }
+
+    // Add Finance Panel
+    if (role === 2 || isAdmin) {
+        list.Shortcuts.Finance = { route: route("finance.pending"), active: route.current("finance.pending"), title: "Pending Docs", icon: "bi-wallet2" };
+    }
+
+    // Add IWP Panel
+    if (role === 13 || isAdmin) {
+        list.Shortcuts.Iwp = { route: route("iwp.receipts"), active: route.current("iwp.receipts"), title: "IWP Receipts", icon: "bi-receipt" };
+    }
+
+    // Add HR Panel
+    if (role === 6 || isAdmin) {
+        list.Shortcuts.Hr = { route: route("hr.birthdays"), active: route.current("hr.birthdays"), title: "Birthdays", icon: "bi-balloon" };
+    }
+
+    // Add Marketing CMS
+    if (role === 9 || role === 1 || isAdmin || role === 100) {
+        list.Shortcuts.Marketing = { route: route("marketing.cms"), active: route.current("marketing.cms"), title: "Marketing CMS", icon: "bi-megaphone" };
     }
     
-    return list;
+    // CEO Panel (Governance Year + Staff Management)
+    if (role === 1 || isAdmin) {
+        list.Shortcuts.CeoPanel = { route: route("ceo.panel"), active: route.current("ceo.panel"), title: "CEO Panel", icon: "bi-award-fill" };
+    }
+
+    // Super Admin Panel
+    if (role === 99) {
+        list.Shortcuts.SuperAdmin = { route: route("super.admin.panel"), active: route.current("super.admin.panel"), title: "Super Admin", icon: "bi-shield-lock-fill" };
+    }
+
+    // CEO/Admin: Pinned Docs
+    if (role === 1 || role === 8 || isAdmin) {
+        list.Shortcuts.PinnedDocs = { route: route("pinneddoc.index"), active: route.current("PinnedDocs"), title: "Dokumen Penting", icon: "bi-pin-angle" };
+    }
+    
+    // Filter empty sections
+    return Object.fromEntries(Object.entries(list).filter(([_, content]) => Object.keys(content).length > 0));
 });
 
 const active_section = computed(() => {
     const current = page.component;
+    // Prioritize Shortcuts section if active
+    if (nav_list.value.Shortcuts && Object.values(nav_list.value.Shortcuts).some(s => s.active)) return 'Shortcuts';
+    // Map specific SEEO components to Business if they are displayed in the Business section menu
+    if (current.includes('OperatingPanel') || current.includes('ProductionPanel') || current.includes('MenuBoard')) return 'Business';
     if (current.startsWith('Staff/SEEO') || current.startsWith('Staff/Marketing')) return 'Organization';
     if (current.startsWith('Staff/Business')) return 'Business';
     return 'Organization';
@@ -144,22 +259,32 @@ const active_section = computed(() => {
 const active_group = computed(() => {
     const current = page.component;
     if (current.includes('Finance') || current.includes('CashFlow')) return 'Finance';
-    if (current.includes('Foods') || current.includes('Stand')) return 'Foods';
+    if (current.includes('Foods') || current.includes('Stand') || current.includes('MenuBoard') || current.includes('OperatingPanel') || current.includes('ProductionPanel')) return 'Foods';
     if (current.includes('Goods') || current.includes('Good')) return 'Goods';
     return null;
 });
 
-// Local UI state for collapses (prevent immediate hide after Bootstrap animation)
-const openedSection = ref('Organization');
-const openedGroups = ref({}); // { SectionKey: GroupKey }
+// Helper for section icons
+function getSectionIcon(sectionKey) {
+    const icons = {
+        Shortcuts: 'bi-star-fill',
+        Organization: 'bi-building',
+        Business: 'bi-briefcase'
+    };
+    return icons[sectionKey] || 'bi-layers';
+}
+
+// Local UI state for collapses (allows multiple to be open at once)
+const openedSections = ref({ 'Organization': true });
+const openedGroups = ref({}); // { 'sectionKey_groupKey': true }
 
 function toggleSection(sectionKey) {
-    openedSection.value = openedSection.value === sectionKey ? null : sectionKey;
+    openedSections.value[sectionKey] = !openedSections.value[sectionKey];
 }
 
 function toggleGroup(sectionKey, groupKey) {
-    const current = openedGroups.value[sectionKey];
-    openedGroups.value[sectionKey] = current === groupKey ? null : groupKey;
+    const key = `${sectionKey}_${groupKey}`;
+    openedGroups.value[key] = !openedGroups.value[key];
 }
 
 function updateTime() {
@@ -222,11 +347,11 @@ onMounted(async () => {
     timeInterval = setInterval(updateTime, 1000);
     await nextTick(); // Tunggu DOM siap
 
-    // Initialize openedSection with active_section for initial route context
-    openedSection.value = active_section.value;
+    // Initialize openedSections with active_section for initial route context
+    openedSections.value[active_section.value] = true;
     // Initialize openedGroups for active group if present
     if (active_group.value) {
-        openedGroups.value[active_section.value] = active_group.value;
+        openedGroups.value[`${active_section.value}_${active_group.value}`] = true;
     }
 
     // Inisialisasi Bootstrap Offcanvas HANYA SEKALI
@@ -253,9 +378,9 @@ onMounted(async () => {
 // OPTIMIZED: Close mobile sidebar on navigation (no rebuilding nav_list)
 watch(() => page.component, () => {
     // Sync opened state with route changes
-    openedSection.value = active_section.value;
+    openedSections.value[active_section.value] = true;
     if (active_group.value) {
-        openedGroups.value[active_section.value] = active_group.value;
+        openedGroups.value[`${active_section.value}_${active_group.value}`] = true;
     }
     if (window.innerWidth < 992 && offcanvasInstance.value) {
         offcanvasInstance.value.hide();
@@ -293,33 +418,35 @@ watch(() => page.component, () => {
                         <button
                             type="button"
                             class="nav-header btn w-100 text-start d-flex align-items-center"
-                            :class="{'active-section': active_section == sectionKey, 'open': openedSection === sectionKey}"
+                            :class="{'active-section': active_section == sectionKey, 'open': openedSections[sectionKey]}"
                             @click="() => { toggleSection(sectionKey); changeIcon('icon_nav_section_desktop_' + sectionKey.replace(/\s+/g, '')); }"
                         >
-                            <i :id="'icon_nav_section_desktop_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', openedSection === sectionKey ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+                            <i :id="'icon_nav_section_desktop_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', openedSections[sectionKey] ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+                            <i :class="['bi', getSectionIcon(sectionKey), 'me-2', 'text-warning']"></i>
                             <span class="fw-semibold">{{ sectionKey }}</span>
                         </button>
-                        <div v-show="openedSection === sectionKey" :id="'nav_section_desktop_' + sectionKey.replace(/\s+/g, '')">
+                        <div v-show="openedSections[sectionKey]" :id="'nav_section_desktop_' + sectionKey.replace(/\s+/g, '')">
                             <div class="nav-items pt-1 ps-3">
                                 <div v-for="(nav_group, nav_group_key) in sectionContent" :key="nav_group_key" class="mb-1">
                                     <template v-if="Array.isArray(nav_group)">
                                         <button
                                             type="button"
                                             class="nav-item nav-group d-flex align-items-center btn text-start w-100"
-                                            :class="{'active-group': active_group == nav_group_key, 'open': openedGroups[sectionKey] === nav_group_key}"
+                                            :class="{'active-group': active_group == nav_group_key, 'open': openedGroups[`${sectionKey}_${nav_group_key}`]}"
                                             @click="() => { toggleGroup(sectionKey, nav_group_key); changeIcon('icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')); }"
                                         >
-                                            <i :id="'icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', active_group == nav_group_key ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+                                            <i :id="'icon_nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', openedGroups[`${sectionKey}_${nav_group_key}`] ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                                             <span class="fw-medium">{{ nav_group_key }}</span>
                                         </button>
-                                        <div v-show="openedGroups[sectionKey] === nav_group_key"
+                                        <div v-show="openedGroups[`${sectionKey}_${nav_group_key}`]"
                                             :id="'nav_group_desktop_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
                                         >
                                             <a v-for="(nav, index) in nav_group"
                                                 :key="`${sectionKey}-${nav_group_key}-${index}`"
                                                 :href="nav.route"
-                                                :class="['nav-item', 'sub-item', 'd-block', nav.active ? 'active' : '']"
+                                                :class="['nav-item', 'sub-item', 'd-flex', 'align-items-center', nav.active ? 'active' : '']"
                                             >
+                                                <i v-if="nav.icon" :class="['bi', nav.icon, 'me-2']"></i>
                                                 {{ nav.title }}
                                             </a>
                                         </div>
@@ -327,8 +454,9 @@ watch(() => page.component, () => {
                                     <template v-if="!Array.isArray(nav_group) && typeof nav_group === 'object' && nav_group !== null && nav_group.route !== undefined">
                                         <a
                                             :href="nav_group.route"
-                                            :class="['nav-item', 'd-block', nav_group.active ? 'active' : '']"
+                                            :class="['nav-item', 'd-flex', 'align-items-center', nav_group.active ? 'active' : '']"
                                         >
+                                            <i v-if="nav_group.icon" :class="['bi', nav_group.icon, 'me-2']"></i>
                                             {{ nav_group.title }}
                                         </a>
                                     </template>
@@ -358,34 +486,36 @@ watch(() => page.component, () => {
                      <div v-for="(sectionContent, sectionKey) in nav_list" :key="sectionKey + '-mobile'" class="nav-section mb-2">
                          <button
                             type="button"
-                            class="nav-header btn w-100 text-start d-flex align-items-center"
-                            :class="{'active-section': active_section == sectionKey, 'open': openedSection === sectionKey}"
+                             class="nav-header btn w-100 text-start d-flex align-items-center"
+                            :class="{'active-section': active_section == sectionKey, 'open': openedSections[sectionKey]}"
                             @click="() => { toggleSection(sectionKey); changeIcon('icon_nav_section_mobile_' + sectionKey.replace(/\s+/g, '')); }"
                         >
-                            <i :id="'icon_nav_section_mobile_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', openedSection === sectionKey ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+                            <i :id="'icon_nav_section_mobile_' + sectionKey.replace(/\s+/g, '')" :class="['bi', 'me-2', openedSections[sectionKey] ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+                            <i :class="['bi', getSectionIcon(sectionKey), 'me-2', 'text-warning']"></i>
                             <span class="fw-semibold">{{ sectionKey }}</span>
                         </button>
-                                   <div v-show="openedSection === sectionKey" :id="'nav_section_mobile_' + sectionKey.replace(/\s+/g, '')">
+                        <div v-show="openedSections[sectionKey]" :id="'nav_section_mobile_' + sectionKey.replace(/\s+/g, '')">
                             <div class="nav-items pt-1 ps-3">
                                  <div v-for="(nav_group, nav_group_key) in sectionContent" :key="nav_group_key + '-mobile'" class="mb-1">
                                      <template v-if="Array.isArray(nav_group)">
                                          <button
                                             type="button"
-                                            class="nav-item nav-group d-flex align-items-center btn text-start w-100"
-                                            :class="{'active-group': active_group == nav_group_key, 'open': openedGroups[sectionKey] === nav_group_key}"
+                                             class="nav-item nav-group d-flex align-items-center btn text-start w-100"
+                                            :class="{'active-group': active_group == nav_group_key, 'open': openedGroups[`${sectionKey}_${nav_group_key}`]}"
                                             @click="() => { toggleGroup(sectionKey, nav_group_key); changeIcon('icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')); }"
                                         >
-                                             <i :id="'icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', active_group == nav_group_key ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+                                             <i :id="'icon_nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')" :class="['bi', 'me-2', 'nav-group-icon', openedGroups[`${sectionKey}_${nav_group_key}`] ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
                                              <span class="fw-medium">{{ nav_group_key }}</span>
                                         </button>
-                                                     <div v-show="openedGroups[sectionKey] === nav_group_key"
+                                                     <div v-show="openedGroups[`${sectionKey}_${nav_group_key}`]"
                                             :id="'nav_group_mobile_' + sectionKey.replace(/\s+/g, '') + '_' + nav_group_key.replace(/\s+/g, '')"
                                         >
                                              <a v-for="(nav, index) in nav_group"
                                                 :key="`${sectionKey}-${nav_group_key}-${index}-mobile`"
                                                 :href="nav.route"
-                                                :class="['nav-item', 'sub-item', 'd-block', nav.active ? 'active' : '']"
+                                                :class="['nav-item', 'sub-item', 'd-flex', 'align-items-center', nav.active ? 'active' : '']"
                                             >
+                                                <i v-if="nav.icon" :class="['bi', nav.icon, 'me-2']"></i>
                                                 {{ nav.title }}
                                             </a>
                                         </div>
@@ -393,8 +523,9 @@ watch(() => page.component, () => {
                                      <template v-if="!Array.isArray(nav_group) && typeof nav_group === 'object' && nav_group !== null && nav_group.route !== undefined">
                                         <a
                                             :href="nav_group.route"
-                                            :class="['nav-item', 'd-block', nav_group.active ? 'active' : '']"
+                                            :class="['nav-item', 'd-flex', 'align-items-center', nav_group.active ? 'active' : '']"
                                         >
+                                            <i v-if="nav_group.icon" :class="['bi', nav_group.icon, 'me-2']"></i>
                                             {{ nav_group.title }}
                                         </a>
                                     </template>
@@ -422,6 +553,13 @@ watch(() => page.component, () => {
                         </div>
                     </div>
 
+                    <div v-if="can_switch_year" class="me-2 d-none d-md-flex align-items-center gap-2">
+                        <span class="small text-muted">Tahun</span>
+                        <select class="form-select form-select-sm" style="width: 110px;" v-model="selected_year" @change="submitYear">
+                            <option v-for="y in available_years" :key="y" :value="y">{{ y }}</option>
+                        </select>
+                    </div>
+
                     <div class="user-profile dropdown">
                         <button
                             class="profile-btn btn d-flex align-items-center dropdown-toggle border-0"
@@ -431,7 +569,7 @@ watch(() => page.component, () => {
                             aria-expanded="false"
                         >
                             <img
-                                :src="auth_user?.full_profile_image_url || '/storage/images/profile/example.png'"
+                                :src="auth_user?.full_profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(auth_user?.name || 'User')}&color=7F9CF5&background=EBF4FF`"
                                 alt="Profile"
                                 class="profile-img rounded-circle me-2"
                                 @error="$event.target.src='/storage/local/images/compro/logo.png'"
@@ -486,7 +624,7 @@ watch(() => page.component, () => {
 }
 .bg-gradient-custom {
      /* Selaraskan dengan palet login: Bootstrap Primary gradient */
-     background: linear-gradient(135deg, #0d6efd 0%, #6ea8fe 100%);
+     background: #27187e;
 }
 .sidebar-content-inner {
     overflow-y: auto;
@@ -568,11 +706,12 @@ watch(() => page.component, () => {
 
 /* Main Content Wrapper */
 .main-content-wrapper {
-    background-color: #f8fafc; /* Latar belakang area konten */
+    background-color: #f7f7ff; /* Latar belakang area konten */
 }
 
 /* Top Header */
 .top-header {
+    background-color: #f7f7ff !important;
     height: 65px; /* Tinggi header tetap */
     flex-shrink: 0;
     z-index: 1040;
@@ -591,7 +730,7 @@ watch(() => page.component, () => {
 
 /* Content Container */
 .content-container {
-    background-color: #f8fafc;
+    background-color: #f7f7ff;
 }
 
 /* Custom Scrollbar (dari style.css Anda) */
@@ -622,11 +761,14 @@ watch(() => page.component, () => {
 
 /* Style tambahan jika diperlukan */
 .text-warning { color: #fbbf24 !important; } /* Sesuaikan warna warning */
-.form-check-input:checked { background-color: #4e54c8; border-color: #4e54c8; } /* Warna check input */
-.btn-primary { background-color: #0d6efd; border-color: #0d6efd; }
-.btn-primary:hover { background-color: #0b5ed7; border-color: #0b5ed7; }
+.form-check-input:checked { background-color: #27187e; border-color: #27187e; } /* Warna check input */
+.btn-primary { background-color: #27187e; border-color: #27187e; color: #fff; }
+.btn-primary:hover { background-color: #27187e; border-color: #27187e; color: #fff; }
+.btn-outline-primary { color: #27187e; border-color: #27187e; }
+.btn-outline-primary:hover { background-color: #27187e; color: #fff; }
 .btn-success { background-color: #10b981; border-color: #10b981; }
 .btn-success:hover { background-color: #059669; border-color: #059669; }
-.text-primary { color: #0d6efd !important; }
-a.text-primary:hover { color: #0b5ed7 !important; }
+.text-primary { color: #27187e !important; }
+a.text-primary:hover { color: #27187e !important; }
+.bg-white { background-color: #f7f7ff !important; }
 </style>

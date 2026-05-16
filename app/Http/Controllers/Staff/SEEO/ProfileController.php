@@ -35,28 +35,36 @@ class ProfileController extends Controller
         }
 
         // Add full_profile_image_url to the profile object
+        $fallbackUrl = 'https://ui-avatars.com/api/?name=' . urlencode($profile->name ?? 'User') . '&color=7F9CF5&background=EBF4FF';
+        
         if ($profile->profile_image) {
             try {
                 $path = 'images/profile/' . $profile->profile_image;
-                $disk = Storage::disk('google');
-                if ($disk->exists($path)) {
-                    $profile->full_profile_image_url = $disk->url($path);
+                if (config('app.env') === 'production') {
+                    $disk = Storage::disk('google');
+                    if ($disk->exists($path)) {
+                        $profile->full_profile_image_url = '/storage/images/profile/' . $profile->profile_image;
+                    } else {
+                        $profile->full_profile_image_url = $fallbackUrl;
+                    }
                 } else {
-                    $profile->full_profile_image_url = '/storage/images/profile/example.png';
+                    // In local, if we have a filename but no google drive access, check local public disk
+                    if (Storage::disk('public')->exists($path)) {
+                        $profile->full_profile_image_url = '/storage/local/' . $path;
+                    } else {
+                        $profile->full_profile_image_url = $fallbackUrl;
+                    }
                 }
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Failed to resolve Google Drive URL for profile image in edit', [
-                    'user_id' => $profile->id,
-                    'error' => $e->getMessage(),
-                ]);
-                $profile->full_profile_image_url = '/storage/images/profile/example.png';
+                $profile->full_profile_image_url = $fallbackUrl;
             }
+        } else {
+            $profile->full_profile_image_url = $fallbackUrl;
         }
 
 
-        if (!$profile->phone || !$profile->password) {
-            return back()->with('notif', ['type' => 'info', 'message' => $profile->name . '`s account has not finish the registration process.']);
-        }
+        // Removed strict check that blocks profile access if phone/password is missing
+        // as users need to access profile to fill these details.
 
         $program_list = ProgramStaff::with(['program'])->where('user_id', '=', $profile->id)->get();
         $logbook_list = Logbook::with(['program', 'employee'])->where('user_id', '=', $profile->id)->orderBy('created_at', 'desc')->limit(5)->get();
@@ -83,6 +91,7 @@ class ProfileController extends Controller
             'name' => ['string', 'min:10', 'max:50', 'nullable'],
             'phone' => ['numeric', 'max_digits:15', 'min_digits:10', 'starts_with:0', 'nullable'],
             'location' => ['string', 'nullable'],
+            'birth_date' => ['date', 'nullable'],
         ]);
         $auth_user = Auth::user();
         $user = User::find($auth_user->id);
@@ -120,9 +129,11 @@ class ProfileController extends Controller
         $user_phone = $request->input('phone') ? $request->input('phone') : $auth_user->phone;
         $user_name = $request->input('name') ? $request->input('name') : $auth_user->name;
         $user_location = $request->input('location') ? $request->input('location') : $auth_user->location;
+        $user_birth_date = $request->input('birth_date') ? $request->input('birth_date') : $auth_user->birth_date;
         $user->phone = $user_phone;
         $user->name = $user_name;
         $user->location = $user_location;
+        $user->birth_date = $user_birth_date;
 
         if ($user->save()) {
             return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update profile.']);

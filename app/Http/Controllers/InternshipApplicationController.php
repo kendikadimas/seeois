@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\InternshipApplication;
 use App\Models\Program;
+use App\Mail\InternshipAnnouncementMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 use Intervention\Image\ImageManager;
@@ -58,7 +60,7 @@ class InternshipApplicationController extends Controller
         
         // Definisi role yang diizinkan akses (non super admin):
         // 1 = CEO, 5 = Co-CEO, 6 = HR Manager
-        $allowedRoles = [1, 5, 6];
+        $allowedRoles = [1, 5, 6, 15];
         
         // Cek apakah user memiliki role yang diizinkan
         $hasAllowedRole = is_super_admin($user) || in_array($user->roles_id, $allowedRoles);
@@ -86,6 +88,7 @@ class InternshipApplicationController extends Controller
         // Render komponen Vue dan kirim data 'applications' sebagai props
         return Inertia::render('Internship/Index', [
             'applications' => $applications,
+            'availableYears' => $this->availableInternshipYears(),
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -136,7 +139,8 @@ class InternshipApplicationController extends Controller
         // Render komponen Vue dengan status submission
         return Inertia::render('Internship/Register', [
             'hasSubmitted' => $hasSubmitted,
-            'submissionData' => $submissionData
+            'submissionData' => $submissionData,
+            'availableYears' => $this->availableInternshipYears(),
         ]);
     }
 
@@ -156,6 +160,7 @@ class InternshipApplicationController extends Controller
             'krs_photo' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
             'email_username' => 'required|string|max:100',
             'study_program' => 'required|string|max:255',
+            'internship_year' => 'required|integer',
             'division_choice_1' => 'required|string|max:255',
             'reason_choice_1' => 'required|string',
             'division_choice_2' => 'required|string|max:255|different:division_choice_1',
@@ -209,13 +214,7 @@ class InternshipApplicationController extends Controller
 
                 // Jika disk Google, coba ambil URL (tergantung adapter) untuk mempermudah akses
                 try {
-                    if ($disk === 'google') {
-                        // Beberapa adapter menyediakan metode url(); jika tidak, fallback ke path
-                        $krsUrl = Storage::disk($disk)->url($storagePath);
-                        $krsPath = $krsUrl ?: $storagePath;
-                    } else {
-                        $krsPath = $storagePath;
-                    }
+                    $krsPath = $storagePath;
                 } catch (\Exception $e) {
                     // Adapter mungkin tidak mendukung url(); gunakan path sebagai fallback
                     Log::warning('Unable to get URL from storage disk: ' . $e->getMessage(), ['disk' => $disk, 'path' => $storagePath]);
@@ -239,11 +238,13 @@ class InternshipApplicationController extends Controller
                 'krs_path' => $krsPath,
                 'email' => $fullEmail,
                 'study_program' => $validatedData['study_program'],
+                'internship_year' => $validatedData['internship_year'],
                 'division_choice_1' => $validatedData['division_choice_1'],
                 'reason_choice_1' => $validatedData['reason_choice_1'],
                 'division_choice_2' => $validatedData['division_choice_2'],
                 'reason_choice_2' => $validatedData['reason_choice_2'],
                 'willing_to_be_placed_elsewhere' => $validatedData['willing_to_be_placed_elsewhere'],
+                'status' => 'pending',
                 'ip_address' => $request->ip(),
             ]);
             
@@ -280,5 +281,41 @@ class InternshipApplicationController extends Controller
                 'general' => 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.'
             ])->withInput();
         }
+    }
+
+    public function updateDecision(Request $request, InternshipApplication $internshipApplication)
+    {
+        $data = $request->validate([
+            'status' => 'required|in:accepted,rejected',
+            'decision_note' => 'nullable|string|max:1000',
+        ]);
+
+        $internshipApplication->update([
+            'status' => $data['status'],
+            'reviewed_by' => Auth::id(),
+            'reviewed_at' => now(),
+            'decision_note' => $data['decision_note'] ?? null,
+        ]);
+
+        Mail::to($internshipApplication->email)->send(new InternshipAnnouncementMail(
+            $internshipApplication,
+            $data['status'],
+            $data['decision_note'] ?? null
+        ));
+
+        $internshipApplication->update([
+            'announcement_sent_at' => now(),
+        ]);
+
+        return back()->with('notif', [
+            'type' => 'info',
+            'message' => 'Status pendaftaran diperbarui dan email pengumuman telah dikirim.',
+        ]);
+    }
+
+    private function availableInternshipYears(): array
+    {
+        $currentYear = now()->year;
+        return range($currentYear, $currentYear - 4);
     }
 }

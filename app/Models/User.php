@@ -29,6 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'location',
         'level',
         'phone',
+        'birth_date',
         'roles_id',
         'profile_image',
         'email_verified_at',
@@ -55,6 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'birth_date' => 'date',
             'password' => 'hashed',
             'roles_id' => 'integer',  // Force roles_id to always be integer
         ];
@@ -81,6 +83,43 @@ class User extends Authenticatable implements MustVerifyEmail
     public function roles(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function hasRole(string $roleName): bool
+    {
+        if (is_super_admin($this)) {
+            return true;
+        }
+
+        $currentRoleName = $this->roles?->name;
+        if (!$currentRoleName) {
+            return false;
+        }
+
+        return strcasecmp($currentRoleName, $roleName) === 0;
+    }
+
+    /**
+     * @param string[] $roleNames
+     */
+    public function hasAnyRole(array $roleNames): bool
+    {
+        if (is_super_admin($this)) {
+            return true;
+        }
+
+        $currentRoleName = $this->roles?->name;
+        if (!$currentRoleName) {
+            return false;
+        }
+
+        foreach ($roleNames as $roleName) {
+            if (strcasecmp($currentRoleName, $roleName) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -150,6 +189,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function contribution_receipt(): HasMany
     {
         return $this->hasMany(ContributionReceipt::class, 'financial_id');
+    }
+
+    /**
+     * Logbooks uploaded by this employee.
+     */
+    public function logbooks(): HasMany
+    {
+        return $this->hasMany(Logbook::class, 'user_id');
     }
 
     /**

@@ -50,6 +50,7 @@ const thisMonth = computed(() => {
 const formUpdateProfile = useForm({
     name: props.profile.name,
     phone: props.profile.phone,
+    birth_date: props.profile.birth_date,
     profile_image: props.profile.profile_image,
 });
 
@@ -72,7 +73,7 @@ const formAddContribution = useForm({
 });
 
 function handleSubmitUpdateProfile() {
-    formUpdateProfile.post(route("profile.update"), {
+    formUpdateProfile.post("/seeo/profile/update", {
         onSuccess: () => {
             showUpdateProfileModal(false);
         },
@@ -85,7 +86,7 @@ function handleSubmitUpdateProfile() {
 }
 
 function handleSubmitUpdatePassword() {
-    formUpdatePassword.post(route("password.change"), {
+    formUpdatePassword.post("/seeo/profile/password", {
         onSuccess: () => {
             showUpdatePasswordModal(false);
             formUpdatePassword.reset();
@@ -94,7 +95,7 @@ function handleSubmitUpdatePassword() {
 }
 
 function handleSubmitLogbook() {
-    formAddLogbook.post(route("logbook.add"), {
+    formAddLogbook.post("/seeo/logbook/add", {
         onSuccess: () => {
             formAddLogbook.reset();
             if (logbookImageRef.value) {
@@ -105,7 +106,7 @@ function handleSubmitLogbook() {
 }
 
 function handleSubmitContribution() {
-    formAddContribution.post(route("contribution.insert"), {
+    formAddContribution.post("/seeo/contribution/insert", {
         onSuccess: () => {
             formAddContribution.reset();
             if (contributionReceiptRef.value) {
@@ -235,7 +236,7 @@ watch(
                                     v-if="auth_user.roles_id == 99 || auth_user.id == profile.id"
                                     data-bs-toggle="dropdown"
                                     aria-expanded="false"
-                                    class="btn btn-sm btn-outline-secondary end-0 top-0 position-absolute mt-1 me-1 border-0"
+                                    class="btn btn-sm btn-outline-secondary inset-e-0 top-0 position-absolute mt-1 me-1 border-0"
                                 >
                                     <i class="bi bi-gear-fill"></i>
                                 </button>
@@ -408,6 +409,39 @@ watch(
                                                                     formUpdateProfile
                                                                         .errors
                                                                         .phone
+                                                                "
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div
+                                                        class="row justify-content-center mt-2"
+                                                    >
+                                                        <div
+                                                            class="col-4 col-lg-3 d-flex"
+                                                        >
+                                                            <label
+                                                                for="profile_birth_date"
+                                                                class="form-label d-inline-block my-auto"
+                                                                >Birthday</label
+                                                            >
+                                                        </div>
+                                                        <div
+                                                            class="col-8 col-lg-7"
+                                                        >
+                                                            <input
+                                                                id="profile_birth_date"
+                                                                type="date"
+                                                                class="form-control form-control-sm d-inline-block"
+                                                                v-model="
+                                                                    formUpdateProfile.birth_date
+                                                                "
+                                                            />
+                                                            <InputError
+                                                                :message="
+                                                                    formUpdateProfile
+                                                                        .errors
+                                                                        .birth_date
                                                                 "
                                                             />
                                                         </div>
@@ -672,7 +706,7 @@ watch(
                                                     'example.png')
                                             "
                                             alt="image"
-                                            class="img-fluid w-100 h-100 object-fit-cover rounded border-secondary-subtle border-1 shadow placeholder"
+                                            class="img-fluid w-100 h-100 object-fit-cover rounded border-secondary-subtle border shadow placeholder"
                                             @load="showImage"
                                             style="min-height: 200px"
                                         />
@@ -683,7 +717,7 @@ watch(
                                                     'example.png')
                                             "
                                             :class="
-                                                'btn btn-sm btn-primary border-0 shadow rounded-5 position-absolute end-0 bottom-0 mb-2 ' +
+                                                'btn btn-sm btn-primary border-0 shadow rounded-5 position-absolute inset-e-0 bottom-0 mb-2 ' +
                                                 (auth_user.id !== profile.id
                                                     ? 'me-2'
                                                     : '')
@@ -702,7 +736,7 @@ watch(
                                             @click="
                                                 triggerFileUploadProfileImage()
                                             "
-                                            class="btn btn-sm btn-primary border-0 shadow rounded-5 position-absolute end-0 bottom-0 me-2 mb-2"
+                                            class="btn btn-sm btn-primary border-0 shadow rounded-5 position-absolute inset-e-0 bottom-0 me-2 mb-2"
                                         >
                                             <i class="bi bi-camera"></i>
                                         </button>
@@ -777,7 +811,7 @@ watch(
                                             >
                                                 {{ "Phone" }}
                                             </p>
-                                            <p class="text-secondary-emphasis">
+                                            <p class="text-secondary-emphasis" v-if="profile.phone">
                                                 <a
                                                     :href="
                                                         'https://wa.me/+62' +
@@ -792,6 +826,7 @@ watch(
                                                     {{ profile.phone }}
                                                 </a>
                                             </p>
+                                            <p class="text-muted small" v-else>Belum diatur</p>
                                         </div>
                                     </div>
                                 </div>
@@ -813,7 +848,7 @@ watch(
                                 >
                                     <div class="d-flex">
                                         <i
-                                            class="bi bi-journal-bookmark rounded-4 fs-1 text-primary border border-primary-subtle border-1 shadow-sm py-1 px-2 d-block mx-auto"
+                                            class="bi bi-journal-bookmark rounded-4 fs-1 text-primary border-primary-subtle border shadow-sm py-1 px-2 d-block mx-auto"
                                         ></i>
                                     </div>
                                     <span
@@ -829,7 +864,7 @@ watch(
                                 >
                                     <div class="d-flex">
                                         <i
-                                            class="bi bi-journal-text rounded-4 fs-1 text-primary border border-primary-subtle border-1 shadow-sm py-1 px-2 mx-auto"
+                                            class="bi bi-journal-text rounded-4 fs-1 text-primary border-primary-subtle border shadow-sm py-1 px-2 mx-auto"
                                         ></i>
                                     </div>
                                     <span
@@ -1030,10 +1065,7 @@ watch(
                                             <a
                                                 v-for="program in program_list"
                                                 :href="
-                                                    route('checkLogbook', [
-                                                        program.program_id,
-                                                        auth_user.id,
-                                                    ])
+                                                    `/seeo/logbook/check/${program.program_id}/${auth_user.id}`
                                                 "
                                                 :class="'text-decoration-none '"
                                             >
@@ -1130,7 +1162,7 @@ watch(
                                                     : '') +
                                                 (month <= contribution?.months
                                                     ? 'bg-primary bg-opacity-25'
-                                                    : 'bg-secondary bg-opacity-25 border-dark-subtle border-1')
+                                                    : 'bg-secondary bg-opacity-25 border-dark-subtle border')
                                             "
                                             v-for="month in contribution_settings.period"
                                         >
@@ -1301,10 +1333,7 @@ watch(
                                             class="ms-auto text-primary text-decoration-none"
                                             style="font-size: 0.7rem"
                                             :href="
-                                                route(
-                                                    'checkContribution',
-                                                    auth_user.id
-                                                )
+                                                `/seeo/contribution/${auth_user.id}`
                                             "
                                         >
                                             {{ "check my contribution" }}

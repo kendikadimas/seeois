@@ -27,6 +27,8 @@ class Attachment extends Model
         'title',
         'document',
         'link',
+        'is_pinned',
+        'pinned_year',
         'deleted_at',
     ];
 

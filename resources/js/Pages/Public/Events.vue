@@ -20,10 +20,16 @@
                     Temukan berbagai seminar, workshop, dan kompetisi yang kami selenggarakan untuk mengasah jiwa wirausaha Anda.
                 </p>
 
+                <div class="mt-10 flex justify-center">
+                    <Link :href="route('seminar.registration.create')" class="inline-flex items-center px-5 py-3 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-500 transition-colors">
+                        Daftar Seminar Nasional
+                    </Link>
+                </div>
+
                 <!-- Scroll Indicator -->
                 <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50">
                     <span class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Scroll to Explore</span>
-                    <div class="w-px h-12 bg-gradient-to-b from-blue-500 to-transparent"></div>
+                    <div class="w-px h-12 bg-linear-to-b from-blue-500 to-transparent"></div>
                 </div>
             </div>
         </section>
@@ -50,7 +56,7 @@
 
 <script setup>
 import PublicLayout from '@/Layouts/PublicLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 
 // Hapus defineProps dan ganti dengan data statis ini
 const events = [

@@ -278,6 +278,14 @@
                                         </select>
                                         <p v-if="form.errors.study_program" class="error-message">{{ form.errors.study_program }}</p>
                                     </div>
+
+                                    <div class="form-group mt-3">
+                                        <label class="form-label">Tahun Pendaftaran <span class="required">*</span></label>
+                                        <select v-model="form.internship_year" class="form-select" required>
+                                            <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+                                        </select>
+                                        <p v-if="form.errors.internship_year" class="error-message">{{ form.errors.internship_year }}</p>
+                                    </div>
                                 </div>
 
                                 <!-- Upload KRS -->
@@ -464,6 +472,10 @@ const props = defineProps({
     submissionData: {
         type: Object,
         default: null
+    },
+    availableYears: {
+        type: Array,
+        default: () => []
     }
 });
 
@@ -489,6 +501,7 @@ const form = useForm({
     krs_photo: null,
     email_username: '',
     study_program: '',
+    internship_year: props.availableYears?.[0] || new Date().getFullYear(),
     division_choice_1: '',
     reason_choice_1: '',
     division_choice_2: '',
@@ -499,7 +512,7 @@ const form = useForm({
 // Progress calculation
 const progressWidth = computed(() => {
     let progress = 0;
-    const fields = ['name', 'nim', 'phone_number', 'email_username', 'study_program'];
+    const fields = ['name', 'nim', 'phone_number', 'email_username', 'study_program', 'internship_year'];
     
     const filledDataDiri = fields.filter(field => form[field]).length;
     progress += (filledDataDiri / fields.length) * 25;
@@ -553,7 +566,7 @@ const handleFileUpload = (event) => {
 
 // Form submission
 const submit = () => {
-    form.post(route('internship.store'), {
+    form.post('/seeo/internship/register', {
         onSuccess: (page) => {
             if (page.props.flash.success) {
                 if (page.props.flash.whatsapp_link) {
@@ -1395,7 +1408,7 @@ html {
 }
 
 .submission-summary {
-    background: #f8fafc !important;
+    background: #f7f7ff !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 12px !important;
     padding: 2rem !important;

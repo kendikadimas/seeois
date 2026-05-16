@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff\SEEO;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\ScopedByYear;
 use App\Models\BudgetItem;
 use App\Models\Department;
 use App\Models\DisbursementItem;
@@ -18,38 +19,49 @@ use Inertia\Inertia;
 
 class DepartmentController extends Controller
 {
+    use ScopedByYear;
+
     /**
      * Display departments.
      */
     public function structural(Request $request)
     {
+        [$activeYear, $yearId] = $this->activeYearScope();
         // Retrieve or create session
         $structural_session = session('structural', ['category' => 'name', 'order' => 'asc', 'keyword' => null]);
         // Save session to database
         $request->session()->put('structural', $structural_session);
         // Stand filter
         $structural_category = $structural_session['category'];
-        $structural_order = $structural_session['order'];
-        $structural_keyword = $structural_session['keyword'];
+        $structural_order    = $structural_session['order'];
+        $structural_keyword  = $structural_session['keyword'];
+
+        $deptQuery = Department::with(['manager']);
+        $this->applyYearScope($deptQuery, $yearId);
+
         $department_list = $structural_keyword !== null ?
-            Department::orderByRaw("
+            $deptQuery->orderByRaw("
                 CASE
                 WHEN name = ? THEN 1
                 WHEN name LIKE ? THEN 2
                 WHEN name LIKE ? THEN 3
                 ELSE 4
                 END 
-            ", [$structural_keyword, "$structural_keyword%", "%$structural_keyword%"])->with(['manager'])->get() :
-            Department::orderBy($structural_category, $structural_order)->with(['manager'])->get();
+            ", [$structural_keyword, "$structural_keyword%", "%$structural_keyword%"])->get() :
+            $deptQuery->orderBy($structural_category, $structural_order)->get();
+
+        $staffQuery = User::select(['id', 'name'])->where('roles_id', '>', 0);
+        $this->applyYearScope($staffQuery, $yearId);
+
         $data = [
-            'staff_list' => User::select(['id', 'name'])->where('roles_id', '>', 0)->get(),
+            'staff_list'      => $staffQuery->get(),
             'department_list' => $department_list,
-            'filter' => [
+            'filter'          => [
                 'category' => $structural_category,
-                'order' => $structural_order,
-                'keyword' => $structural_keyword,
+                'order'    => $structural_order,
+                'keyword'  => $structural_keyword,
             ],
-            'notif' => session('notif'),
+            'notif'  => session('notif'),
             'errors' => session('errors') ? session('errors')->getBag('default')->getMessages() : [],
         ];
         return Inertia::render('Staff/SEEO/Structural', $data);
@@ -72,17 +84,22 @@ class DepartmentController extends Controller
      */
     public function department(Request $request, $id)
     {
+        [$activeYear, $yearId] = $this->activeYearScope();
         $staff_session = session('department_staff', ['keyword' => null]);
         $request->session()->put('department_staff', $staff_session);
         $department = Department::with(['manager', 'program' => ['user'], 'staff'])->find($id);
         if (!$department) {
             return redirect()->route('structural')->with('notif', ['type' => 'warning', 'message' => 'Department not found. Please select available departments in this page.']);
         }
+        $staffBaseQuery  = User::select(['id', 'name'])->where('roles_id', '>', 0);
+        $staffBaseQuery2 = User::select(['id', 'name'])->where('roles_id', '>', 0);
+        $this->applyYearScope($staffBaseQuery,  $yearId);
+        $this->applyYearScope($staffBaseQuery2, $yearId);
         $data = [
-            'staff_list' => User::select(['id', 'name'])->where('roles_id', '>', 0)->where('department_id', '=', null)->get(),
-            'staff_list_2' => User::select(['id', 'name'])->where('roles_id', '>', 0)->get(),
-            'department' => $department,
-            'notif' => session('notif'),
+            'staff_list'   => $staffBaseQuery->where('department_id', '=', null)->get(),
+            'staff_list_2' => $staffBaseQuery2->get(),
+            'department'   => $department,
+            'notif'  => session('notif'),
             'errors' => session('errors') ? session('errors')->getBag('default')->getMessages() : [],
         ];
         return Inertia::render('Staff/SEEO/Department', $data);
@@ -109,10 +126,13 @@ class DepartmentController extends Controller
             'manager_id' => ['required', 'numeric', Rule::unique(Department::class)->whereNull('deleted_at')],
         ]);
 
+        [$activeYear, $yearId] = $this->activeYearScope();
+
         $department = Department::create(
             [
                 'name' => $request->input('name'),
                 'manager_id' => $request->input('manager_id'),
+                'year_id' => $yearId,
             ]
         );
         $manager = User::find($request->input('manager_id'));

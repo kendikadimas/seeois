@@ -15,6 +15,11 @@ class MenuItem extends Model
         HasFactory,
         SoftDeletes;
 
+    protected $casts = [
+        'is_published' => 'boolean',
+        'published_at' => 'datetime',
+    ];
+
     /**
      * Define table name
      */
@@ -37,6 +42,8 @@ class MenuItem extends Model
         'stock',
         'category',
         'image',
+        'is_published',
+        'published_at',
     ];
 
     /**

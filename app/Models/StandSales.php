@@ -15,6 +15,10 @@ class StandSales extends Model
         HasFactory,
         SoftDeletes;
 
+    protected $casts = [
+        'delivered_at' => 'datetime',
+    ];
+
     /**
      * Define table name
      */
@@ -38,6 +42,7 @@ class StandSales extends Model
         'voucher_id',
         'payment_method_id',
         'payment_price',
+        'delivered_at',
         'deleted_at',
     ];
 

@@ -55,14 +55,14 @@ function submitForm() {
         form.transform((data) => ({
             ...data,
             _method: 'put'
-        })).post(route('marketing.activities.update', form.id), {
+        })).post(`/seeo/marketing/activities/${form.id}`, {
             onSuccess: () => {
                 hideModal();
                 notifRef.value?.showToast('success', 'Kegiatan/Berita berhasil diupdate.');
             }
         });
     } else {
-        form.post(route('marketing.activities.store'), {
+        form.post("/seeo/marketing/activities", {
             onSuccess: () => {
                 hideModal();
                 notifRef.value?.showToast('success', 'Kegiatan/Berita berhasil ditambahkan.');
@@ -73,7 +73,7 @@ function submitForm() {
 
 function deleteActivity(id) {
     if (confirm('Yakin ingin menghapus berita/kegiatan ini?')) {
-        form.delete(route('marketing.activities.destroy', id), {
+        form.delete(`/seeo/marketing/activities/${id}`, {
             onSuccess: () => {
                 notifRef.value?.showToast('success', 'Berita/Kegiatan berhasil dihapus.');
             }

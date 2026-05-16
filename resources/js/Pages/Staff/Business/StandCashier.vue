@@ -32,6 +32,7 @@ const props = defineProps({
     menu_list: Object,
     customer_list: Array,
     order_list: Array,
+    today_sales: Array,
     payment_method_list: Array,
     data: Object,
     notif: Object,
@@ -44,11 +45,28 @@ const modalConfirmationRef = ref(null);
 const modalAlertNotificationRef = ref(null);
 const modalPrintReceipt = ref(null);
 const modalNewCustomer = ref(null);
+const modalCashierHelp = ref(null);
+const customerSelect = ref(null);
 const toastNotifRef = ref(null);
 const receiptContentRef = ref(null);
 const receiptPrintedImageUrl = ref(null);
-const receiptIsDownload = ref(true);
-const receiptIsSendWhatsapp = ref(true);
+const currentSearch = ref("");
+const selectedTodaySale = ref(null); // track which today-sale opened the receipt modal
+
+// Watch for new customer data from server to auto-select
+watch(() => props.data, (newData) => {
+    if (newData && newData.new_customer_id) {
+        form_transaction.customer_id = newData.new_customer_id;
+        // Also update the customer name in the form
+        const newCustomer = props.customer_list.find(c => c.id == newData.new_customer_id);
+        if (newCustomer) {
+            form_transaction.customer = newCustomer.name;
+        }
+        toastNotifRef.value.showToast("info", "New customer auto-selected");
+    }
+}, { deep: true });
+const receiptIsDownload = { value: false };
+const receiptIsSendWhatsapp = { value: false };
 const active_tab = ref(1);
 const selected_order = ref();
 const placeholder = ref("placeholder");
@@ -113,10 +131,8 @@ function addOrder(menu) {
     }
 }
 
-function handleSubmitTransaction() {
-    console.log(form_transaction);
-
-    form_transaction.post(`/food/stand/sales/add/${props.stand.id}`, {
+function handleSubmitSale() {
+    form_transaction.post(`/seeo/staff/food/stand/sales/add/${props.stand.id}`, {
         onError: (errors) => {
             for (const key in errors) {
                 toastNotifRef.value.showToast("warning", errors[key]);
@@ -125,15 +141,36 @@ function handleSubmitTransaction() {
     });
 }
 
+function debugOpenStandDetail() {
+    console.debug('[StandCashier] opening detail', {
+        standId: props.stand.id,
+        standName: props.stand.name,
+        href: `/seeo/staff/blaterian/foods/stand_detail/${props.stand.id}`,
+    });
+}
+
 function handleSubmitNewCustomer() {
-    form_new_customer.post(`/food/stand/sales/customer/add/${props.stand.id}`);
+    form_new_customer.post(`/seeo/staff/food/stand/sales/customer/add/${props.stand.id}`, {
+        onSuccess: () => {
+            showNewCustomerModal(false);
+            form_new_customer.reset();
+        },
+        onError: (errors) => {
+            for (const key in errors) {
+                toastNotifRef.value.showToast("warning", errors[key]);
+            }
+        }
+    });
 }
 
 function handleFinishTransaction(id) {
     const form = useForm({
         transaction_id: id,
     });
-    form.post('/shop/transaction/finish');
+    form.post('/seeo/staff/shop/transaction/finish', {
+        preserveScroll: true,
+        preserveState: true
+    });
 }
 
 function showPrintReceiptModal(is_show) {
@@ -145,6 +182,7 @@ function showPrintReceiptModal(is_show) {
         modalPrintReceipt.value.show();
     } else {
         modalPrintReceipt.value.hide();
+        selectedTodaySale.value = null; // reset when closing
     }
 }
 
@@ -160,6 +198,57 @@ function showNewCustomerModal(is_show) {
     }
 }
 
+function showCashierHelpModal(is_show) {
+    if (modalCashierHelp.value == null) {
+        const modal = document.getElementById("cashierHelpModal");
+        modalCashierHelp.value = bootstrap.Modal.getOrCreateInstance(modal);
+    }
+    if (is_show) {
+        modalCashierHelp.value.show();
+    } else {
+        modalCashierHelp.value.hide();
+    }
+}
+
+/**
+ * Open the receipt modal pre-filled from a completed today_sales entry.
+ * Reuses the existing printReceiptModal and form_print_receipt.
+ */
+function openTodayReceiptModal(sale) {
+    selectedTodaySale.value = sale;
+    form_print_receipt.value.date = format(new Date(sale.created_at), "EE, dd/MM/yy HH:mm");
+    form_print_receipt.value.customer = sale.customer?.name ?? sale.customer ?? "—";
+    form_print_receipt.value.customer_id = sale.customer_id;
+    form_print_receipt.value.order_list = sale.order; // items have .menu.name / .menu.price / .amount
+    form_print_receipt.value.subtotal = (sale.transaction ?? 0) + (sale.discount ?? 0);
+    form_print_receipt.value.discount = sale.discount ?? 0;
+    form_print_receipt.value.transaction = sale.transaction ?? 0;
+    form_print_receipt.value.payment_method_id = sale.payment_method_id;
+    form_print_receipt.value.payment_price = sale.payment_price ?? 0;
+    form_print_receipt.value.payment_change = (sale.payment_price ?? 0) - (sale.transaction ?? 0);
+    showPrintReceiptModal(true);
+}
+
+function openNewCustomerModal() {
+    if (auth_user.roles_id != 99 && !props.stand.cashier.some(c => c.id === auth_user.id)) {
+        alertNotification(
+            'You are not listed as Cashier in Stand ' +
+                props.stand.name +
+                '. Only cashier can add customer.'
+        );
+    } else {
+        // Pre-fill phone from v-select search if user typed a number there
+        const searchVal = currentSearch.value?.trim() ?? "";
+        form_new_customer.phone = searchVal !== "" ? searchVal : "";
+
+        // Pre-fill name from the customer name input if already typed
+        const nameVal = form_transaction.customer?.trim() ?? "";
+        form_new_customer.name = nameVal !== "" ? nameVal : "";
+
+        showNewCustomerModal(true);
+    }
+}
+
 function resetForm() {
     form_transaction.customer = null;
     form_transaction.customer_id = null;
@@ -172,64 +261,106 @@ function resetForm() {
 }
 
 const printReceipt = async () => {
-    const element = receiptContentRef.value;
-    const canvas = await html2canvas(element, {
-        scale: 2, // higher quality
-    });
-    receiptPrintedImageUrl.value = canvas.toDataURL("image/png", 0.8);
-    // Optional: download
-    if (receiptIsDownload.value) {
-        const link = document.createElement("a");
-        link.href = receiptPrintedImageUrl.value;
-        link.download =
-            "receipt" +
-            props.stand.id +
-            auth_user.id +
-            format(today.value, "HHmm") +
-            ".png";
-        link.click();
-    }
-    // Send to Whatsapp
-    if (receiptIsSendWhatsapp.value) {
-        if (!form_print_receipt.value.customer_id) {
-            return toastNotifRef.value.showToast(
-                "warning",
-                "Please add the customer first."
-            );
+    try {
+        const element = receiptContentRef.value;
+        if (!element) {
+            toastNotifRef.value.showToast("warning", "Receipt element not found. Try again.");
+            return;
         }
-        const customer_phone = props.customer_list.find(
-            (item) => item.id == form_print_receipt.value.customer_id
-        )?.phone;
-        const phone =
-            "62" +
-            (customer_phone.startsWith("0")
-                ? customer_phone.slice(1)
-                : customer_phone);
-        const message = encodeURIComponent(
-            [
-                "*BLATERIAN RECEIPT*",
-                "",
-                "Thank you!! We excited to have your next order (>_<)",
-                "Have a great dayy...",
-                "================",
-                "Terima kasih!! Kami nantikan pesananmu selanjutnya (>_<)",
-                "Semoga harimu luar biasaa...",
-                "",
-                "#GoodFoodMakesGoodMood",
-            ].join("\n")
-        );
-        window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+
+        toastNotifRef.value.showToast("info", "Generating receipt...");
+
+        // Clone outside modal to bypass Bootstrap overflow/transform issues.
+        // Use left: -9999px (off-screen) instead of opacity:0 — html2canvas
+        // cannot capture invisible elements.
+        const clone = element.cloneNode(true);
+        clone.style.position = "absolute";
+        clone.style.top = "0";
+        clone.style.left = "-9999px";
+        clone.style.width = "360px";
+        clone.style.height = "640px";
+        clone.style.zIndex = "1";
+        clone.style.pointerEvents = "none";
+        document.body.appendChild(clone);
+
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        const canvas = await html2canvas(clone, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#ffffff",
+            logging: false,
+            width: 360,
+            height: 640,
+        });
+
+        document.body.removeChild(clone);
+
+        const dataUrl = canvas.toDataURL("image/png", 0.9);
+        receiptPrintedImageUrl.value = dataUrl;
+
+        // Download
+        if (receiptIsDownload.value) {
+            const link = document.createElement("a");
+            link.href = dataUrl;
+            link.download = "receipt_" + props.stand.id + "_" + format(new Date(), "ddMMyyHHmm") + ".png";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toastNotifRef.value.showToast("info", "Receipt downloaded.");
+        }
+
+        // Send to WhatsApp
+        if (receiptIsSendWhatsapp.value) {
+            if (!form_print_receipt.value.customer_id) {
+                toastNotifRef.value.showToast("warning", "No customer selected. Cannot send WhatsApp.");
+                return;
+            }
+            let customer_phone = props.customer_list.find(
+                (item) => item.id == form_print_receipt.value.customer_id
+            )?.phone;
+            if (!customer_phone && selectedTodaySale.value) {
+                customer_phone = selectedTodaySale.value.customer?.phone;
+            }
+            if (!customer_phone) {
+                toastNotifRef.value.showToast("warning", "Customer phone number not found.");
+                return;
+            }
+            const normalized = customer_phone.startsWith("0") ? customer_phone.slice(1) : customer_phone;
+            const phone = "62" + normalized;
+            const message = encodeURIComponent(
+                [
+                    "*BLATERIAN RECEIPT*",
+                    "",
+                    "Thank you!! We excited to have your next order (>_<)",
+                    "Have a great dayy...",
+                    "================",
+                    "Terima kasih!! Kami nantikan pesananmu selanjutnya (>_<)",
+                    "Semoga harimu luar biasaa...",
+                    "",
+                    "#GoodFoodMakesGoodMood",
+                ].join("\n")
+            );
+            window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+        }
+    } catch (err) {
+        console.error("[printReceipt] error:", err);
+        toastNotifRef.value.showToast("warning", "Failed to generate receipt: " + err.message);
     }
 };
 
 function onSearchCustomer(search) {
-    if (search !== "") {
+    currentSearch.value = search;
+    if (search && search.trim() !== "") {
         form_new_customer.phone = search;
     }
 }
 
 const onInputCustomer = () => {
-    form_new_customer.name = form_transaction.customer;
+    if (form_transaction.customer) {
+        form_new_customer.name = form_transaction.customer;
+    }
 };
 
 function confirmation(route, message) {
@@ -286,7 +417,8 @@ watch(
             </a>
             <span class="mx-2">{{ "/" }}</span>
             <a
-                :href="`/blaterian/foods/stand_detail/${stand.id}`"
+                :href="`/seeo/staff/blaterian/foods/stand_detail/${stand.id}`"
+                @click="debugOpenStandDetail()"
                 class="bg-opacity-0 text-decoration-none text-primary-emphasis"
             >
                 <span class="fw-light">{{ stand.name }}</span>
@@ -304,6 +436,13 @@ watch(
                                 ><i class="bi bi-shop me-2"></i
                                 >{{ "Stand " + stand.name }}</span
                             >
+                            <button
+                                class="btn btn-sm btn-outline-info border-0 py-0 mb-auto"
+                                @click="showCashierHelpModal(true)"
+                                title="Panduan Kasir"
+                            >
+                                <i class="bi bi-question-circle"></i>
+                            </button>
                         </div>
                         <div class="row g-2 mt-1">
                             <div class="col-6">
@@ -338,23 +477,40 @@ watch(
                         <div class="d-flex">
                             <button
                                 :class="
-                                    'btn btn-sm btn-outline-primary border-0 w-50 ' +
+                                    'btn btn-sm btn-outline-primary border-0 w-33 ' +
                                     (active_tab == 1 ? 'active' : '')
                                 "
+                                style="width:33.33%"
                                 @click="active_tab = 1"
                             >
                                 <i class="fa-solid fa-cash-register me-2"></i>
                                 {{ "Cashier" }}
                             </button>
+                            <!--
+                            SELF-ORDER TAB BUTTON (MOBILE) — ARCHIVED
                             <button
                                 :class="
-                                    'btn btn-sm btn-outline-primary border-0 w-50 ' +
+                                    'btn btn-sm btn-outline-primary border-0 ' +
                                     (active_tab == 2 ? 'active' : '')
                                 "
+                                style="width:33.33%"
                                 @click="active_tab = 2"
                             >
                                 <i class="fa-solid fa-user-group me-2"></i>
                                 {{ "Self-Order" }}
+                            </button>
+                            -->
+                            <button
+                                :class="
+                                    'btn btn-sm btn-outline-primary border-0 ' +
+                                    (active_tab == 3 ? 'active' : '')
+                                "
+                                style="width:33.33%"
+                                @click="active_tab = 3"
+                            >
+                                <i class="bi bi-receipt me-2"></i>
+                                {{ "Today" }}
+                                <span v-if="today_sales?.length > 0" class="badge bg-primary ms-1" style="font-size:0.65rem">{{ today_sales.length }}</span>
                             </button>
                         </div>
                     </div>
@@ -453,6 +609,7 @@ watch(
                             </li>
                         </div>
                     </div>
+                    <!-- SELF-ORDER ORDER LIST CARD (LEFT COLUMN) — ARCHIVED
                     <div class="card p-3 bg-white mt-4" v-if="active_tab == 2">
                         <div
                             class="d-flex border-primary border-bottom border-1 pb-2"
@@ -521,29 +678,47 @@ watch(
                             </li>
                         </div>
                     </div>
+                    END ARCHIVED -->
                 </div>
                 <div class="col-12 col-lg-7">
                     <div class="card mb-4 bg-white p-1 d-lg-block d-none">
                         <div class="d-flex">
                             <button
                                 :class="
-                                    'btn btn-sm btn-outline-primary border-0 w-50 ' +
+                                    'btn btn-sm btn-outline-primary border-0 ' +
                                     (active_tab == 1 ? 'active' : '')
                                 "
+                                style="width:33.33%"
                                 @click="active_tab = 1"
                             >
                                 <i class="fa-solid fa-cash-register me-2"></i>
                                 {{ "Cashier" }}
                             </button>
+                            <!--
+                            SELF-ORDER TAB BUTTON (DESKTOP) — ARCHIVED
                             <button
                                 :class="
-                                    'btn btn-sm btn-outline-primary border-0 w-50 ' +
+                                    'btn btn-sm btn-outline-primary border-0 ' +
                                     (active_tab == 2 ? 'active' : '')
                                 "
+                                style="width:33.33%"
                                 @click="active_tab = 2"
                             >
                                 <i class="fa-solid fa-user-group me-2"></i>
                                 {{ "Self-Order" }}
+                            </button>
+                            -->
+                            <button
+                                :class="
+                                    'btn btn-sm btn-outline-primary border-0 ' +
+                                    (active_tab == 3 ? 'active' : '')
+                                "
+                                style="width:33.33%"
+                                @click="active_tab = 3"
+                            >
+                                <i class="bi bi-receipt me-2"></i>
+                                {{ "Today's Transactions" }}
+                                <span v-if="today_sales?.length > 0" class="badge bg-primary ms-1" style="font-size:0.65rem">{{ today_sales.length }}</span>
                             </button>
                         </div>
                     </div>
@@ -592,6 +767,7 @@ watch(
                                         @input="onInputCustomer"
                                     />
                                     <v-select
+                                        ref="customerSelect"
                                         class="bg-white text-nowrap w-100 me-2"
                                         :options="customer_list"
                                         label="phone"
@@ -612,19 +788,7 @@ watch(
                                     />
                                     <button
                                         class="btn btn-sm btn-outline-primary"
-                                        @click="
-                                            () => {
-                                                if (is_cashier) {
-                                                    showNewCustomerModal(true);
-                                                } else {
-                                                    alertNotification(
-                                                        'You are not listed as Cashier in Stand ' +
-                                                            stand.name +
-                                                            '. Only cashier can add customer.'
-                                                    );
-                                                }
-                                            }
-                                        "
+                                        @click="openNewCustomerModal"
                                     >
                                         <i class="bi bi-plus-lg"></i>
                                     </button>
@@ -945,7 +1109,7 @@ watch(
                         </div>
                         <div class="d-flex mt-3 bg-primary bg-opacity-10">
                             <button
-                                @click="handleSubmitTransaction"
+                                @click="handleSubmitSale"
                                 class="btn btn-outline-primary w-50 border-0 rounded-0"
                             >
                                 {{ "Submit" }}
@@ -954,7 +1118,13 @@ watch(
                                 class="btn btn-sm btn-outline-primary w-50 rounded-0 border-0"
                                 @click="
                                     () => {
-                                        if (is_cashier) {
+                                        if (auth_user.roles_id != 99 && !stand.cashier.some(c => c.cashier_id === auth_user.id)) {
+                                            alertNotification(
+                                                'You are not listed as Cashier in Stand ' +
+                                                    stand.name +
+                                                    '. Only cashier can add transaction.'
+                                            );
+                                        } else {
                                             form_print_receipt.date = format(
                                                 new Date(),
                                                 'EE, dd/MM/yy-HH:ii'
@@ -980,12 +1150,6 @@ watch(
                                                 form_transaction?.payment_price -
                                                 form_transaction?.transaction;
                                             showPrintReceiptModal(true);
-                                        } else {
-                                            alertNotification(
-                                                'You are not listed as Cashier in Stand ' +
-                                                    stand.name +
-                                                    '. Only cashier can add transaction.'
-                                            );
                                         }
                                     }
                                 "
@@ -995,6 +1159,7 @@ watch(
                             </button>
                         </div>
                     </div>
+                    <!-- SELF-ORDER ORDER DETAIL CARD (RIGHT COLUMN) — ARCHIVED
                     <div class="card p-3 my-4" v-if="active_tab == 2">
                         <div class="d-flex pb-2 border-bottom border-primary">
                             <span class="text-primary-emphasis h6 mb-0">
@@ -1341,6 +1506,89 @@ watch(
                             </div>
                         </div>
                     </div>
+                    END ARCHIVED -->
+                    <!-- Today's Transactions Tab -->
+                    <div class="card p-3 my-4" v-if="active_tab == 3">
+                        <div class="d-flex pb-2 border-bottom border-primary">
+                            <span class="text-primary-emphasis h6 mb-0 me-auto">
+                                <i class="bi bi-receipt me-2"></i>
+                                {{ "Today's Transactions" }}
+                            </span>
+                            <span class="text-secondary my-auto" style="font-size:0.8rem">
+                                {{ today_sales?.length ?? 0 }} transaksi
+                            </span>
+                        </div>
+                        <!-- Summary row -->
+                        <div class="row g-2 mt-1 mb-2">
+                            <div class="col-6">
+                                <span class="d-block text-secondary" style="font-size:0.8rem">Total Pemasukan</span>
+                                <span class="d-block text-primary fw-bold">
+                                    {{ formatIDR(today_sales?.reduce((sum, s) => sum + (s.transaction ?? 0), 0) ?? 0) }}
+                                </span>
+                            </div>
+                            <div class="col-6">
+                                <span class="d-block text-secondary" style="font-size:0.8rem">Total Transaksi</span>
+                                <span class="d-block text-primary-emphasis fw-bold">
+                                    {{ today_sales?.length ?? 0 }} order
+                                </span>
+                            </div>
+                        </div>
+                        <div class="scroll-container scroll-container-lg pe-1">
+                            <div v-if="!today_sales || today_sales.length === 0" class="d-flex bg-light py-2">
+                                <span class="text-secondary fst-italic mx-auto" style="font-size:0.8rem">Belum ada transaksi hari ini.</span>
+                            </div>
+                            <li class="list-group list-group-flush" v-else>
+                                <ul
+                                    class="list-group-item mb-0 px-0 py-2"
+                                    v-for="sale in today_sales"
+                                    :key="sale.id"
+                                >
+                                    <div class="d-flex align-items-start gap-2">
+                                        <!-- Customer & time -->
+                                        <div class="me-auto">
+                                            <span class="d-block text-primary-emphasis fw-semibold">
+                                                {{ sale.customer?.name ?? sale.customer ?? "—" }}
+                                            </span>
+                                            <span class="text-secondary d-block" style="font-size:0.75rem">
+                                                <i class="bi bi-telephone me-1"></i>{{ sale.customer?.phone ?? "—" }}
+                                            </span>
+                                            <span class="text-secondary" style="font-size:0.75rem">
+                                                <i class="bi bi-clock me-1"></i>{{ formatDate(sale.created_at) }}
+                                            </span>
+                                        </div>
+                                        <!-- Amount & method -->
+                                        <div class="text-end">
+                                            <span class="d-block text-primary fw-bold">
+                                                {{ formatIDR(sale.transaction ?? 0) }}
+                                            </span>
+                                            <span class="text-secondary d-block" style="font-size:0.75rem">
+                                                {{ payment_method_list.find(p => p.id == sale.payment_method_id)?.name ?? "—" }}
+                                            </span>
+                                        </div>
+                                        <!-- Receipt button -->
+                                        <button
+                                            class="btn btn-sm btn-outline-primary border-0 px-2 py-0 align-self-center"
+                                            title="Lihat & Print Receipt"
+                                            @click="openTodayReceiptModal(sale)"
+                                        >
+                                            <i class="bi bi-receipt-cutoff"></i>
+                                        </button>
+                                    </div>
+                                    <!-- Order items -->
+                                    <div class="mt-1 ps-1">
+                                        <span
+                                            class="badge bg-light text-secondary border me-1 mb-1"
+                                            style="font-size:0.7rem"
+                                            v-for="item in sale.order"
+                                            :key="item.id"
+                                        >
+                                            {{ item.amount }}x {{ item.menu?.name ?? "?" }}
+                                        </span>
+                                    </div>
+                                </ul>
+                            </li>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1349,14 +1597,13 @@ watch(
     <!-- Modals -->
     <!-- Print Receipt Modal -->
     <div
-        v-if="is_cashier"
         class="modal fade"
         id="printReceiptModal"
         tabindex="-1"
         aria-labelledby="printReceiptModal"
     >
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow mx-auto">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
+            <div class="modal-content shadow mx-auto" style="width: 380px;">
                 <div class="modal-header py-1 ps-3 pe-2">
                     <span class="modal-title fs-5 text-primary-emphasis">
                         <i class="bi bi-receipt-cutoff pe-2"></i>
@@ -1371,313 +1618,160 @@ watch(
                     </button>
                 </div>
                 <div class="modal-body p-0">
-                    <!-- Receipt Container -->
+                    <!-- Receipt Container — fixed 9:16 ratio (360×640px) -->
                     <div
-                        class="bg-white watermark-background"
                         ref="receiptContentRef"
                         style="
-                            background: url('/storage/local/images/shop/brand/logo_watermark.png');
+                            width: 360px;
+                            height: 640px;
+                            background-color: #ffffff;
+                            background-image: url('/storage/local/images/shop/brand/logo_watermark.png');
                             background-repeat: repeat;
-                            background-size: 25mm;
+                            background-size: 60px;
+                            display: flex;
+                            flex-direction: column;
+                            overflow: hidden;
+                            margin: 0 auto;
+                            font-family: 'Segoe UI', Arial, sans-serif;
                         "
                     >
-                        <!-- Header -->
-                        <div class="p-3" style="background-color: #412f55">
-                            <div class="d-flex">
-                                <div class="mx-auto">
-                                    <img
-                                        :src="'/storage/local/images/shop/brand/blaterian_logo.png'"
-                                        alt="image"
-                                        class=""
-                                        style="height: 15mm"
-                                    />
-                                    <img
-                                        :src="'/storage/local/images/shop/brand/blaterian_text.png'"
-                                        alt="image"
-                                        class=""
-                                        style="height: 15mm"
-                                    />
-                                </div>
-                            </div>
+                        <!-- ── HEADER ── -->
+                        <div style="background-color:#412f55; padding:20px 16px 16px; flex-shrink:0; display:flex; justify-content:center; align-items:center; gap:10px;">
+                            <img
+                                :src="'/storage/local/images/shop/brand/blaterian_logo.png'"
+                                alt="logo"
+                                style="height:48px; object-fit:contain;"
+                            />
+                            <img
+                                :src="'/storage/local/images/shop/brand/blaterian_text.png'"
+                                alt="BLATERIAN"
+                                style="height:36px; object-fit:contain;"
+                            />
                         </div>
-                        <div class="p-3">
-                            <!-- Stand Detail -->
-                            <div class="row g-3">
-                                <div class="col-6">
-                                    <span
-                                        class="d-block text-secondary"
-                                        style="font-size: 0.8rem"
-                                        >{{ "Date-Time" }}
-                                    </span>
-                                    <div class="d-flex scroll-x-hidden">
-                                        <span class="text-nowrap">{{
-                                            form_print_receipt?.date
-                                        }}</span>
-                                    </div>
+
+                        <!-- ── BODY ── -->
+                        <div style="flex:1; padding:16px 20px; display:flex; flex-direction:column; gap:0; overflow:hidden;">
+
+                            <!-- Transaction Info: 2-col grid -->
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; margin-bottom:14px;">
+                                <div>
+                                    <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Date-Time</div>
+                                    <div style="font-size:0.92rem; font-weight:600; color:#222;">{{ form_print_receipt?.date }}</div>
                                 </div>
-                                <div class="col-6">
-                                    <span
-                                        class="d-block text-secondary"
-                                        style="font-size: 0.8rem"
-                                        >{{ "Place" }}
-                                    </span>
-                                    <div class="d-flex scroll-x-hidden">
-                                        <span class="text-nowrap">{{
-                                            stand.place
-                                        }}</span>
-                                    </div>
+                                <div>
+                                    <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Place</div>
+                                    <div style="font-size:0.92rem; font-weight:600; color:#222;">{{ stand.place }}</div>
                                 </div>
-                                <div class="col-6">
-                                    <span
-                                        class="d-block text-secondary"
-                                        style="font-size: 0.8rem"
-                                        >{{ "Customer" }}
-                                    </span>
-                                    <div class="d-flex scroll-x-hidden">
-                                        <span class="text-nowrap">{{
-                                            form_print_receipt?.customer
-                                        }}</span>
-                                    </div>
+                                <div style="margin-top:8px;">
+                                    <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Customer</div>
+                                    <div style="font-size:0.92rem; font-weight:600; color:#222;">{{ form_print_receipt?.customer }}</div>
                                 </div>
-                                <div class="col-6">
-                                    <span
-                                        class="d-block text-secondary"
-                                        style="font-size: 0.8rem"
-                                        >{{ "Cashier" }}
-                                    </span>
-                                    <div class="d-flex scroll-x-hidden">
-                                        <span class="text-nowrap">{{
-                                            auth_user.name
-                                        }}</span>
-                                    </div>
+                                <div style="margin-top:8px;">
+                                    <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Cashier</div>
+                                    <div style="font-size:0.92rem; font-weight:600; color:#222;">{{ auth_user.name }}</div>
                                 </div>
                             </div>
-                            <div
-                                class="border-1 border-secondary-subtle mt-3"
-                                style="border-style: dashed"
-                            ></div>
-                            <!-- Order Detail  -->
-                            <div class="mt-2">
-                                <span
-                                    class="d-block h6 text-primary-emphasis"
-                                    >{{ "Order Items" }}</span
-                                >
+
+                            <!-- Divider -->
+                            <div style="border-top:1.5px dashed #c8c8c8; margin-bottom:10px;"></div>
+
+                            <!-- Order Items -->
+                            <div style="margin-bottom:10px;">
+                                <div style="font-size:1rem; font-weight:700; color:#412f55; margin-bottom:8px;">Order Items</div>
                                 <div
-                                    class="mt-2"
                                     v-for="item in form_print_receipt?.order_list"
+                                    style="margin-bottom:6px;"
                                 >
-                                    <div class="d-flex">
-                                        <span class="me-2">{{
-                                            "(" + item.amount + ")"
-                                        }}</span>
-                                        <span class="fw-bold me-2">{{
-                                            item?.menu
-                                                ? item?.menu?.name
-                                                : item.name
-                                        }}</span>
+                                    <div style="font-size:0.88rem;">
+                                        <span style="color:#555;">({{ item.amount }})</span>
+                                        <span style="font-weight:700; margin-left:6px;">{{ item?.menu ? item.menu.name : item.name }}</span>
                                     </div>
-                                    <div class="d-flex">
-                                        <span class="me-auto text-secondary">
-                                            {{
-                                                formatIDR(
-                                                    item?.menu
-                                                        ? item?.menu?.price
-                                                        : item.price
-                                                )
-                                            }}
-                                        </span>
-                                        <span class="ms-2">{{
-                                            formatIDR(
-                                                item?.menu
-                                                    ? item?.menu?.price *
-                                                          item?.amount
-                                                    : item.total
-                                            )
-                                        }}</span>
+                                    <div style="display:flex; justify-content:space-between; font-size:0.82rem; color:#555; margin-top:1px;">
+                                        <span>{{ formatIDR(item?.menu ? item.menu.price : item.price) }}</span>
+                                        <span style="color:#222; font-weight:500;">{{ formatIDR(item?.menu ? item.menu.price * item.amount : item.total) }}</span>
                                     </div>
                                 </div>
                             </div>
-                            <div
-                                class="border-1 border-secondary-subtle mt-3"
-                                style="border-style: dashed"
-                            ></div>
-                            <!-- Total -->
-                            <div class="mt-2">
-                                <span
-                                    class="d-block h6 text-primary-emphasis"
-                                    >{{ "Total" }}</span
-                                >
-                                <div class="d-flex">
-                                    <div class="">
-                                        <span
-                                            class="d-block text-secondary"
-                                            style="font-size: 0.8rem"
-                                            >{{ "Subtotal" }}
-                                        </span>
-                                        <div class="d-flex scroll-x-hidden">
-                                            <span class="text-nowrap">{{
-                                                formatIDR(
-                                                    form_print_receipt?.subtotal ??
-                                                        0
-                                                )
-                                            }}</span>
-                                        </div>
+
+                            <!-- Divider -->
+                            <div style="border-top:1.5px dashed #c8c8c8; margin-bottom:10px;"></div>
+
+                            <!-- Total — 3 columns -->
+                            <div style="margin-bottom:10px;">
+                                <div style="font-size:1rem; font-weight:700; color:#412f55; margin-bottom:8px;">Total</div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;">
+                                    <div>
+                                        <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Subtotal</div>
+                                        <div style="font-size:0.88rem; color:#222;">{{ formatIDR(form_print_receipt?.subtotal ?? 0) }}</div>
                                     </div>
-                                    <div class="mx-auto">
-                                        <span
-                                            class="d-block text-secondary"
-                                            style="font-size: 0.8rem"
-                                            >{{ "Discount" }}
-                                        </span>
-                                        <div class="d-flex scroll-x-hidden">
-                                            <span class="text-nowrap">{{
-                                                formatIDR(
-                                                    form_print_receipt.discount
-                                                )
-                                            }}</span>
-                                        </div>
+                                    <div>
+                                        <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Discount</div>
+                                        <div style="font-size:0.88rem; color:#222;">{{ formatIDR(form_print_receipt?.discount ?? 0) }}</div>
                                     </div>
-                                    <div class="">
-                                        <span
-                                            class="d-block text-secondary"
-                                            style="font-size: 0.8rem"
-                                            >{{ "Total" }}
-                                        </span>
-                                        <div class="d-flex scroll-x-hidden">
-                                            <span class="text-nowrap fw-bold">{{
-                                                formatIDR(
-                                                    form_print_receipt.transaction
-                                                )
-                                            }}</span>
-                                        </div>
+                                    <div>
+                                        <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Total</div>
+                                        <div style="font-size:0.92rem; font-weight:700; color:#222;">{{ formatIDR(form_print_receipt?.transaction ?? 0) }}</div>
                                     </div>
                                 </div>
                             </div>
-                            <div
-                                class="border-1 border-secondary-subtle mt-3"
-                                style="border-style: dashed"
-                            ></div>
-                            <!-- Payment -->
-                            <div class="mt-2">
-                                <span
-                                    class="d-block h6 text-primary-emphasis"
-                                    >{{ "Payment" }}</span
-                                >
-                                <div class="d-flex">
-                                    <div class="">
-                                        <span
-                                            class="d-block text-secondary"
-                                            style="font-size: 0.8rem"
-                                            >{{ "Method" }}
-                                        </span>
-                                        <div class="d-flex scroll-x-hidden">
-                                            <span class="text-nowrap">{{
-                                                payment_method_list.find(
-                                                    (item) =>
-                                                        item.id ==
-                                                        form_print_receipt?.payment_method_id
-                                                )?.name
-                                            }}</span>
-                                        </div>
+
+                            <!-- Divider -->
+                            <div style="border-top:1.5px dashed #c8c8c8; margin-bottom:10px;"></div>
+
+                            <!-- Payment — 3 columns -->
+                            <div>
+                                <div style="font-size:1rem; font-weight:700; color:#412f55; margin-bottom:8px;">Payment</div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;">
+                                    <div>
+                                        <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Method</div>
+                                        <div style="font-size:0.88rem; color:#222;">{{ payment_method_list.find(p => p.id == form_print_receipt?.payment_method_id)?.name ?? '—' }}</div>
                                     </div>
-                                    <div class="mx-auto">
-                                        <span
-                                            class="d-block text-secondary"
-                                            style="font-size: 0.8rem"
-                                            >{{ "Price" }}
-                                        </span>
-                                        <div class="d-flex scroll-x-hidden">
-                                            <span class="text-nowrap">{{
-                                                formatIDR(
-                                                    form_print_receipt?.payment_price
-                                                )
-                                            }}</span>
-                                        </div>
+                                    <div>
+                                        <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Price</div>
+                                        <div style="font-size:0.88rem; color:#222;">{{ formatIDR(form_print_receipt?.payment_price ?? 0) }}</div>
                                     </div>
-                                    <div class="">
-                                        <span
-                                            class="d-block text-secondary"
-                                            style="font-size: 0.8rem"
-                                            >{{ "Change" }}
-                                        </span>
-                                        <div class="d-flex scroll-x-hidden">
-                                            <span class="text-nowrap">{{
-                                                formatIDR(
-                                                    form_print_receipt?.payment_price -
-                                                        form_print_receipt?.transaction
-                                                )
-                                            }}</span>
-                                        </div>
+                                    <div>
+                                        <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Change</div>
+                                        <div style="font-size:0.88rem; color:#222;">{{ formatIDR((form_print_receipt?.payment_price ?? 0) - (form_print_receipt?.transaction ?? 0)) }}</div>
                                     </div>
                                 </div>
                             </div>
+
                         </div>
-                        <!-- Footer -->
-                        <div
-                            style="
-                                background-color: #412f55;
-                                border-top-style: dashed;
-                                border-top-color: #efc55c;
-                                border-top-width: 0.1rem;
-                            "
-                        >
-                            <div class="d-flex">
-                                <span
-                                    class="mx-auto my-2"
-                                    style="font-size: 0.8rem; color: #efc55c"
-                                >
-                                    <i class="bi bi-instagram me-2"></i>
-                                    {{ "blaterian.id" }}
-                                </span>
-                            </div>
+
+                        <!-- ── FOOTER ── -->
+                        <div style="background-color:#412f55; border-top:2px dashed #efc55c; padding:10px 16px; flex-shrink:0; display:flex; justify-content:center; align-items:center; gap:8px;">
+                            <i class="bi bi-instagram" style="color:#efc55c; font-size:1rem;"></i>
+                            <span style="color:#efc55c; font-size:0.85rem; font-weight:500;">blaterian.id</span>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer p-1">
-                    <div class="d-flex bg-white">
-                        <div class="d-flex me-3">
-                            <input
-                                type="checkbox"
-                                v-model="receiptIsDownload"
-                            />
-                            <div class="d-flex w-100">
-                                <span class="ms-2" style="font-size: 0.8rem"
-                                    >{{ "Download Receipt" }}
-                                </span>
-                                <i
-                                    class="bi bi-download ms-2 text-primary"
-                                    style="font-size: 0.8rem"
-                                ></i>
-                            </div>
-                        </div>
-                        <div class="d-flex">
-                            <input
-                                type="checkbox"
-                                v-model="receiptIsSendWhatsapp"
-                            />
-                            <div class="d-flex w-100">
-                                <span class="ms-2" style="font-size: 0.8rem"
-                                    >{{ "Send Whatsapp" }}
-                                </span>
-                                <i
-                                    class="bi bi-whatsapp ms-2 text-success"
-                                    style="font-size: 0.8rem"
-                                ></i>
-                            </div>
-                        </div>
+                <div class="modal-footer p-2 d-flex flex-column gap-2">
+                    <div class="d-flex gap-2 w-100">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary w-50 d-flex align-items-center justify-content-center gap-2"
+                            @click="() => { receiptIsDownload.value = true; receiptIsSendWhatsapp.value = false; printReceipt(); }"
+                        >
+                            <i class="bi bi-download"></i>
+                            {{ "Download" }}
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-success w-50 d-flex align-items-center justify-content-center gap-2"
+                            @click="() => { receiptIsDownload.value = false; receiptIsSendWhatsapp.value = true; printReceipt(); }"
+                        >
+                            <i class="bi bi-whatsapp"></i>
+                            {{ "Share WA" }}
+                        </button>
                     </div>
                     <button
-                        type="submit"
-                        class="btn btn-sm btn-primary w-100"
-                        @click="
-                            () => {
-                                printedReceipt.id = selected_order?.id;
-                                printedReceipt.print = true;
-                                // printReceipt();
-                            }
-                        "
+                        type="button"
+                        class="btn btn-sm btn-primary w-100 d-flex align-items-center justify-content-center gap-2"
+                        @click="() => { receiptIsDownload.value = true; receiptIsSendWhatsapp.value = true; printReceipt(); }"
                     >
-                        <i class="bi bi-printer me-2"></i> {{ "Print Receipt" }}
+                        <i class="bi bi-printer"></i>
+                        {{ "Download & Share WA" }}
                     </button>
                 </div>
             </div>
@@ -1685,7 +1779,7 @@ watch(
     </div>
     <!-- New Customer -->
     <div
-        v-if="is_cashier"
+        v-if="is_cashier || auth_user.roles_id == 99"
         class="modal fade"
         id="newCustomerModal"
         tabindex="-1"
@@ -1706,54 +1800,65 @@ watch(
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
-                <div class="modal-body bg-white">
-                    <span
-                        class="text-secondary d-block"
-                        style="font-size: 0.8rem"
-                    >
-                        {{ "Name" }}
-                    </span>
-                    <input
-                        type="text"
-                        v-model="form_new_customer.name"
-                        class="form-control form-control-sm"
-                        placeholder="ex: Timothy"
-                    />
-                    <InputError
-                        :message="form_new_customer.errors.name"
-                        class="mt-2"
-                    />
-                    <span
-                        class="text-secondary d-block mt-3"
-                        style="font-size: 0.8rem"
-                    >
-                        {{ "Phone" }}
-                    </span>
-                    <input
-                        type="tel"
-                        v-model="form_new_customer.phone"
-                        class="form-control form-control-sm"
-                        placeholder="08xxxxxxx"
-                    />
-                    <InputError
-                        :message="form_new_customer.errors.phone"
-                        class="mt-2"
-                    />
-                </div>
-                <div class="modal-footer py-1 px-2">
-                    <button
-                        class="btn btn-sm btn-primary w-100"
-                        @click="handleSubmitNewCustomer"
-                    >
-                        {{ "Add Customer" }}
-                    </button>
-                </div>
+                <form @submit.prevent="handleSubmitNewCustomer">
+                    <div class="modal-body bg-white">
+                        <p class="text-secondary mb-3" style="font-size: 0.8rem">
+                            Tambahkan customer baru dengan nama dan nomor HP. Nomor HP akan digunakan untuk mencatat transaksi.
+                        </p>
+                        <span
+                            class="text-secondary d-block"
+                            style="font-size: 0.8rem"
+                        >
+                            {{ "Name" }}
+                        </span>
+                        <input
+                            type="text"
+                            v-model="form_new_customer.name"
+                            class="form-control form-control-sm"
+                            placeholder="ex: Timothy"
+                            required
+                            autofocus
+                        />
+                        <InputError
+                            :message="form_new_customer.errors.name"
+                            class="mt-2"
+                        />
+                        <span
+                            class="text-secondary d-block mt-3"
+                            style="font-size: 0.8rem"
+                        >
+                            {{ "Phone" }}
+                        </span>
+                        <input
+                            type="tel"
+                            v-model="form_new_customer.phone"
+                            class="form-control form-control-sm"
+                            placeholder="08xxxxxxx"
+                            required
+                        />
+                        <InputError
+                            :message="form_new_customer.errors.phone"
+                            class="mt-2"
+                        />
+                    </div>
+                    <div class="modal-footer py-1 px-2">
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-primary w-100"
+                            :disabled="form_new_customer.processing"
+                        >
+                            <i class="bi bi-save me-2" v-if="!form_new_customer.processing"></i>
+                            <span class="spinner-border spinner-border-sm me-2" role="status" v-if="form_new_customer.processing"></span>
+                            {{ form_new_customer.processing ? "Adding..." : "Add Customer" }}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
     <!-- Dana Receipt Modal -->
     <div
-        v-if="is_cashier"
+        v-if="is_cashier || auth_user.roles_id == 99"
         class="modal fade"
         id="danaReceiptModal"
         tabindex="-1"
@@ -1866,6 +1971,94 @@ watch(
                         ></i>
                         {{ "Validate" }}
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Cashier Help Modal -->
+    <div class="modal fade" id="cashierHelpModal" tabindex="-1" aria-labelledby="cashierHelpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0" style="background-color:#412f55;">
+                    <h5 class="modal-title fw-bold text-white" id="cashierHelpModalLabel">
+                        <i class="bi bi-question-circle me-2"></i>Panduan Kasir
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @click="showCashierHelpModal(false)"></button>
+                </div>
+                <div class="modal-body p-0">
+
+                    <div class="px-4 pt-3 pb-2 bg-light border-bottom">
+                        <p class="small text-muted mb-0">Panduan singkat untuk kasir dalam mencatat transaksi di stand <strong>{{ stand.name }}</strong>.</p>
+                    </div>
+
+                    <div class="px-4 py-3 d-flex flex-column gap-4">
+
+                        <!-- Cara catat transaksi -->
+                        <div>
+                            <h6 class="fw-bold mb-2" style="color:#412f55;"><i class="bi bi-cart-plus me-2"></i>Cara Mencatat Transaksi</h6>
+                            <ol class="small text-muted ps-3 mb-0" style="line-height:1.8;">
+                                <li>Pastikan kamu berada di tab <strong>Cashier</strong>.</li>
+                                <li>Klik menu di daftar kiri untuk menambahkan ke order.</li>
+                                <li>Isi nama customer di kolom <strong>Customer</strong>.</li>
+                                <li>Pilih nomor HP customer dari dropdown, atau klik <i class="bi bi-plus-lg"></i> untuk daftarkan customer baru.</li>
+                                <li>Isi <strong>Discount</strong> jika ada (opsional).</li>
+                                <li>Pilih <strong>Payment Method</strong> dan isi <strong>Payment Price</strong>.</li>
+                                <li>Klik <strong>Submit</strong> untuk menyimpan transaksi.</li>
+                            </ol>
+                        </div>
+
+                        <!-- Tambah customer baru -->
+                        <div class="border rounded p-3 bg-light">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-person-plus text-primary me-2"></i>Customer Baru</h6>
+                            <p class="small text-muted mb-0">Jika customer belum terdaftar, klik tombol <span class="badge bg-primary"><i class="bi bi-plus-lg"></i></span> di sebelah dropdown nomor HP. Isi nama dan nomor HP, lalu simpan. Customer akan otomatis ter-select.</p>
+                        </div>
+
+                        <!-- Receipt -->
+                        <div class="border rounded p-3 bg-light">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-receipt-cutoff text-secondary me-2"></i>Cetak & Share Receipt</h6>
+                            <p class="small text-muted mb-1">Klik tombol <strong>Receipt</strong> setelah mengisi form transaksi untuk preview receipt.</p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="badge bg-primary" style="font-size:0.7rem;"><i class="bi bi-download me-1"></i>Download</span>
+                                <span class="badge bg-success" style="font-size:0.7rem;"><i class="bi bi-whatsapp me-1"></i>Share WA</span>
+                                <span class="badge bg-dark" style="font-size:0.7rem;"><i class="bi bi-printer me-1"></i>Download & Share WA</span>
+                            </div>
+                        </div>
+
+                        <!-- Today tab -->
+                        <div class="border rounded p-3 bg-light">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-receipt text-info me-2"></i>Tab Today's Transactions</h6>
+                            <p class="small text-muted mb-0">Lihat semua transaksi yang sudah selesai hari ini. Klik ikon <i class="bi bi-receipt-cutoff"></i> di setiap baris untuk mencetak ulang atau share receipt ke customer.</p>
+                        </div>
+
+                        <!-- Stok habis -->
+                        <div class="border rounded p-3" style="border-color:#efc55c !important;background:#fffbf0;">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Stok Habis</h6>
+                            <p class="small text-muted mb-0">Menu yang stoknya habis (sold = stock) masih bisa diklik tapi sebaiknya tidak dijual. Hubungi Production Staff untuk update stok via ikon <i class="bi bi-box-seam"></i> di halaman Stand Detail.</p>
+                        </div>
+
+                        <!-- Indikator stok di menu list -->
+                        <div>
+                            <h6 class="fw-bold mb-2" style="color:#412f55;"><i class="bi bi-info-circle me-2"></i>Indikator Stok di Daftar Menu</h6>
+                            <div class="d-flex flex-column gap-1 small">
+                                <div><span class="text-dark fw-bold me-2">( sold / stock )</span>— angka terjual vs stok total</div>
+                                <div><span class="text-danger fw-bold me-2">Merah</span>— stok habis (sold = stock)</div>
+                                <div><span class="text-warning fw-bold me-2">Kuning</span>— stok hampir habis (sisa ≤ 5)</div>
+                                <div><span class="text-dark fw-bold me-2">Hitam</span>— stok masih aman</div>
+                            </div>
+                        </div>
+
+                        <!-- Payment method -->
+                        <div>
+                            <h6 class="fw-bold mb-2" style="color:#412f55;"><i class="bi bi-credit-card me-2"></i>Metode Pembayaran</h6>
+                            <div class="small text-muted">
+                                Pilih metode sesuai cara bayar customer. Untuk pembayaran <strong>DANA</strong>, minta customer upload bukti transfer — kasir perlu memverifikasi sebelum submit.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-sm px-4 text-white" style="background-color:#412f55;" @click="showCashierHelpModal(false)">Mengerti</button>
                 </div>
             </div>
         </div>

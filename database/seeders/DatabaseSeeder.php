@@ -81,10 +81,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-
-
-
-
         // Seeds user
         $user_list = $this->create_user(40)->toArray();
         // DB::table('users')->insert(

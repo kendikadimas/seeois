@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Staff\Business;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\ScopedByYear;
 use App\Models\FoodOrder;
 use App\Models\FoodsExpense;
 use App\Models\FoodsIncome;
 use App\Models\FoodsTag;
 use App\Models\GeneralContact;
+use App\Models\GovernanceYear;
 use App\Models\MenuItem;
 use App\Models\Stand;
 use App\Models\StandExpense;
@@ -29,29 +31,51 @@ use App\Services\ProfitCalculator;
 
 class StandController extends Controller
 {
+    use ScopedByYear;
+
     /**
      * Choose Stand before go to detail stand.
      */
     function index(Request $request)
     {
+        [$activeYear, $defaultYearId] = $this->activeYearScope();
+
+        // Allow switching year via query param (year tab filter)
+        $selectedYearId = $request->integer('year_id', $defaultYearId);
+        $yearId = $selectedYearId ?: $defaultYearId;
+
+        // All governance years for tab bar
+        $governanceYears = GovernanceYear::orderByDesc('year')->get(['id', 'year', 'label', 'is_active']);
+
         // Retrieve or create session
         $stand_session = session('stand', ['category' => 'date', 'order' => 'desc', 'active' => false]);
-        // Save session to database
         $request->session()->put('stand', $stand_session);
         // Stand filter
         $stand_category = $stand_session['category'];
-        $stand_order = $stand_session['order'];
-        $stand_active = $stand_session['active'];
-        $stand_list = $stand_active ?  Stand::with(['pic'])->where('menu_lock', '>', 0)->where('sale_validation', '=', 0)->orderBy($stand_category, $stand_order)->get() : Stand::with(['pic'])->orderBy($stand_category, $stand_order)->get();
+        $stand_order    = $stand_session['order'];
+        $stand_active   = $stand_session['active'];
+
+        $standQuery = Stand::with(['pic'])->where('year_id', $yearId);
+        if ($stand_active) {
+            $standQuery->where('menu_lock', '>', 0)->where('sale_validation', '=', 0);
+        }
+        $stand_list = $standQuery->orderBy($stand_category, $stand_order)->get();
+
+        $staffQuery = User::select(['id', 'name'])->where('roles_id', '>', 0)->where('year_id', $yearId);
+        $staff_list = $staffQuery->get();
+
         $data = [
-            'staff_list' => User::select(['id', 'name'])->where('roles_id', '>', 0)->get(),
-            'stand_list' => $stand_list,
-            'filter' => [
+            'staff_list'      => $staff_list,
+            'stand_list'      => $stand_list,
+            'governance_years'=> $governanceYears,
+            'selected_year_id'=> $yearId,
+            'active_year_id'  => $defaultYearId,
+            'filter'          => [
                 'category' => $stand_category,
-                'order' => $stand_order,
-                'active' => $stand_active,
+                'order'    => $stand_order,
+                'active'   => $stand_active,
             ],
-            'notif' => session('notif'),
+            'notif'  => session('notif'),
             'errors' => session('errors') ? session('errors')->getBag('default')->getMessages() : [],
         ];
         return Inertia::render('Staff/Business/Stand', $data);
@@ -79,7 +103,7 @@ class StandController extends Controller
         $request->session()->put('stand_expense', $expense_session);
         // Include recipe components to allow frontend coverage indicator
         $menu_list = MenuItem::where('stand_id', $stand->id)
-            ->with(['tags', 'recipeComponents'])
+            ->with(['tags', 'recipeComponents.expense'])
             ->orderBy('name', 'asc')
             ->get()
             ->groupBy('category');
@@ -122,6 +146,7 @@ class StandController extends Controller
             'users' => User::where('roles_id', '!=', null)->get(),
             'stand' => $stand,
             'menu_category' => $menu_list,
+            'all_categories' => MenuItem::select('category')->distinct()->pluck('category')->toArray(),
             'income_list' => $income_list,
             'expense_list' => $expense_list,
             'food_tag_list' => $food_tag_list,
@@ -153,8 +178,9 @@ class StandController extends Controller
         $active = $request->input('active');
         $category =  $request->input('category');
         $order =  $request->input('order');
+        $yearId = $request->input('year_id');
         session()->put('stand', ['category' => $category, 'order' => $order, 'active' => $active,]);
-        return redirect()->route('food.stand');
+        return redirect()->route('food.stand', ['year_id' => $yearId]);
     }
 
     /**
@@ -162,13 +188,17 @@ class StandController extends Controller
      */
     function insertStand(Request $request)
     {
+        [$activeYear, $defaultYearId] = $this->activeYearScope();
+        $yearId = $request->input('year_id', $defaultYearId);
+
         // Validating data
         $request->validate([
             'name' => ['required', 'string'],
             'pic_id' => ['required', 'numeric'],
             'place' => ['required', 'string'],
             'type' => ['required', 'numeric'],
-            'date' => ['required', 'date',  'after_or_equal:today'],
+            'date' => ['required', 'date', 'after_or_equal:today'],
+            'year_id' => ['nullable', 'integer'],
         ]);
 
         // Insert new stand
@@ -178,27 +208,28 @@ class StandController extends Controller
             'date' => $request->input('date'),
             'place' => $request->input('place'),
             'type' => $request->input('type'),
+            'year_id' => $yearId,
         ]);
 
         // Insert new foods expense
         $expense = FoodsExpense::create([
             'category' => 'stand expense',
-            'category_id' => Stand::where('name', '=', $request->input('name'))->first()->id,
+            'category_id' => $stand->id,
             'price' => 0,
         ]);
 
         // Insert new foods income
         $income = FoodsIncome::create([
             'category' => 'stand income',
-            'category_id' => Stand::where('name', '=', $request->input('name'))->first()->id,
+            'category_id' => $stand->id,
             'price' => 0,
         ]);
 
         // sucees insert
         if ($stand && $expense && $income) {
-            return redirect()->route('food.stand', ['id' => $stand->id])->with('notif', ['type' => 'info', 'message' => 'Success create new stand.']);
+            return redirect()->route('food.stand', ['year_id' => $yearId])->with('notif', ['type' => 'info', 'message' => 'Success create new stand.']);
         } else {
-            return redirect()->route('food.stand')->with('notif', ['type' => 'warning', 'message' => 'Failed to create new stand. Please try again or contact admin.']);
+            return redirect()->route('food.stand', ['year_id' => $yearId])->with('notif', ['type' => 'warning', 'message' => 'Failed to create new stand. Please try again or contact admin.']);
         }
     }
 
@@ -402,6 +433,8 @@ class StandController extends Controller
             $reciept_name = 'SE' . $id . '_' . ($last_id + 1) . '_receipt.webp';
             // Always use google disk for receipt storage (unified across envs)
             Storage::disk('google')->put('images/receipt/stand/expense/' . $reciept_name, $receipt_encoded);
+            // Also save to public disk for local environment previews and reliability
+            Storage::disk('public')->put('images/receipt/stand/expense/' . $reciept_name, $receipt_encoded);
         } else {
             $reciept_name = StandExpense::find($request->input('receipt_same'))->reciept;
         }
@@ -646,7 +679,7 @@ class StandController extends Controller
         if ($detailed !== null) {
             $stand->profit = $detailed;
         } else {
-            $expense = $stand->expense()->where('operational_id', '!=', 0)->sum('total_price');
+            $expense = $stand->expenseItems()->where('operational_id', '!=', 0)->sum('total_price');
             $income = $stand->sale()->sum('transaction');
             $stand->profit = $income - $expense;
         }
@@ -662,15 +695,54 @@ class StandController extends Controller
         $id = $request->input('id');
         $stock = $request->input('amount');
 
+        if (!$id) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Menu ID is missing.']);
+        }
+
         $menu = MenuItem::find($id);
+
+        if (!$menu) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Menu item not found.']);
+        }
+
         $menu->stock += $stock;
         $stand = $menu->stand;
 
         if ($menu->save() > 0) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update stock ' . $menu->name . ' from Stand ' . $stand->name . ' Menu.']);
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update stock ' . $menu->name . ' from Stand ' . ($stand->name ?? 'Unknown') . ' Menu.']);
         } else {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Failed to update stock ' . $menu->name . ' from Stand ' . $stand->name . ' Menu. Please try again or contact admin.']);
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Failed to update stock ' . $menu->name . ' from Stand ' . ($stand->name ?? 'Unknown') . ' Menu. Please try again or contact admin.']);
         }
+    }
+
+    /**
+     * update menu details
+     */
+    function updateMenu(Request $request, $id)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'category' => ['required', 'string'],
+            'food_tag' => ['nullable', 'array'],
+        ]);
+
+        $menu = MenuItem::find($id);
+        if (!$menu) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Menu not found.']);
+        }
+
+        $menu->update([
+            'name' => $request->name,
+            'price' => $request->price,
+            'category' => $request->category,
+        ]);
+
+        if ($request->has('food_tag')) {
+            $menu->tags()->sync($request->food_tag);
+        }
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update menu ' . $menu->name]);
     }
 
     /**

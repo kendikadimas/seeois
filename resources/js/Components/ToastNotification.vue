@@ -54,15 +54,38 @@ export default {
         };
     },
     methods: {
-        notif_parse() {
-            this.notif_type = this.is_error ? "warning" : this.notif["type"];
-            this.notif_message = this.is_error
-                ? this.errors.join(". ")
-                : this.notif["message"];
+        showToast(type, message) {
+            this.notif_type = type;
+            this.notif_message = message;
+            this.notif_title =
+                type.charAt(0).toUpperCase() + type.slice(1) + ".";
             this.currentTime = new Date();
-            hours = String(this.currentTime.getHours()).padStart(2, "0");
-            minutes = String(this.currentTime.getMinutes()).padStart(2, "0");
+            const hours = String(this.currentTime.getHours()).padStart(2, "0");
+            const minutes = String(this.currentTime.getMinutes()).padStart(
+                2,
+                "0"
+            );
             this.notif_time = hours + ":" + minutes;
+
+            const toastEl = document.getElementById("toast_notification");
+            if (toastEl) {
+                const toast = bootstrap.Toast.getOrCreateInstance(toastEl);
+                toast.show();
+            }
+        },
+        notif_parse() {
+            if (!this.notif && !this.errors) return;
+
+            this.notif_type = this.is_error ? "warning" : (this.notif?.type || "info");
+            this.notif_message = this.is_error
+                ? (Array.isArray(this.errors) ? this.errors.join(". ") : this.errors)
+                : (this.notif?.message || "");
+                
+            this.currentTime = new Date();
+            const hours = String(this.currentTime.getHours()).padStart(2, "0");
+            const minutes = String(this.currentTime.getMinutes()).padStart(2, "0");
+            this.notif_time = hours + ":" + minutes;
+            
             switch (this.notif_type) {
                 case "warning":
                     this.notif_title = "Warning!";
@@ -70,7 +93,6 @@ export default {
                 case "danger":
                     this.notif_title = "Danger!";
                     break;
-
                 default:
                     this.notif_title = "Information.";
                     break;
@@ -78,12 +100,15 @@ export default {
         },
     },
     mounted() {
-        if (this.errors) {
+        if (this.errors && this.errors.length > 0) {
             this.is_error = true;
-        } else {
+            this.notif_parse();
+            this.showToast("warning", Array.isArray(this.errors) ? this.errors.join(". ") : this.errors);
+        } else if (this.notif && this.notif.message) {
             this.is_error = false;
+            this.notif_parse();
+            this.showToast(this.notif.type, this.notif.message);
         }
-        this.notif_parse();
     },
 };
 </script>

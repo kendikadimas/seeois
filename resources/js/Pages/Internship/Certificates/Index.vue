@@ -137,7 +137,7 @@ const formatDate = (date) => {
 
 const downloadCertificate = (certId) => {
   // Simple direct download
-  window.location.href = route('certificate.download', certId)
+  window.location.href = `/seeo/internship/certificate/download/${certId}`
 }
 </script>
 

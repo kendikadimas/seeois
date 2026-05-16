@@ -25,8 +25,15 @@ class SalesController extends Controller
      */
     public function sales(Request $request, $id)
     {
+        $auth_user = Auth::user();
+        $query = Stand::with(['pic', 'cashier']);
+        
+        // Super Admin bypass
+        if ($auth_user->roles_id != 99) {
+            $query->where('sale_validation', '==', 0)->where('menu_lock', '!=', 0);
+        }
 
-        $stand = Stand::with(['pic', 'cashier'])->where('sale_validation', '==', 0)->where('menu_lock', '!=', 0)->find($id);
+        $stand = $query->find($id);
         if (!$stand) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Stand is not found. Try again from Stand Detail page.']);
         }
@@ -34,16 +41,22 @@ class SalesController extends Controller
         $payment_method_list = PaymentMethod::all();
         $customer_list = User::where('phone', "!=", null)->where('phone', '!=', '')->select(['id', 'name', 'phone'])->get();
         $order_list = StandSales::where('cashier_id', "=", 0)->where('stand_id', $stand->id)->with(['voucher', 'customer', 'order' => ['menu']])->get();
+        $today_sales = StandSales::where('stand_id', $stand->id)
+            ->where('cashier_id', '>', 0)
+            ->whereDate('created_at', today())
+            ->with(['customer', 'order' => ['menu']])
+            ->orderBy('created_at', 'desc')
+            ->get();
         $data = [
             'stand' => $stand,
             'menu_list' => $menu_list,
             'customer_list' => $customer_list,
             'order_list' => $order_list,
+            'today_sales' => $today_sales,
             'payment_method_list' => $payment_method_list,
             'data' => session('data'),
             'notif' => session('notif'),
             'errors' => session('errors') ? session('errors')->getBag('default')->getMessages() : [],
-
         ];
         return Inertia::render('Staff/Business/StandCashier', $data);
     }
@@ -77,8 +90,10 @@ class SalesController extends Controller
         // Checking Cashier Token
         $stand = Stand::find($id);
         $auth_user = Auth::user();
-        if ($stand->cashier->contains('cashier_id', $auth_user->id)) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not cashier in Stand (' . $stand->pic->name . '). Only cashier can add transaction.']);
+        // Allow Super Admin or authorized cashier
+        if ($auth_user->roles_id != 99 && !$stand->cashier->contains('id', $auth_user->id)) {
+            $standLabel = $stand->pic?->name ?? $stand->name ?? 'this stand';
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not cashier in Stand (' . $standLabel . '). Only cashier can add transaction.']);
         }
         $sale = StandSales::create([
             'cashier_id' => Auth::user()->id,
@@ -117,12 +132,13 @@ class SalesController extends Controller
     public function insertCustomer(Request $request, $id)
     {
         $request->validate([
-            'name' => ['required'],
-            'phone' => ['required']
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:20', 'unique:users,phone']
         ]);
         $stand = Stand::find($id);
         $auth_user = Auth::user();
-        if ($stand->cashier->contains('cashier_id', $auth_user->id)) {
+        // Allow Super Admin or authorized cashier
+        if ($auth_user->roles_id != 99 && !$stand->cashier->contains('id', $auth_user->id)) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not cashier in Stand (' . $stand->pic->name . '). Only cashier can add customer.']);
         }
         $customer = new User();
@@ -168,7 +184,9 @@ class SalesController extends Controller
     {
         $transaction = StandSales::with('customer')->find($id);
         $auth_user = Auth::user();
-        if (!Stand::find($transaction->stand_id)->cashier->contains($auth_user->id)) {
+        $stand = Stand::find($transaction->stand_id);
+        // Allow Super Admin or authorized cashier
+        if ($auth_user->roles_id != 99 && !$stand->cashier->contains('id', $auth_user->id)) {
             return redirect()->back()->with('notif', ['type' => 'danger', 'message' => ['You are not listed as cashier.', 'This feature only available for cashier.']]);
         }
         if (!$transaction) {
@@ -210,7 +228,9 @@ class SalesController extends Controller
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'This transaction has been done by ' . $transaction->cashier->name . '.']);
         }
         $auth_user = Auth::user();
-        if (!Stand::find($transaction->stand_id)->cashier->contains($auth_user->id)) {
+        $stand = Stand::find($transaction->stand_id);
+        // Allow Super Admin or authorized cashier
+        if ($auth_user->roles_id != 99 && !$stand->cashier->contains('id', $auth_user->id)) {
             return redirect()->back()->with('notif', ['type' => 'danger', 'message' => ['You are not listed as cashier.', 'This feature only available for cashier.']]);
         }
         $transaction->cashier_id = Auth::user()->id;

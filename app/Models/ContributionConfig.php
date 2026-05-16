@@ -25,6 +25,8 @@ class ContributionConfig extends Model
         'price',
         'start',
         'period',
+        'financial_id',
+        'year_id',
     ];
 
     /**

@@ -37,7 +37,12 @@ class AppServiceProvider extends ServiceProvider
             $client->setClientSecret($config['clientSecret']);
             // bypass ssl check for windows laragon environments
             $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
-            $client->refreshToken($config['refreshToken']);
+            
+            try {
+                $client->refreshToken($config['refreshToken']);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Google Drive Refresh Token Error: ' . $e->getMessage());
+            }
 
             if (isset($config['accessToken'])) {
                 $client->setAccessToken($config['accessToken']);

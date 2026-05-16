@@ -54,7 +54,11 @@ const selected_receipt = computed(() => {
             (receipt) => receipt.id == selected_receipt_id.value
         );
 });
-const selected_contribution_id = ref(null);
+const selected_contribution_id = ref(
+    props.default_contribution_id && props.default_contribution_id > 0
+        ? props.default_contribution_id
+        : null
+);
 const selected_contribution = computed(() => {
     return props.contribution_users.find(
         (user) => user.id == selected_contribution_id.value
@@ -68,13 +72,13 @@ const form_contribution_setting = useForm({
     start:
         props.contribution_config?.financial_id > 0
             ? props.contribution_config.start
-            : new Date().getMonth(),
+            : new Date().getMonth() + 1,
     end:
         props.contribution_config?.financial_id > 0
             ? props.contribution_config.period +
               props.contribution_config.start -
               1
-            : new Date().getMonth(),
+            : new Date().getMonth() + 1,
 });
 const form_contribution_filter = useForm({
     keyword: props.filter.contribution.keyword,
@@ -93,7 +97,7 @@ const form_update_payroll_batch = useForm({
 });
 
 function handleSetContribution() {
-    form_contribution_setting.post(route("contribution.settings"), {
+    form_contribution_setting.post("/seeo/staff/contribution/settings", {
         onSuccess: () => {
             showContributionSettingsModal(false);
             form_contribution_setting.reset();
@@ -107,7 +111,7 @@ function handleSetContribution() {
 }
 
 function handleSetPayroll() {
-    form_payroll_setting.post(route("payroll.settings"), {
+    form_payroll_setting.post("/seeo/staff/payroll/settings", {
         onSuccess: () => {
             showPayrollSettingsModal(false);
         },
@@ -115,11 +119,11 @@ function handleSetPayroll() {
 }
 
 function handleUpdatePayrollSingle() {
-    form_update_payroll_single.post(route("payroll.update.single"));
+    form_update_payroll_single.post("/seeo/staff/payroll/single");
 }
 
 function handleUpdatePayrollBatch() {
-    form_update_payroll_batch.post(route("payroll.update.batch"));
+    form_update_payroll_batch.post("/seeo/staff/payroll/batch");
 }
 
 function showContributionSettingsModal(is_show) {
@@ -157,7 +161,7 @@ function setSelectedReceipt(receipt_id) {
 }
 
 function handleContributionFilter() {
-    form_contribution_filter.post(route("contribution.filter"));
+    form_contribution_filter.post("/seeo/staff/contribution");
 }
 
 function newLevel() {
@@ -222,6 +226,9 @@ const handleResize = () => {
 };
 
 onMounted(() => {
+    if (props.default_contribution_id && props.default_contribution_id > 0) {
+        selected_contribution_id.value = props.default_contribution_id;
+    }
     window.addEventListener("resize", handleResize);
 });
 onUnmounted(() => {
@@ -392,15 +399,9 @@ watch(
                                                         >
                                                         <span class="text-dark">
                                                             {{
-                                                                getMonthName(
-                                                                    contribution_config.start
-                                                                ) +
+                                                                getMonthName(((contribution_config.start - 1) % 12) + 1) +
                                                                 " - " +
-                                                                getMonthName(
-                                                                    contribution_config.start +
-                                                                        contribution_config.period -
-                                                                        1
-                                                                )
+                                                                getMonthName(((contribution_config.start + contribution_config.period - 2) % 12) + 1)
                                                             }}
                                                         </span>
                                                     </div>
@@ -429,10 +430,7 @@ watch(
                                                         >
                                                         <a
                                                             :href="
-                                                                route(
-                                                                    'profile.edit',
-                                                                    contribution_config.financial_id
-                                                                )
+                                                                `/seeo/staff/profile/${contribution_config.financial_id}`
                                                             "
                                                             class="text-dark text-decoration-none d-flex"
                                                             >{{
@@ -472,7 +470,9 @@ watch(
                                                     <button
                                                         v-if="
                                                             auth_user.roles_id ==
-                                                            2
+                                                                2 ||
+                                                            auth_user.roles_id ==
+                                                                99
                                                         "
                                                         class="btn btn-sm btn-outline-secondary ms-auto ms-lg-0 py-0 d-flex border-0"
                                                         @click="
@@ -549,10 +549,7 @@ watch(
                                                                         0
                                                                     "
                                                                     :href="
-                                                                        route(
-                                                                            'profile.edit',
-                                                                            payroll_balance?.financial_id
-                                                                        )
+                                                                        `/seeo/staff/profile/${payroll_balance?.financial_id}`
                                                                     "
                                                                     class="text-dark text-decoration-none d-flex"
                                                                     >{{
@@ -651,7 +648,9 @@ watch(
                                                     <button
                                                         v-if="
                                                             auth_user.roles_id ==
-                                                            2
+                                                                2 ||
+                                                            auth_user.roles_id ==
+                                                                99
                                                         "
                                                         class="ms-auto ms-lg-0 btn btn-sm btn-outline-secondary py-0 d-flex border-0"
                                                         @click="
@@ -686,10 +685,7 @@ watch(
                                     <a
                                         :href="
                                             selected_contribution?.id > 0
-                                                ? route(
-                                                      'profile.edit',
-                                                      selected_contribution?.id
-                                                  )
+                                                ? `/seeo/staff/profile/${selected_contribution?.id}`
                                                 : ''
                                         "
                                         class="text-dark text-decoration-none d-flex scroll-x-hidden"
@@ -778,8 +774,7 @@ watch(
                                                                 "
                                                                 >{{
                                                                     getMonthName(
-                                                                        month +
-                                                                            contribution_config.start -
+                                                                        ((month + contribution_config.start - 2) % 12) +
                                                                             1,
                                                                         "short"
                                                                     )
@@ -999,10 +994,7 @@ watch(
                                                                                 <button
                                                                                     @click="
                                                                                         confirmation(
-                                                                                            route(
-                                                                                                'contribution.validation',
-                                                                                                selected_receipt.id
-                                                                                            ),
+                                                                                            `/seeo/staff/contribution/validation/${selected_receipt.id}`,
                                                                                             'Confirm to ' +
                                                                                                 (selected_receipt.financial_id
                                                                                                     ? 'unvalidate'

@@ -18,9 +18,9 @@ class EnsureUserHasRole
      *
      * @param Request $request
      * @param Closure $next
-     * @param string $requiredRoleId Role id passed from middleware definition (e.g. role:3)
+     * @param string ...$requiredRoleIds Role ids from middleware (e.g. role:3,99 → '3', '99')
      */
-    public function handle(Request $request, Closure $next, string $requiredRoleId)
+    public function handle(Request $request, Closure $next, string ...$requiredRoleIds)
     {
         $user = $request->user();
         if (!$user) {
@@ -33,9 +33,24 @@ class EnsureUserHasRole
             return $next($request); // bypass all specific role checks
         }
 
-        if ((int)$user->roles_id !== (int)$requiredRoleId) {
-            $targetRole = Role::find($requiredRoleId);
-            $targetName = $targetRole?->name ?? 'required role';
+        $requiredRoleIds = collect($requiredRoleIds)
+            ->flatMap(fn ($id) => explode(',', (string) $id))
+            ->map(fn ($id) => trim($id))
+            ->filter(fn ($id) => $id !== '')
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        if ($requiredRoleIds->isEmpty()) {
+            return redirect()->back()->with('notif', [
+                'type' => 'danger',
+                'message' => 'You are not allowed. Missing required role configuration.'
+            ]);
+        }
+
+        if (!$requiredRoleIds->contains((int) $user->roles_id)) {
+            $targetNames = Role::whereIn('id', $requiredRoleIds->all())->pluck('name')->filter()->values();
+            $targetName = $targetNames->isNotEmpty() ? $targetNames->implode(' / ') : 'required role';
+
             return redirect()->back()->with('notif', [
                 'type' => 'danger',
                 'message' => 'You are not allowed. Please contact ' . $targetName . ' to access this feature.'

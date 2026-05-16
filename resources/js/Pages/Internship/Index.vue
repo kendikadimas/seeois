@@ -109,6 +109,12 @@
                                 </option>
                             </select>
                         </div>
+                        <div class="filter-box">
+                            <select v-model="filterYear" class="filter-select">
+                                <option value="">Semua Tahun</option>
+                                <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Statistics Cards -->
@@ -592,6 +598,15 @@
                                                     </span>
                                                 </span>
                                             </div>
+                                            <div class="info-row">
+                                                <span class="info-label">Status Review:</span>
+                                                <span class="info-value">
+                                                    <span class="status-badge" :class="selectedApp.status === 'accepted' ? 'status-success' : selectedApp.status === 'rejected' ? 'status-danger' : 'status-warning'">
+                                                        <i :class="selectedApp.status === 'accepted' ? 'bi bi-check-circle' : selectedApp.status === 'rejected' ? 'bi bi-x-circle' : 'bi bi-hourglass-split'"></i>
+                                                        {{ selectedApp.status || 'pending' }}
+                                                    </span>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -653,6 +668,12 @@
                             >
                                 <i class="bi bi-envelope"></i>Kirim Email
                             </a>
+                            <button v-if="selectedApp && (user.is_ceo || user.is_hr_manager || user.is_internship_pic || user.role_id === 15)" type="button" class="modal-btn modal-btn-success" @click="sendDecision('accepted')">
+                                <i class="bi bi-check-circle"></i>Terima
+                            </button>
+                            <button v-if="selectedApp && (user.is_ceo || user.is_hr_manager || user.is_internship_pic || user.role_id === 15)" type="button" class="modal-btn modal-btn-danger" @click="sendDecision('rejected')">
+                                <i class="bi bi-x-circle"></i>Tolak
+                            </button>
                             <button type="button" class="modal-btn modal-btn-secondary" data-bs-dismiss="modal">
                                 <i class="bi bi-x"></i>Tutup
                             </button>
@@ -725,12 +746,16 @@
 
 <script setup>
 import StaffLayout from "@/Layouts/StaffLayout.vue";
-import { Head } from "@inertiajs/vue3";
+import { Head, useForm } from "@inertiajs/vue3";
 import { ref, computed, watch } from 'vue';
 
 // Props
 const props = defineProps({
     applications: {
+        type: Array,
+        default: () => []
+    },
+    availableYears: {
         type: Array,
         default: () => []
     },
@@ -747,6 +772,7 @@ console.log('Applications:', props.applications);
 // Reactive data
 const searchQuery = ref('');
 const filterStudyProgram = ref('');
+const filterYear = ref('');
 const isExporting = ref(false);
 const tableContainer = ref(null);
 const sortField = ref('created_at');
@@ -758,6 +784,10 @@ const selectedKRSApp = ref(null);
 const krsModal = ref(null);
 const detailModal = ref(null);
 const divisionStatsModal = ref(null);
+const reviewForm = useForm({
+    status: '',
+    decision_note: '',
+});
 
 // Computed properties
 const uniqueStudyPrograms = computed(() => {
@@ -782,6 +812,10 @@ const filteredApplications = computed(() => {
         filtered = filtered.filter(app => 
             app.study_program === filterStudyProgram.value
         );
+    }
+
+    if (filterYear.value) {
+        filtered = filtered.filter(app => String(app.internship_year) === String(filterYear.value));
     }
 
     return filtered;
@@ -902,7 +936,7 @@ const notWillingCount = computed(() => {
 });
 
 // Watch for changes that should reset pagination
-watch([searchQuery, filterStudyProgram], () => {
+watch([searchQuery, filterStudyProgram, filterYear], () => {
     currentPage.value = 1;
 });
 
@@ -926,6 +960,23 @@ const showDivisionStatsModal = () => {
 
 const clearSearch = () => {
     searchQuery.value = '';
+};
+
+const sendDecision = async (status) => {
+    if (!selectedApp.value) return;
+
+    const note = window.prompt(status === 'accepted' ? 'Catatan penerimaan (opsional):' : 'Catatan penolakan (opsional):', '');
+    reviewForm.status = status;
+    reviewForm.decision_note = note || '';
+
+    reviewForm.post(`/seeo/internship/review/${selectedApp.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            reviewForm.reset();
+            const modal = bootstrap.Modal.getOrCreateInstance(detailModal.value);
+            modal.hide();
+        },
+    });
 };
 
 const toggleSort = (field) => {
@@ -1919,7 +1970,7 @@ const exportToCSV = () => {
 }
 
 .table-header {
-    background: #f8fafc !important;
+    background: #f7f7ff !important;
     border-bottom: 2px solid #e5e7eb !important;
 }
 
@@ -1966,7 +2017,7 @@ const exportToCSV = () => {
 }
 
 .table-row:hover {
-    background-color: #f8fafc !important;
+    background-color: #f7f7ff !important;
 }
 
 .table-body td {
@@ -2052,6 +2103,11 @@ const exportToCSV = () => {
 .status-danger {
     background: #fee2e2 !important;
     color: #991b1b !important;
+}
+
+.status-warning {
+    background: #fef3c7 !important;
+    color: #92400e !important;
 }
 
 .action-btn {
@@ -2287,7 +2343,7 @@ const exportToCSV = () => {
 }
 
 .info-card-internship {
-    background: #f8fafc !important;
+    background: #f7f7ff !important;
     border: 1px solid #e5e7eb !important;
     border-radius: 8px !important;
     overflow: hidden !important;
@@ -2453,7 +2509,7 @@ const exportToCSV = () => {
 /* Modal Footer */
 .modal-footer-internship {
     padding: 1.5rem 2rem !important;
-    background: #f8fafc !important;
+    background: #f7f7ff !important;
     border-top: 1px solid #e5e7eb !important;
 }
 
@@ -2665,7 +2721,7 @@ const exportToCSV = () => {
 
 /* Division Stats List */
 .division-stats-list {
-    background: #f8fafc !important;
+    background: #f7f7ff !important;
     border: 1px solid #e5e7eb !important;
     border-radius: 8px !important;
     padding: 1.5rem !important;
@@ -2755,7 +2811,7 @@ const exportToCSV = () => {
     align-items: center !important;
     gap: 0.75rem !important;
     padding: 0.75rem !important;
-    background: #f8fafc !important;
+    background: #f7f7ff !important;
     border: 1px solid #e5e7eb !important;
     border-radius: 6px !important;
 }
@@ -2837,7 +2893,7 @@ const exportToCSV = () => {
 /* Modal Footer */
 .modal-footer-stats {
     padding: 1.5rem 2rem !important;
-    background: #f8fafc !important;
+    background: #f7f7ff !important;
     border-top: 1px solid #e5e7eb !important;
     display: flex !important;
     justify-content: space-between !important;
@@ -2985,7 +3041,7 @@ const exportToCSV = () => {
     display: flex !important;
     gap: 2rem !important;
     padding: 1.5rem !important;
-    background: #f8fafc !important;
+    background: #f7f7ff !important;
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
@@ -3031,7 +3087,7 @@ const exportToCSV = () => {
 .krs-modal-footer {
     padding: 1.5rem !important;
     border-top: 1px solid #e2e8f0 !important;
-    background: #f8fafc !important;
+    background: #f7f7ff !important;
     border-radius: 0 0 12px 12px !important;
     display: flex !important;
     justify-content: space-between !important;

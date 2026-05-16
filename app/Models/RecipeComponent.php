@@ -18,6 +18,7 @@ class RecipeComponent extends Model
         'stand_expense_id',
         'quantity_used',
         'unit_used',
+        'price',
     ];
 
     public function menu(): BelongsTo

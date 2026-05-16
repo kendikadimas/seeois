@@ -26,6 +26,7 @@ class Department extends Model
     protected $fillable = [
         'name',
         'manager_id',
+        'year_id',
         'budget',
         'expense',
         'disbursement',

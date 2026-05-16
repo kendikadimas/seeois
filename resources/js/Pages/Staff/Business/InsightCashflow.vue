@@ -64,11 +64,11 @@ const filtered_goods_expense_list = computed(() => {
 });
 
 function handleSubmitFilterFoods() {
-    form_foods_filter.post(route("insight.filter.foods"));
+    form_foods_filter.post(`/seeo/staff/blaterian/insight/filter/foods`);
 }
 
 function handleSubmitFilterGoods() {
-    form_goods_filter.post(route("insight.filter.goods"));
+    form_goods_filter.post(`/seeo/staff/blaterian/insight/filter/goods`);
 }
 
 function handleFoodsFilter(category) {
@@ -79,7 +79,7 @@ function handleFoodsFilter(category) {
                 : "asc"
             : "desc";
     form_foods_filter.category = category;
-    form_foods_filter.post(route("insight.filter.foods"));
+    form_foods_filter.post(`/seeo/staff/blaterian/insight/filter/foods`);
 }
 
 function handleGoodsFilter(category) {
@@ -90,7 +90,7 @@ function handleGoodsFilter(category) {
                 : "asc"
             : "desc";
     form_goods_filter.category = category;
-    form_goods_filter.post(route("insight.filter.goods"));
+    form_goods_filter.post(`/seeo/staff/blaterian/insight/filter/goods`);
 }
 
 function setFoodsActiveTab(number) {
@@ -154,7 +154,7 @@ watch(
         <ModalConfirmation ref="modalConfirmationRef" />
         <template #header>
             <a
-                :href="route('blaterian.insight')"
+                :href="`/seeo/staff/blaterian/insight`"
                 class="bg-opacity-0 text-decoration-none text-primary-emphasis"
             >
                 <span class="fw-light">{{ "Business Insight" }}</span>
@@ -537,7 +537,7 @@ watch(
                             </div>
                             <div class="d-flex mt-2 ms-2">
                                 <span
-                                    class="text-primary border-end border-secondary-subtle border-3 pe-3 me-3 my-auto h6"
+                                    class="text-primary pe-3 me-3 my-auto h6"
                                     >{{ "Filter" }}</span
                                 >
                                 <button
@@ -910,7 +910,7 @@ watch(
                             </div>
                             <div class="d-flex mt-2 ms-2">
                                 <span
-                                    class="text-primary border-end border-secondary-subtle border-3 pe-3 me-3 my-auto h6"
+                                    class="text-primary pe-3 me-3 my-auto h6"
                                     >{{ "Filter" }}</span
                                 >
                                 <button

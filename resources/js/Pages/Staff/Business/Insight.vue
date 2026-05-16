@@ -69,7 +69,7 @@ function showTasteTagSettingModal(is_show) {
 }
 
 function handleSetTasteTag() {
-    form_taste_tag.post(route("update.insight.taste_tag"), {
+    form_taste_tag.post(`/seeo/staff/food/insight/taste_tag`, {
         onSuccess: () => {
             showTasteTagSettingModal(false);
         },
@@ -709,7 +709,7 @@ watch(
                                     "Cashflow"
                                 }}</span>
                                 <a
-                                    :href="route('blaterian.insight.cashflow')"
+                                    :href="`/seeo/staff/blaterian/insight/cashflow`"
                                     class="text-decoration-none ms-auto my-auto"
                                     style="font-size: 0.8rem"
                                 >

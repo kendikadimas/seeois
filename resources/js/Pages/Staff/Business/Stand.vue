@@ -21,6 +21,9 @@ import { formatDate, formatDateOnly } from "@/utils";
 const props = defineProps({
     staff_list: Array,
     stand_list: Array,
+    governance_years: Array,
+    selected_year_id: Number,
+    active_year_id: Number,
     filter: Object,
     notif: Object,
     errors: Object,
@@ -37,6 +40,7 @@ const form_filter = useForm({
     category: props.filter.category,
     order: props.filter.order,
     active: props.filter.active,
+    year_id: props.selected_year_id,
 });
 const form_new_stand = useForm({
     name: null,
@@ -44,6 +48,7 @@ const form_new_stand = useForm({
     place: null,
     date: null,
     type: 0,
+    year_id: props.selected_year_id,
 });
 
 // Safe label accessor to avoid reading .name of null/primitive
@@ -65,7 +70,7 @@ function handleSubmitFilter(category) {
         form_filter.category = category;
         form_filter.keyword = null;
     }
-    form_filter.post('/food/stand/filter');
+    form_filter.post('/seeo/staff/food/stand/filter');
 }
 
 function showNewStandModal(is_show) {
@@ -81,11 +86,20 @@ function showNewStandModal(is_show) {
 }
 
 function handleNewStand() {
-    form_new_stand.post('/food/stand/add/new', {
+    form_new_stand.post('/seeo/staff/food/stand/add/new', {
         onSuccess: () => {
             showNewStandModal(false);
             form_new_stand.reset();
         },
+    });
+}
+
+function debugOpenStandDetail(stand) {
+    console.debug('[Stand] opening detail', {
+        standId: stand.id,
+        standName: stand.name,
+        href: `/seeo/staff/blaterian/foods/stand_detail/${stand.id}`,
+        activeYearId: props.selected_year_id,
     });
 }
 
@@ -145,6 +159,24 @@ watch(
         </template>
 
         <div class="container me-lg-0 mx-auto mb-5">
+            <!-- Year Tabs -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <ul class="nav nav-tabs border-0">
+                        <li v-for="year in governance_years" :key="year.id" class="nav-item">
+                            <a 
+                                :href="'/blaterian/foods/stand?year_id=' + year.id" 
+                                :class="['nav-link border-0 rounded-pill px-4 me-2', selected_year_id === year.id ? 'active bg-primary text-white shadow-sm' : 'text-secondary bg-white border border-secondary-subtle']"
+                                style="transition: all 0.2s;"
+                            >
+                                {{ year.year }}
+                                <span v-if="year.is_active" class="badge rounded-pill bg-info ms-1" style="font-size: 0.6rem;">Aktif</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
             <!-- Filter -->
             <div class="row mt-4">
                 <div class="col-12">
@@ -152,7 +184,7 @@ watch(
                         <div class="d-flex">
                             <div class="d-flex mx-auto">
                                 <span
-                                    class="text-primary border-end border-secondary-subtle border-3 pe-3 me-3 my-auto"
+                                    class="text-primary pe-3 me-3 my-auto"
                                     >{{ "Filter" }}</span
                                 >
                                 <button
@@ -225,7 +257,8 @@ watch(
             <div class="row gx-4 mt-4 mt-lg-5">
                 <div v-for="stand in stand_list" class="col-lg-4 col-12">
                     <a
-                        :href="`/blaterian/foods/stand_detail/${stand.id}`"
+                        :href="`/seeo/staff/blaterian/foods/stand_detail/${stand.id}`"
+                        @click="debugOpenStandDetail(stand)"
                         class="text-decoration-none"
                     >
                         <div class="card card-bg-hover p-3 mb-3 mb-lg-4">

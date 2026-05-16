@@ -1,133 +1,146 @@
 <template>
-    <Head title="Hubungi Kami - SEEO" />
+    <Head>
+        <title>Hubungi Kami - SEEO FT UNSOED</title>
+        <meta name="description" content="Hubungi SEEO FT UNSOED untuk pertanyaan, kerjasama, atau informasi lebih lanjut. Temukan lokasi sekretariat kami di PKM Fakultas Teknik UNSOED Purbalingga.">
+        <meta name="keywords" content="organisasi entrepreneur, ukm mahasiswa, website ukm, ukm kewirausahaan, kewirausahaan mahasiswa, organisasi kewirausahaan, ukm unsoed, ukm ft unsoed, kontak seeo">
+        <meta property="og:title" content="Hubungi SEEO FT UNSOED">
+        <meta property="og:description" content="Punya pertanyaan atau ide kolaborasi? Hubungi kami sekarang.">
+    </Head>
     <PublicLayout>
-        <!-- Hero Section -->
-        <section class="relative bg-slate-950 min-h-[calc(100vh-5rem)] flex items-center justify-center border-b border-slate-900 overflow-hidden">
-            <!-- Background Decoration -->
-            <div class="absolute inset-0 z-0">
-                <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[120px]"></div>
-            </div>
-
-            <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 text-center">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 text-blue-400 text-sm font-medium mb-8 border border-blue-500/20">
-                    Layanan Administrasi
-                </div>
-                
-                <h1 class="text-5xl lg:text-7xl font-bold text-white tracking-tight mb-8 leading-tight">
-                    Pusat Bantuan & <br />
-                    <span class="text-blue-500 italic">Kemitraan</span>
+        <!-- Modern Hero Section -->
+        <section class="pt-32 pb-20 bg-white overflow-hidden relative">
+            <div class="max-w-7xl mx-auto px-6 relative z-10">
+                <h1 class="text-6xl md:text-8xl font-black text-[#004182] mb-8 tracking-tight uppercase">
+                    Let's <span class="text-[#FFD700]">Connect</span>
                 </h1>
-                
-                <p class="text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto">
-                    Akses representasi formal untuk kelimpahan pertukaran informasi, laporan legalitas, dan rancangan strategis korespondensi partnership institusi Anda bersama kami.
+                <p class="text-gray-500 text-lg md:text-xl font-medium max-w-2xl leading-relaxed mb-12">
+                    Punya pertanyaan, ide kolaborasi, atau ingin memberikan masukan? <br class="hidden md:block"> Kami siap mendengar dan membantu Anda.
                 </p>
 
-                <!-- Scroll Indicator -->
-                <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-20">
-                    <div class="w-px h-16 bg-gradient-to-b from-blue-500 to-transparent"></div>
+                <!-- Social Links (Integrated) -->
+                <div class="flex flex-wrap gap-6 items-center">
+                    <a href="https://instagram.com/seeo_unsoed" target="_blank" class="group flex items-center gap-3 px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#FFD700] hover:bg-[#FFD700]/5 transition-all">
+                        <i class="bi bi-instagram text-[#004182] text-xl group-hover:scale-125 transition-transform"></i>
+                        <span class="text-[10px] font-black text-[#004182] uppercase tracking-widest">Instagram</span>
+                    </a>
+                    <a href="#" class="group flex items-center gap-3 px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#FFD700] hover:bg-[#FFD700]/5 transition-all">
+                        <i class="bi bi-linkedin text-[#004182] text-xl group-hover:scale-125 transition-transform"></i>
+                        <span class="text-[10px] font-black text-[#004182] uppercase tracking-widest">LinkedIn</span>
+                    </a>
+                    <a href="#" class="group flex items-center gap-3 px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#FFD700] hover:bg-[#FFD700]/5 transition-all">
+                        <i class="bi bi-youtube text-[#004182] text-xl group-hover:scale-125 transition-transform"></i>
+                        <span class="text-[10px] font-black text-[#004182] uppercase tracking-widest">YouTube</span>
+                    </a>
+                    <a href="#" class="group flex items-center gap-3 px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#FFD700] hover:bg-[#FFD700]/5 transition-all">
+                        <i class="bi bi-tiktok text-[#004182] text-xl group-hover:scale-125 transition-transform"></i>
+                        <span class="text-[10px] font-black text-[#004182] uppercase tracking-widest">TikTok</span>
+                    </a>
                 </div>
             </div>
+            <!-- Background Decoration -->
+            <!-- <div class="absolute top-0 right-0 w-1/3 h-full bg-[#f8f9fa] -skew-x-12 translate-x-1/2 -z-0"></div> -->
         </section>
 
-        <!-- Main Content Core -->
-        <section class="py-24 bg-slate-50">
-            <div class="max-w-7xl mx-auto px-6 lg:px-8">
-                <div class="grid lg:grid-cols-2 gap-16">
+        <!-- Contact Channels (Only Essential Info) -->
+        <!-- <section class="py-24 bg-white relative z-10 border-t border-gray-50">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid md:grid-cols-2 gap-12">
                     
-                    <!-- Form Control Panel -->
-                    <div class="bg-white rounded-3xl p-8 lg:p-12 border border-slate-200 shadow-sm">
-                        <h2 class="text-2xl font-bold text-slate-900 mb-2">Saluran Terpadu Cepat</h2>
-                        <p class="text-slate-600 mb-8 border-b border-slate-100 pb-6">Tim Humas kami akan menyinkronisasikan korespondensi via surel paling lambat dalam 2 x 24 Jam hari operasional.</p>
-                        
-                        <form action="#" method="POST" class="space-y-6">
-                            <div>
-                                <label for="full-name" class="block text-sm font-bold text-slate-700 mb-1.5">Identitas Lengkap (Instansi) <span class="text-red-500">*</span></label>
-                                <input type="text" name="full-name" id="full-name" required placeholder="Cth: Bagas - PT. Teknologi..." 
-                                       class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-slate-50 transition-colors p-3.5 border">
-                            </div>
-                            
-                            <div>
-                                <label for="email" class="block text-sm font-bold text-slate-700 mb-1.5">Surel Formal / Aktif <span class="text-red-500">*</span></label>
-                                <input type="email" name="email" id="email" required placeholder="Cth: corporate@mail.id"
-                                       class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-slate-50 transition-colors p-3.5 border">
-                            </div>
+                    <div class="group p-10 bg-white rounded-[3rem] border border-gray-100 shadow-xl transition-all hover:border-[#FFD700]">
+                        <div class="w-16 h-16 bg-[#004182] text-[#FFD700] rounded-[1.5rem] flex items-center justify-center mb-8 shadow-lg group-hover:scale-110 transition-transform">
+                            <i class="bi bi-geo-alt-fill text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-black text-[#004182] mb-4 uppercase tracking-tight">Sekretariat</h3>
+                        <p class="text-gray-500 text-sm leading-[2] font-medium italic">
+                            Sekretariat SEEO<br>
+                            PKM Fakultas Teknik UNSOED, Purbalingga
+                        </p>
+                    </div>
 
-                            <div>
-                                <label for="subject" class="block text-sm font-bold text-slate-700 mb-1.5">Klasifikasi Tujuan <span class="text-red-500">*</span></label>
-                                <select id="subject" name="subject" required class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-slate-50 transition-colors p-3.5 border">
-                                    <option value="">-- Pilih Kategori --</option>
-                                    <option value="partnership">Tawaran Sponsorship & Kemitraan</option>
-                                    <option value="business">Eksplorasi Transaksi Blaterian</option>
-                                    <option value="academic">Agenda Akademis / Riset</option>
-                                    <option value="other">Tanya Jawab Publik & Lainnya</option>
-                                </select>
+
+                    <div class="group p-10 bg-white rounded-[3rem] border border-gray-100 shadow-xl transition-all hover:border-[#FFD700]">
+                        <div class="w-16 h-16 bg-[#FFD700] text-[#004182] rounded-[1.5rem] flex items-center justify-center mb-8 shadow-lg group-hover:scale-110 transition-transform">
+                            <i class="bi bi-envelope-fill text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-black text-[#004182] mb-4 uppercase tracking-tight">Email</h3>
+                        <p class="text-gray-500 text-sm leading-[2] font-medium">
+                            <a href="mailto:seeoftunsoed@gmail.com" class="hover:text-[#FFD700] transition-colors">seeoftunsoed@gmail.com</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section> -->
+
+        <!-- Contact Form Section -->
+        <section class="py-24 bg-[#f8f9fa]">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="bg-white rounded-[4rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+                    <!-- Form Side -->
+                    <div class="lg:w-3/5 p-10 md:p-20">
+                        <h2 class="text-4xl font-black text-[#004182] mb-12 uppercase tracking-tight">Kirim Pesan</h2>
+                        <form @submit.prevent class="space-y-8">
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4">Nama Lengkap</label>
+                                    <input type="text" placeholder="John Doe" class="w-full px-8 py-4 bg-gray-50 rounded-full border border-transparent focus:border-[#FFD700] focus:outline-none transition-all font-medium">
+                                </div>
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4">Alamat Email</label>
+                                    <input type="email" placeholder="john@example.com" class="w-full px-8 py-4 bg-gray-50 rounded-full border border-transparent focus:border-[#FFD700] focus:outline-none transition-all font-medium">
+                                </div>
                             </div>
-                            
-                            <div>
-                                <label for="message" class="block text-sm font-bold text-slate-700 mb-1.5">Formulasi Pesan Khusus <span class="text-red-500">*</span></label>
-                                <textarea id="message" name="message" rows="5" required placeholder="Uraikan rincian korespondensi..."
-                                          class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-slate-50 transition-colors p-3.5 border resize-y"></textarea>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4">Subjek Pesan</label>
+                                <input type="text" placeholder="Media Partner / Sponsorship / Lainnya" class="w-full px-8 py-4 bg-gray-50 rounded-full border border-transparent focus:border-[#FFD700] focus:outline-none transition-all font-medium">
                             </div>
-                            
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4">Isi Pesan</label>
+                                <textarea rows="6" placeholder="Halo kak, saya ingin mengajukan..." class="w-full px-8 py-6 bg-gray-50 rounded-[2rem] border border-transparent focus:border-[#FFD700] focus:outline-none transition-all font-medium resize-none"></textarea>
+                            </div>
                             <div class="pt-4">
-                                <button type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                    Transmisikan Formulir
+                                <button class="bg-[#004182] text-white px-10 py-3 rounded-full font-black hover:bg-[#FFD700] hover:text-[#004182] transition-all tracking-[0.1em] text-sm">
+                                    Kirim Pesan
                                 </button>
                             </div>
                         </form>
                     </div>
-
-                    <!-- Company Identifiers Sidebar -->
-                    <div class="flex flex-col gap-8 flex-1">
-                        <div class="bg-slate-900 rounded-3xl p-10 border border-slate-800 text-white shadow-xl">
-                            <h3 class="text-xl font-bold mb-8">Informasi Identitas Official</h3>
-                            
-                            <ul class="space-y-8">
-                                <li class="flex gap-4">
-                                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-slate-200 mb-1">Sekretariat Fisik Pusat</h4>
-                                        <p class="text-slate-400 text-sm leading-relaxed">Pusat Kegiatan Kemahasiswaan (PKM)<br/>Fakultas Teknik Universitas Jenderal Soedirman<br/>Sokaraja, Kab. Banyumas, Jawa Tengah</p>
-                                    </div>
-                                </li>
-                                
-                                <li class="flex gap-4">
-                                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-slate-200 mb-1">Surat Elektronik (Email)</h4>
-                                        <a href="mailto:seeoftunsoed@gmail.com" class="text-blue-400 hover:text-blue-300 text-sm transition-colors">seeoftunsoed@gmail.com</a>
-                                        <p class="text-slate-500 text-xs mt-1">Direkomendasikan untuk Partnership Proposal.</p>
-                                    </div>
-                                </li>
-                                
-                                <li class="flex gap-4">
-                                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400">
-                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.042-3.441.219-.937 1.404-5.965 1.404-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.357-.631-2.724-1.378l-.701 2.67c-.256.982-.94 2.213-1.398 2.967C9.095 23.707 10.52 24 12.017 24c6.624 0 11.99-5.367 11.99-11.987C24.007 5.367 18.641.001.017.001z"/></svg>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-slate-200 mb-1">Sosial Media Publik</h4>
-                                        <a href="https://instagram.com/seeo_ftunsoed" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm transition-colors">@seeo_ftunsoed (Instagram)</a>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
+                    <!-- Visual Side -->
+                    <div class="lg:w-2/5 bg-[#004182] p-20 flex flex-col justify-center text-white relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-64 h-64 border-[30px] border-[#FFD700]/10 rounded-full translate-x-1/2 -translate-y-1/2"></div>
+                        <div class="absolute bottom-0 left-0 w-32 h-32 bg-[#FFD700] rounded-full -translate-x-1/2 translate-y-1/2 blur-3xl opacity-20"></div>
                         
-                        <div class="bg-blue-50 rounded-3xl p-8 border border-blue-100 flex items-center justify-between shadow-sm">
-                            <div class="max-w-[200px]">
-                                <h4 class="font-bold text-slate-900 mb-1">Lokasi Kami</h4>
-                                <p class="text-xs text-slate-600">Klik visual panduan disamping guna menyusuri rute eksternal melalui peta.</p>
+                        <div class="relative z-10">
+                            <h3 class="text-3xl font-black mb-8 leading-tight">Mencari Kerjasama Strategis?</h3>
+                            <p class="text-white/60 text-lg mb-12 font-medium">Kami sangat terbuka untuk kolaborasi dengan instansi, perusahaan, atau organisasi lain untuk memajukan teknologi di lingkungan kampus.</p>
+                            <div class="space-y-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10">
+                                        <i class="bi bi-telephone-fill"></i>
+                                    </div>
+                                    <span class="font-bold">+62 812-3456-7890</span>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10">
+                                        <i class="bi bi-clock-fill"></i>
+                                    </div>
+                                    <span class="font-bold">Senin - Jumat | 09:00 - 17:00</span>
+                                </div>
                             </div>
-                            <a href="https://g.co/kgs/2X7C39x" target="_blank" class="w-14 h-14 bg-white rounded-full flex items-center justify-center border border-slate-200 text-blue-600 hover:shadow-md transition-shadow">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M21.928 11.607c-.202-.488-.635-.605-.928-.633V8c0-1.103-.897-2-2-2h-6V4.61c.305-.274.5-.668.5-1.11a1.5 1.5 0 00-3 0c0 .442.195.836.5 1.11V6H5c-1.103 0-2 .897-2 2v2.997l-.082.006A1 1 0 002 12v2a1 1 0 001 1h2v5c0 1.103.897 2 2 2h10c1.103 0 2-.897 2-2v-5h2a1 1 0 001-1v-2c0-.142-.03-.277-.072-.393zM10.5 4.5a.5.5 0 011 0v1.5h-1V4.5zm-5.5 4h14v2h-14V8zm12 11c0 .551-.449 1-1 1H8c-.551 0-1-.449-1-1v-4h10v4zm-5-3h-4v-2h4v2z"/></svg>
-                            </a>
                         </div>
                     </div>
                 </div>
             </div>
+        </section>
+
+        <!-- Map Section -->
+        <section class="h-[500px] bg-gray-100 grayscale hover:grayscale-0 transition-all duration-1000">
+            <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d521.3327011582118!2d109.33636630681688!3d-7.428993513373772!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6559bc3139f21b%3A0xd5c712f3a50928fe!2sPKM%20Teknik%20Unsoed!5e0!3m2!1sid!2sid!4v1778857389901!5m2!1sid!2sid" 
+                class="w-full h-full border-0" 
+                allowfullscreen="" 
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
         </section>
     </PublicLayout>
 </template>

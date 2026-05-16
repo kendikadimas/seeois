@@ -15,7 +15,7 @@ class StorageController extends Controller
         // Convert to Laravel Collection
         $pathCollection = collect($pathArray);
         // return $pathCollection->first() != "local" && config('app.env') == 'production' ? $this->show_gdrive($path) : $this->show_local($path);
-        if ($pathCollection->first() !== 'local') {
+        if ($pathCollection->first() !== 'local' && config('app.env') === 'production') {
             return $this->show_gdrive($path);
         } else {
             return $this->show_local($path);

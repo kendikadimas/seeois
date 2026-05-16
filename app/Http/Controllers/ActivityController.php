@@ -18,7 +18,7 @@ class ActivityController extends Controller
         $activities = Activity::latest()->get();
         return Inertia::render('Staff/Marketing/Activities', [
             'activities' => $activities->map(function ($q) {
-                $q->image_url = $q->image_path ? Storage::url($q->image_path) : null;
+                $q->image_url = $q->image_path ? Storage::disk('public')->url($q->image_path) : null;
                 return $q;
             })
         ]);
@@ -33,16 +33,25 @@ class ActivityController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'image_path' => 'nullable|image|max:2048',
+            'gallery.*' => 'nullable|image|max:2048',
             'category' => 'nullable|string|max:255',
             'date' => 'nullable|date',
             'is_published' => 'boolean',
         ]);
 
-        $data = $request->except('image_path');
+        $data = $request->except(['image_path', 'gallery']);
         $data['slug'] = Str::slug($request->title) . '-' . uniqid();
 
         if ($request->hasFile('image_path')) {
             $data['image_path'] = $request->file('image_path')->store('images/activities', 'public');
+        }
+
+        if ($request->hasFile('gallery')) {
+            $galleryPaths = [];
+            foreach ($request->file('gallery') as $file) {
+                $galleryPaths[] = $file->store('images/activities/gallery', 'public');
+            }
+            $data['gallery'] = $galleryPaths;
         }
 
         Activity::create($data);
@@ -59,18 +68,34 @@ class ActivityController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'image_path' => 'nullable',
+            'gallery.*' => 'nullable',
             'category' => 'nullable|string|max:255',
             'date' => 'nullable|date',
             'is_published' => 'boolean',
         ]);
 
-        $data = $request->except('image_path');
+        $data = $request->except(['image_path', 'gallery']);
 
         if ($request->hasFile('image_path')) {
             if ($activity->image_path) {
                 Storage::disk('public')->delete($activity->image_path);
             }
             $data['image_path'] = $request->file('image_path')->store('images/activities', 'public');
+        }
+
+        if ($request->hasFile('gallery')) {
+            // Delete old gallery images if replacing
+            if ($activity->gallery) {
+                foreach ($activity->gallery as $oldPath) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            }
+            
+            $galleryPaths = [];
+            foreach ($request->file('gallery') as $file) {
+                $galleryPaths[] = $file->store('images/activities/gallery', 'public');
+            }
+            $data['gallery'] = $galleryPaths;
         }
 
         $activity->update($data);

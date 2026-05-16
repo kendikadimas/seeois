@@ -15,8 +15,15 @@ class Activity extends Model
         'slug',
         'description',
         'image_path',
+        'gallery',
         'category',
         'date',
         'is_published',
+    ];
+
+    protected $casts = [
+        'gallery' => 'array',
+        'is_published' => 'boolean',
+        'date' => 'date',
     ];
 }

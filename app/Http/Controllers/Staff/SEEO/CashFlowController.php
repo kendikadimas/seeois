@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff\SEEO;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\ScopedByYear;
 use App\Models\BlaterianBalance;
 use App\Models\BlaterianGoodBalance;
 use App\Models\CashInItem;
@@ -24,6 +25,8 @@ use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class CashFlowController extends Controller
 {
+    use ScopedByYear;
+
     public function index(Request $request)
     {
         // Retrieve or create session
@@ -35,13 +38,20 @@ class CashFlowController extends Controller
         $request->session()->put('cashIn', $cash_in_session);
         $request->session()->put('cashOut', $cash_out_session);
 
+        // active Year
+        [$activeYear, $yearId] = $this->activeYearScope();
+
         // Cash Flow filter
         $cash_in_category = $cash_in_session['category'];
-        $cash_in_order = $cash_in_session['order'];
-        $cash_in_items = CashInItem::orderBy($cash_in_category, $cash_in_order)->with(['financial'])->get();
+        $cash_in_order    = $cash_in_session['order'];
+        $ciQuery = CashInItem::with(['financial']);
+        $this->applyYearScope($ciQuery, $yearId);
+        $cash_in_items = $ciQuery->orderBy($cash_in_category, $cash_in_order)->get();
         $cash_out_category = $cash_out_session['category'];
-        $cash_out_order = $cash_out_session['order'];
-        $cash_out_items = Department::orderBy($cash_out_category, $cash_out_order)->with(['manager'])->get();
+        $cash_out_order    = $cash_out_session['order'];
+        $deptQuery = Department::orderBy($cash_out_category, $cash_out_order)->with(['manager']);
+        $this->applyYearScope($deptQuery, $yearId);
+        $cash_out_items = $deptQuery->get();
         $data = [
             'cash_in_items' => $cash_in_items,
             'cash_out_items' => $cash_out_items,
@@ -73,28 +83,76 @@ class CashFlowController extends Controller
         // Save session
         $request->session()->put('contribution', $contribution_session);
 
+        // active Year
+        [$activeYear, $yearId] = $this->activeYearScope();
+
         // ContributionConfig
-        $contribution_config = ContributionConfig::where('id', '=', 1)->with(['financial'])->first() ??
-            ContributionConfig::create([
-                'price' => 0,
-                'start' => 0,
-                'period' => 0,
-                'financial_id' => 0,
-            ]);
+        $configQuery = ContributionConfig::where('year_id', $yearId)->with(['financial']);
+        $contribution_config = $configQuery->first();
+        $latestConfig = ContributionConfig::whereNotNull('year_id')->orderBy('year_id', 'desc')->first();
+        if (!$contribution_config) {
+            // Try to reuse latest existing configuration from previous years to avoid empty 0-values
+            if ($latestConfig) {
+                $contribution_config = ContributionConfig::create([
+                    'price' => $latestConfig->price ?? 0,
+                    'start' => $latestConfig->start ?? (int)date('n'),
+                    'period' => $latestConfig->period ?? 12,
+                    'financial_id' => $latestConfig->financial_id ?? 0,
+                    'year_id' => $yearId,
+                ]);
+            } else {
+                // Safe fallback: use current month as start (1-based) and full-year period
+                $contribution_config = ContributionConfig::create([
+                    'price' => 0,
+                    'start' => (int)date('n'),
+                    'period' => 12,
+                    'financial_id' => 0,
+                    'year_id' => $yearId,
+                ]);
+            }
+        }
+        if ($contribution_config) {
+            $normalizeStart = $contribution_config->start < 1 || $contribution_config->start > 12;
+            $normalizePeriod = $contribution_config->period < 1;
+            $normalizePrice = $contribution_config->price === null;
+            $normalizeFinancial = $contribution_config->financial_id === null;
+            if ($normalizeStart || $normalizePeriod || $normalizePrice || $normalizeFinancial) {
+                $contribution_config->start = $normalizeStart
+                    ? ($latestConfig->start ?? (int)date('n'))
+                    : $contribution_config->start;
+                $contribution_config->period = $normalizePeriod
+                    ? ($latestConfig->period ?? 12)
+                    : $contribution_config->period;
+                $contribution_config->price = $normalizePrice
+                    ? ($latestConfig->price ?? 0)
+                    : $contribution_config->price;
+                $contribution_config->financial_id = $normalizeFinancial
+                    ? ($latestConfig->financial_id ?? 0)
+                    : $contribution_config->financial_id;
+                $contribution_config->save();
+                $contribution_config->load(['financial']);
+            }
+        }
         // Contribution filter
         $contribution_category = $contribution_session['category'];
-        $contribution_order = $contribution_session['order'];
-        $contribution_keyword = $contribution_session['keyword'];
-        $contribution_users = $contribution_keyword !== null ?
-            User::where('roles_id', '>', 0)->orderByRaw("
+        $contribution_order    = $contribution_session['order'];
+        $contribution_keyword  = $contribution_session['keyword'];
+        // Link to contribution record for THIS year
+        $contribQuery = User::where('roles_id', '>', 0)
+            ->with(['contribution' => function($q) use ($yearId) {
+                $q->where('year_id', $yearId)->with(['receipt' => ['financial']]);
+            }]);
+        $this->applyYearScope($contribQuery, $yearId);
+        $contribution_users = $contribution_keyword !== null
+            ? $contribQuery->orderByRaw("
                 CASE
                 WHEN name = ? THEN 1
                 WHEN name LIKE ? THEN 2
                 WHEN name LIKE ? THEN 3
                 ELSE 4
                 END 
-            ", [$contribution_keyword, "$contribution_keyword%", "%$contribution_keyword%"])->with(['contribution' => ['receipt' => ['financial']]])->get() :
-            User::where('roles_id', '>', 0)->orderBy($contribution_category, $contribution_order)->with(['contribution' => ['receipt' => ['financial']]])->get();
+            ", [$contribution_keyword, "$contribution_keyword%", "%$contribution_keyword%"])->get()
+            : $contribQuery->orderBy($contribution_category, $contribution_order)->get();
 
         $payroll_detail = PayrollLevel::orderBy('level')->get();
         $payroll_balance = PayrollBalance::with(['financial'])->first() ?? PayrollBalance::create([
@@ -182,13 +240,15 @@ class CashFlowController extends Controller
         // store reciept file
         Storage::disk($disk)->put('images/receipt/cash_in/' . $receipt_name, $receipt_encoded);
 
+        [$activeYear, $yearId] = $this->activeYearScope();
         $data = [
             'financial_id' => Auth::user()->id,
-            'name' => $request->input('name'),
-            'price' => $request->input('price'),
-            'reciept' => $receipt_name,
-            'updated_at' => now(),
-            'created_at' => now()
+            'name'         => $request->input('name'),
+            'price'        => $request->input('price'),
+            'reciept'      => $receipt_name,
+            'year_id'      => $yearId,
+            'updated_at'   => now(),
+            'created_at'   => now()
         ];
 
         // sucees insert

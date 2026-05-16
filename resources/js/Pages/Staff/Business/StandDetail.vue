@@ -9,6 +9,7 @@ import vSelect from "vue-select";
 import "vue-select/dist/vue-select.css";
 import html2canvas from "html2canvas";
 import IncomeReceiptTemplate from "@/Components/IncomeReceiptTemplate.vue";
+import ToastNotification from "@/Components/ToastNotification.vue";
 import {
     ref,
     computed,
@@ -43,6 +44,10 @@ const props = defineProps({
         default: () => []
     },
     food_tag_list: {
+        type: Array,
+        default: () => []
+    },
+    all_categories: {
         type: Array,
         default: () => []
     },
@@ -123,8 +128,25 @@ const stand_type = [
     { value: 2, name: "Live and Pre-Order" },
 ];
 const active_tab = ref(1);
-const next_tab = ref(1);
-const prev_tab = ref(1);
+const next_tab = ref(0);
+const prev_tab = ref(0);
+
+// Sync selected items with updated props when server data changes
+watch(() => props.stand, (newStand) => {
+    if (!newStand) return;
+    
+    // Sync selected_expense if it's currently open
+    if (selected_expense.value) {
+        const updated = (newStand.expense || []).find(e => e.id === selected_expense.value.id);
+        if (updated) selected_expense.value = updated;
+    }
+    
+    // Sync selected_menu if it's currently open
+    if (selected_menu.value) {
+        const updated = (newStand.menu || []).find(m => m.id === selected_menu.value.id);
+        if (updated) selected_menu.value = updated;
+    }
+}, { deep: true });
 const selected_expense = ref(null);
 // Safe accessor for selected expense
 const getSelectedExpense = computed(() => selected_expense.value || null);
@@ -144,6 +166,9 @@ const is_production = computed(() => {
         (production) => production.id == auth_user.id
     ) || false;
 });
+const food_tags = computed(() => props.food_tag_list || []);
+const category_options = computed(() => props.all_categories || []);
+
 const shop_status = computed(() => {
     if (!props.stand) return "close";
     if (props.stand.menu_lock > 0 && !(props.stand.sale_validation > 0)) {
@@ -195,6 +220,14 @@ const form_add_menu = useForm({
     image: null,
 });
 
+const form_edit_menu = useForm({
+    id: null,
+    name: null,
+    category: null,
+    price: null,
+    food_tag: [],
+});
+
 const form_add_stock = useForm({
     id: null,
     amount: null,
@@ -232,20 +265,53 @@ const form_attach_recipe = useForm({
     components: [] // { stand_expense_id, quantity_used }
 });
 const modalAttachRecipe = ref(null);
+const modalWorkflowGuide = ref(null);
 
-function showAttachRecipeModal(is_show) {
-    if (modalAttachRecipe.value == null) {
-        const modal = document.getElementById('attachRecipeModal');
-        modalAttachRecipe.value = bootstrap.Modal.getOrCreateInstance(modal);
+function showWorkflowGuideModal(is_show) {
+    if (modalWorkflowGuide.value == null) {
+        const modal = document.getElementById("workflowGuideModal");
+        modalWorkflowGuide.value = bootstrap.Modal.getOrCreateInstance(modal);
     }
     if (is_show) {
-        // Preload components list with validated expense items for this stand
-        form_attach_recipe.components = expense_list
-            .filter(e => e.operational_id && e.operational_id > 0)
-            .map(e => ({ stand_expense_id: e.id, name: e.name, unit: e.unit, price: e.price, qty: e.qty, total_price: e.total_price, quantity_used: 0 }));
-        modalAttachRecipe.value.show();
+        modalWorkflowGuide.value.show();
     } else {
-        modalAttachRecipe.value.hide();
+        modalWorkflowGuide.value.hide();
+    }
+}
+
+function showAttachRecipeModal(is_show, item = null) {
+    if (modalAttachRecipe.value == null) {
+        const modal = document.getElementById('attachRecipeModal');
+        if (modal) {
+            modalAttachRecipe.value = bootstrap.Modal.getOrCreateInstance(modal);
+        }
+    }
+    
+    if (is_show) {
+        if (item) selected_menu.value = item;
+        
+        if (selected_menu.value && modalAttachRecipe.value) {
+            form_attach_recipe.id = selected_menu.value.id;
+            // Map validated expenses and merge existing recipe data
+            // CRITICAL: Must use .value for computed property
+            form_attach_recipe.components = (expense_list.value || [])
+                .filter(e => e.operational_id && e.operational_id > 0)
+                .map(e => {
+                    const existing = selected_menu.value.recipe_components?.find(rc => rc.stand_expense_id === e.id);
+                    return { 
+                        stand_expense_id: e.id, 
+                        name: e.name, 
+                        unit: e.unit, 
+                        price: e.price, 
+                        qty: e.qty, 
+                        total_price: e.total_price, 
+                        quantity_used: existing ? existing.quantity_used : 0 
+                    };
+                });
+            modalAttachRecipe.value.show();
+        }
+    } else {
+        modalAttachRecipe.value?.hide();
     }
 }
 
@@ -259,7 +325,9 @@ function handleAttachRecipe() {
         toastNotifRef.value.showToast('warning', 'Please input at least one ingredient quantity');
         return;
     }
-    useForm({ components: payload }).post(route('stand.menu.recipe.store', selected_menu.value.id), {
+    useForm({ components: payload }).post(`/seeo/staff/food/stand/menu/recipe/store/${selected_menu.value.id}`, {
+        preserveScroll: true,
+        preserveState: true,
         onSuccess: () => {
             showAttachRecipeModal(false);
             toastNotifRef.value.showToast('info', 'Ingredients saved');
@@ -296,14 +364,14 @@ const expenseReceiptUrl = computed(() => {
     // Attempt global Ziggy route helper first
     try {
         if (typeof route === 'function') {
-            built = route('stand.expense.receipt', { filename: file });
+            built = `/seeo/staff/food/stand/expense/receipt/${encodeURIComponent(file)}`;
         }
     } catch (e) {
         console.warn('[StandDetail] Failed building receipt route via Ziggy', e);
     }
     // If helper failed or returned just the name, fallback to manual path
-    if (!built || built === 'stand.expense.receipt' || !/\/food\/stand\/expense\/receipt\//.test(built)) {
-        built = `/food/stand/expense/receipt/${encodeURIComponent(file)}`;
+    if (!built || !/\/seeo\/staff\/food\/stand\/expense\/receipt\//.test(built)) {
+        built = `/seeo/staff/food/stand/expense/receipt/${encodeURIComponent(file)}`;
     }
     return built;
 });
@@ -318,11 +386,11 @@ function buildReceiptUrlForFile(filename) {
     let built = null;
     try {
         if (typeof route === 'function') {
-            built = route('stand.expense.receipt', { filename });
+            built = `/seeo/staff/food/stand/expense/receipt/${encodeURIComponent(filename)}`;
         }
     } catch (_) { }
-    if (!built || built === 'stand.expense.receipt' || !/\/food\/stand\/expense\/receipt\//.test(built)) {
-        built = `/food/stand/expense/receipt/${encodeURIComponent(filename)}`;
+    if (!built || !/\/seeo\/staff\/food\/stand\/expense\/receipt\//.test(built)) {
+        built = `/seeo/staff/food/stand/expense/receipt/${encodeURIComponent(filename)}`;
     }
     return built;
 }
@@ -462,19 +530,37 @@ function showAddMenuModal(is_show) {
         const modal = document.getElementById("addMenuModal");
         modalAddMenu.value = bootstrap.Modal.getOrCreateInstance(modal);
     }
+    is_show ? modalAddMenu.value.show() : modalAddMenu.value.hide();
+}
+
+const modalEditMenu = ref(null);
+function showEditMenuModal(is_show, item = null) {
+    if (modalEditMenu.value == null) {
+        const modal = document.getElementById("editMenuModal");
+        modalEditMenu.value = bootstrap.Modal.getOrCreateInstance(modal);
+    }
     if (is_show) {
-        modalAddMenu.value.show();
+        if (item) {
+            selected_menu.value = item;
+            form_edit_menu.id = item.id;
+            form_edit_menu.name = item.name;
+            form_edit_menu.category = item.category;
+            form_edit_menu.price = item.price;
+            form_edit_menu.food_tag = item.tags ? item.tags.map(t => t.id) : [];
+        }
+        modalEditMenu.value.show();
     } else {
-        modalAddMenu.value.hide();
+        modalEditMenu.value.hide();
     }
 }
 
-function showAddStockModal(is_show) {
+function showAddStockModal(is_show, item = null) {
     if (modalAddStock.value == null) {
         const modal = document.getElementById("addStockModal");
         modalAddStock.value = bootstrap.Modal.getOrCreateInstance(modal);
     }
     if (is_show) {
+        if (item) selected_stock.value = item;
         modalAddStock.value.show();
     } else {
         modalAddStock.value.hide();
@@ -553,12 +639,13 @@ function showDanaContactModal(is_show) {
     }
 }
 
-function showEditMenuImageModal(is_show) {
+function showEditMenuImageModal(is_show, item = null) {
     if (modalEditMenuImage.value == null) {
         const modal = document.getElementById("editMenuImageModal");
         modalEditMenuImage.value = bootstrap.Modal.getOrCreateInstance(modal);
     }
     if (is_show) {
+        if (item) selected_menu.value = item;
         modalEditMenuImage.value.show();
     } else {
         modalEditMenuImage.value.hide();
@@ -567,20 +654,26 @@ function showEditMenuImageModal(is_show) {
 
 function handleEditStand() {
     if (!props.stand?.id) return;
-    form_edit_stand.post(route("food.stand.update", props.stand.id), {
+    form_edit_stand.post(`/seeo/staff/food/stand/update/${props.stand.id}`, {
+        preserveScroll: true,
+        preserveState: true,
         onSuccess: () => {
             showEditStandModal(false);
             form_edit_stand.reset();
+            toastNotifRef.value.showToast("info", "Stand updated successfully");
         },
     });
 }
 
 function handleAddMenu() {
     if (!props.stand?.id) return;
-    form_add_menu.post(route("stand.menu.add", props.stand.id), {
+    form_add_menu.post(`/seeo/staff/food/stand/menu/add/${props.stand.id}`, {
+        preserveScroll: true,
+        preserveState: true,
         onSuccess: () => {
             showAddMenuModal(false);
             form_add_menu.reset();
+            toastNotifRef.value.showToast("info", "Menu added successfully");
         },
         onError: (e) => {
             for (let key in e) {
@@ -593,8 +686,10 @@ function handleAddMenu() {
 function handleEditMenuImage() {
     if (!selected_menu.value?.id) return;
     form_edit_menu_image.post(
-        route("stand.menu.image.update", selected_menu.value.id),
+        `/seeo/staff/food/stand/menu/image/update/${selected_menu.value.id}`,
         {
+            preserveScroll: true,
+            preserveState: false,
             onSuccess: () => {
                 showEditMenuImageModal(false);
                 form_edit_menu_image.reset();
@@ -617,13 +712,27 @@ const handleFileEditMenuImage = (event) => {
     form_edit_menu_image.image = event.target.files[0];
 };
 
+function handleEditMenu() {
+    if (!form_edit_menu.id) return;
+    form_edit_menu.post(`/seeo/staff/food/stand/menu/update/${form_edit_menu.id}`, {
+        preserveScroll: true,
+        preserveState: false,
+        onSuccess: () => {
+            showEditMenuModal(false);
+            form_edit_menu.reset();
+        },
+    });
+}
 function handleAddStock() {
     if (!props.stand?.id) return;
     form_add_stock.id = selected_stock.value?.id;
-    form_add_stock.post(route("stand.menu.stock.update", props.stand.id), {
+    form_add_stock.post(`/seeo/staff/food/stand/menu/stock/update`, {
+        preserveScroll: true,
+        preserveState: true,
         onSuccess: () => {
             showAddStockModal(false);
             form_add_stock.reset();
+            toastNotifRef.value.showToast("info", "Stock updated successfully");
         },
         onError: (e) => {
             for (let key in e) {
@@ -635,10 +744,15 @@ function handleAddStock() {
 
 function handleAddExpense() {
     if (!props.stand?.id) return;
-    form_add_expense.post(route("stand.expense.add", props.stand.id), {
+    form_add_expense.post(`/seeo/staff/food/stand/expense/add/${props.stand.id}`, {
+        preserveScroll: true,
+        preserveState: true,
         onSuccess: () => {
-            showAddExpenseModal(false); // sebelumnya salah: showAddMenuModal(false)
+            showAddExpenseModal(false);
             form_add_expense.reset();
+            toastNotifRef.value.showToast("info", "Expense added successfully");
+            // Force reload to be 100% sure props are fresh
+            router.reload({ only: ['stand'] });
         },
         onError: (e) => {
             for (let key in e) {
@@ -704,7 +818,7 @@ function selectIncome(item) {
 
 function handleDeleteStand() {
     if (!props.stand?.id) return;
-    form_delete_stand.post(route("food.stand.delete", props.stand.id), {
+    form_delete_stand.post(`/seeo/staff/food/stand/delete/${props.stand.id}`, {
         onSuccess: () => {
             showDeleteStandModal(false);
             form_delete_stand.reset();
@@ -718,11 +832,11 @@ function handleDeleteStand() {
 }
 
 function handleFilterExpense() {
-    form_filter_expense.post(route("stand.expense.filter"));
+    form_filter_expense.post(`/seeo/staff/food/stand/expense/filter`);
 }
 
 function handleFilterIncome() {
-    form_filter_income.post(route("stand.income.filter"));
+    form_filter_income.post(`/seeo/staff/food/stand/sales/filter`);
 }
 
 function handleFileAddExpenseReceipt(event) {
@@ -732,7 +846,7 @@ function handleFileAddExpenseReceipt(event) {
 function handleSetProductionStaff() {
     if (!props.stand?.id) return;
     form_production_staff.post(
-        route("update.stand.production_staff", props.stand.id),
+        `/seeo/staff/food/stand/production/${props.stand.id}`,
         {
             onSuccess: () => {
                 form_production_staff.staff_list = props.stand?.production || [];
@@ -745,7 +859,7 @@ function handleSetProductionStaff() {
 function handleSetCashierStaff() {
     if (!props.stand?.id) return;
     form_cashier_staff.post(
-        route("update.stand.cashier_staff", props.stand.id),
+        `/seeo/staff/food/stand/cashier/${props.stand.id}`,
         {
             onSuccess: () => {
                 form_cashier_staff.staff_list = props.stand?.cashier || [];
@@ -756,7 +870,7 @@ function handleSetCashierStaff() {
 }
 
 function handleSetDanaContact() {
-    form_set_dana_contact.post(route("shop.payment.dana.set"), {
+    form_set_dana_contact.post(`/seeo/staff/shop/payment/dana/set`, {
         onSuccess: () => {
             form_set_dana_contact.reset();
             showDanaContactModal(false);
@@ -928,7 +1042,7 @@ watch(
         <ModalAlertNotification ref="modalAlertNotificationRef" />
         <template #header>
             <a
-                :href="route('food.stand')"
+                :href="`/seeo/staff/blaterian/foods/stand`"
                 class="bg-opacity-0 text-decoration-none text-primary-emphasis"
             >
                 <span class="fw-light">{{ "Stand" }}</span>
@@ -947,6 +1061,21 @@ watch(
                                 <i class="bi bi-shop me-2"></i>{{ "Stand " + (stand?.name || 'Unknown') }}
                             </span>
                             <div class="ms-auto d-flex gap-2">
+                                <button
+                                    @click="showWorkflowGuideModal(true)"
+                                    class="btn btn-sm btn-outline-info border-0 py-0 mb-auto"
+                                    title="Workflow Guide"
+                                >
+                                    <i class="bi bi-lightbulb-fill"></i>
+                                </button>
+                                <a
+                                    v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
+                                    href="/seeo/staff/operating/panel"
+                                    class="btn btn-sm btn-outline-primary border-0 py-0 mb-auto"
+                                    title="Go to Operating Panel"
+                                >
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
                                 <button
                                     v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id"
                                     @click="() => { showEditStandModal(true); form_edit_stand.name = stand?.name || null; form_edit_stand.pic_id = stand?.pic_id || null; form_edit_stand.place = stand?.place || null; form_edit_stand.date = stand?.date || null; form_edit_stand.type = stand?.type || null; }"
@@ -1163,8 +1292,7 @@ watch(
                                 <div class="ms-auto me-2 d-flex">
                                     <div
                                         @click="
-                                            stand_status !==
-                                            'Waiting for menu lock'
+                                            (stand_status !== 'Waiting for menu lock' && auth_user.roles_id != 99)
                                                 ? stand_status == 'Active'
                                                     ? alertNotification(
                                                           'You can`t change menu list after being locked by Operational Staff.'
@@ -1178,21 +1306,28 @@ watch(
                                         <button
                                             v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id"
                                             @click="
-                                                stand_status ==
-                                                'Waiting for menu lock'
+                                                (stand_status == 'Waiting for menu lock' || auth_user.roles_id == 99)
                                                     ? showAddMenuModal(true)
                                                     : ''
                                             "
                                             :class="
                                                 'btn btn-sm border-0 py-0 btn-outline-' +
-                                                (stand_status !==
-                                                'Waiting for menu lock'
+                                                (stand_status !== 'Waiting for menu lock' && auth_user.roles_id != 99
                                                     ? 'secondary disabled'
                                                     : 'primary')
                                             "
+                                            title="Add Menu"
                                         >
                                             <i class="bi bi-plus-lg"></i>
                                         </button>
+                                        <a
+                                            v-if="auth_user.roles_id == 10 || auth_user.roles_id == 99"
+                                            href="/seeo/staff/sales-distribution"
+                                            class="btn btn-sm border-0 py-0 btn-outline-primary ms-1"
+                                            title="Go to Sales Distribution Panel"
+                                        >
+                                            <i class="bi bi-box-arrow-up-right"></i>
+                                        </a>
                                     </div>
                                     <div
                                         class="border-start border-2 mt-1 mx-1"
@@ -1203,7 +1338,7 @@ watch(
                                     ></div>
                                     <div
                                         @click="
-                                            stand_status == 'Inactive'
+                                            (stand_status == 'Inactive' && auth_user.roles_id != 99)
                                                 ? alertNotification(
                                                       'This stand is inactive. All feature are locked.'
                                                   )
@@ -1211,16 +1346,13 @@ watch(
                                         "
                                     >
                                         <button
-                                            v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
+                                            v-if="auth_user.roles_id == 3 || auth_user.roles_id == 10 || auth_user.roles_id == 99"
                                             @click="
                                                 menu_category
                                                     ? stand_status == 'Inactive'
                                                         ? ''
                                                         : confirmation(
-                                                              route(
-                                                                  'stand.menu.validate',
-                                                                  stand.id
-                                                              ),
+                                                              `/seeo/staff/food/stand/menu/lock/${stand.id}`,
                                                               'Are you sure want to ' +
                                                                   (stand.menu_lock > 0 ? 'unlock' : 'lock') +
                                                                   ' the menu list of Stand ' +
@@ -1233,7 +1365,7 @@ watch(
                                             "
                                             :class="
                                                 'btn btn-sm border-0 py-0 btn-outline-' +
-                                                (stand_status == 'Inactive'
+                                                (stand_status == 'Inactive' && auth_user.roles_id != 99
                                                     ? 'secondary disabled'
                                                     : 'success')
                                             "
@@ -1270,21 +1402,13 @@ watch(
                                     >
                                         <div class="p-1">
                                             <div class="d-flex">
-                                                <div
-                                                    class="border-2 border-primary-subtle rounded-3"
-                                                    style="width: 20%"
-                                                >
+                                                <div class="border-2 border-primary-subtle rounded-3 overflow-hidden d-flex align-items-center justify-content-center bg-light" style="width: 85px; height: 85px; flex-shrink: 0;">
                                                     <img
-                                                        :src="
-                                                            item.image
-                                                                ? '/storage/images/shop/foods/menu/' +
-                                                                  item.image
-                                                                : '/storage/images/shop/foods/menu/default.png'
-                                                        "
+                                                        :src="item.image ? '/storage/images/shop/foods/menu/' + item.image : '/storage/images/shop/foods/menu/default.png'"
                                                         alt="image"
-                                                        class="placeholder img-fluid rounded"
+                                                        class="img-fluid"
+                                                        style="object-fit: cover; width: 100%; height: 100%; opacity: 0; transition: opacity 0.3s;"
                                                         @load="showImage"
-                                                        style="aspect-ratio: 1"
                                                     />
                                                 </div>
                                                 <div class="ps-2" style="width: 80%">
@@ -1317,80 +1441,73 @@ watch(
                                                         {{ item.stock + ' )' }}
                                                     </span>
                                                     <div class="mb-2">
-                                                        <span v-if="Array.isArray(item.recipe_components) && item.recipe_components.length === 0" class="badge bg-warning text-dark" style="font-size:0.65rem" title="Belum ada ingredient">
-                                                            <i class="bi bi-exclamation-triangle me-1"></i>No Ingredients
-                                                        </span>
-                                                        <span v-else-if="Array.isArray(item.recipe_components) && item.recipe_components.length > 0" class="badge bg-success" style="font-size:0.65rem" title="Jumlah ingredient terhubung">
-                                                            <i class="bi bi-clipboard-check me-1"></i>{{ item.recipe_components.length }} Ingredients
-                                                        </span>
-                                                        <span v-else class="badge bg-secondary" style="font-size:0.65rem" title="Data ingredient tidak dimuat">Unknown</span>
+                                                        <template v-if="Array.isArray(item.recipe_components) && item.recipe_components.length > 0">
+                                                            <span class="badge bg-success-subtle text-success border border-success border-opacity-25 d-inline-flex align-items-center" style="font-size:0.65rem">
+                                                                <i class="bi bi-check-all me-1"></i>{{ (item.recipe_components || []).length }} Ingredients
+                                                                <span class="ms-1 border-start ps-1 border-success border-opacity-25">Modal: {{ formatIDR((item.recipe_components || []).reduce((acc, curr) => {
+                                                                    const cost = parseFloat(curr.price > 0 ? curr.price : (curr.expense?.price ?? 0));
+                                                                    return acc + (parseFloat(curr.quantity_used || 0) * cost);
+                                                                }, 0)) }}</span>
+                                                                <span class="ms-1 border-start ps-1 border-success border-opacity-25 text-primary">Untung: {{ formatIDR(parseFloat(item.price || 0) - (item.recipe_components || []).reduce((acc, curr) => {
+                                                                    const cost = parseFloat(curr.price > 0 ? curr.price : (curr.expense?.price ?? 0));
+                                                                    return acc + (parseFloat(curr.quantity_used || 0) * cost);
+                                                                }, 0)) }}</span>
+                                                            </span>
+                                                        </template>
+                                                        <template v-else>
+                                                            <span class="badge bg-warning text-dark" style="font-size:0.65rem" title="Belum ada ingredient">
+                                                                <i class="bi bi-exclamation-triangle me-1"></i>No Ingredients
+                                                            </span>
+                                                        </template>
                                                     </div>
-                                                    <div class="d-flex mt-auto">
-                                                        <div
-                                                            @click="
-                                                                stand.sale_validation > 0
-                                                                    ? alertNotification('This stand is inactive. All feature are disabled.')
-                                                                    : ''
-                                                            "
-                                                        >
+                                                    <div class="d-flex mt-auto flex-wrap gap-1">
+                                                        <div v-if="auth_user.roles_id == 99 || auth_user.roles_id == 10 || auth_user.roles_id == 3">
                                                             <button
-                                                                @click="() => { showEditMenuImageModal(true); selected_menu.value = item; }"
-                                                                :class="
-                                                                    'btn btn-sm btn-outline-secondary border-0 ' +
-                                                                    (stand.sale_validation > 0 ? 'disabled' : '')
-                                                                "
+                                                                @click="showEditMenuModal(true, item)"
+                                                                class="btn btn-sm btn-outline-primary border-0 p-1"
+                                                                title="Edit Details"
                                                             >
-                                                                <i class="bi bi-image"></i>
+                                                                <i class="bi bi-pencil-square" style="font-size: 1.1rem;"></i>
                                                             </button>
                                                         </div>
-                                                        <div
-                                                            class="ms-1"
-                                                            @click="
-                                                                stand.sale_validation > 0
-                                                                    ? alertNotification('This stand is inactive. All feature are disabled.')
-                                                                    : ''
-                                                            "
-                                                        >
+                                                        <div>
                                                             <button
-                                                                @click="() => { showAddStockModal(true); selected_stock.value = item; }"
-                                                                :class="
-                                                                    'btn btn-sm btn-outline-secondary border-0 ' +
-                                                                    (stand.sale_validation > 0 ? 'disabled' : '')
-                                                                "
+                                                                @click="showEditMenuImageModal(true, item)"
+                                                                class="btn btn-sm btn-outline-secondary border-0 p-1"
+                                                                :disabled="stand.sale_validation > 0 && auth_user.roles_id != 99"
+                                                                title="Update Image"
                                                             >
-                                                                <i class="bi bi-box-seam"></i>
+                                                                <i class="bi bi-image" style="font-size: 1.1rem;"></i>
                                                             </button>
                                                         </div>
-                                                        <div
-                                                            class="ms-1"
-                                                            @click="
-                                                                (stand?.menu_lock || 0) > 0
-                                                                    ? alertNotification('Menu list is locked by ' + (stand.menu_validator?.name ?? 'Unknown') + '. You can`t delete or make any changes.')
-                                                                    : ''
-                                                            "
-                                                        >
+                                                        <div>
                                                             <button
-                                                                @click="
-                                                                    confirmation(
-                                                                        route('stand.menu.delete', item.id),
-                                                                        'Are you sure want to remove ' + (item?.name || '') + ' from menu list?'
-                                                                    )
-                                                                "
-                                                                :class="
-                                                                    'btn btn-sm btn-outline-secondary border-0 ' +
-                                                                    ((stand?.menu_lock || 0) > 0 ? 'disabled' : '')
-                                                                "
-                                                                v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id"
+                                                                @click="showAddStockModal(true, item)"
+                                                                class="btn btn-sm btn-outline-secondary border-0 p-1"
+                                                                :disabled="stand.sale_validation > 0 && auth_user.roles_id != 99"
+                                                                title="Add Stock"
                                                             >
-                                                                <i class="bi bi-trash3 py-0"></i>
+                                                                <i class="bi bi-box-seam" style="font-size: 1.1rem;"></i>
                                                             </button>
                                                         </div>
-                                                        <div class="ms-1" @click=" stand.sale_validation > 0 ? alertNotification('This stand is inactive. All feature are disabled.') : ''">
+                                                        <div v-if="auth_user.roles_id == 99 || auth_user.roles_id == 10 || is_production">
                                                             <button
-                                                                :class="'btn btn-sm btn-outline-secondary border-0 ' + (stand.sale_validation > 0 ? 'disabled' : '')"
-                                                                @click="() => { selected_menu.value = item; showAttachRecipeModal(true); }"
+                                                                class="btn btn-sm btn-outline-success border-0 p-1"
+                                                                @click="showAttachRecipeModal(true, item)"
+                                                                :disabled="stand.sale_validation > 0 && auth_user.roles_id != 99"
+                                                                title="Set Ingredients"
                                                             >
-                                                                <i class="bi bi-clipboard-plus"></i>
+                                                                <i class="bi bi-clipboard-plus" style="font-size: 1.1rem;"></i>
+                                                            </button>
+                                                        </div>
+                                                        <div v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id">
+                                                            <button
+                                                                class="btn btn-sm btn-outline-danger border-0 p-1"
+                                                                @click="confirmation(`/seeo/staff/food/stand/menu/delete/${item.id}`, 'Remove ' + item.name + '?')"
+                                                                :disabled="((stand?.menu_lock || 0) > 0 || (stand?.sale_validation || 0) > 0) && auth_user.roles_id != 99"
+                                                                title="Delete Menu"
+                                                            >
+                                                                <i class="bi bi-trash3" style="font-size: 1.1rem;"></i>
                                                             </button>
                                                         </div>
                                                     </div>
@@ -1451,24 +1568,34 @@ watch(
                                                 ? 'secondary disabled '
                                                 : 'primary')
                                         "
+                                        title="Add Expense"
                                     >
                                         <i class="bi bi-plus-lg"></i>
                                     </button>
                                     <button
                                         @click="
-                                            stand_status == 'Inactive'
+                                            (stand_status == 'Inactive' && auth_user.roles_id != 99)
                                                 ? ''
                                                 : showProductionStaffModal(true)
                                         "
                                         :class="
                                             'btn btn-sm border-0 py-0 btn-outline-' +
-                                            (stand_status == 'Inactive'
+                                            (stand_status == 'Inactive' && auth_user.roles_id != 99
                                                 ? 'secondary disabled '
                                                 : 'primary')
                                         "
+                                        title="Production Staff"
                                     >
                                         <i class="bi bi-people"></i>
                                     </button>
+                                    <a
+                                        v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
+                                        href="/seeo/staff/operating/panel"
+                                        class="btn btn-sm border-0 py-0 btn-outline-primary ms-1"
+                                        title="Go to Operating Panel"
+                                    >
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
                                 </div>
                             </div>
                             <div class="d-flex">
@@ -1520,7 +1647,7 @@ watch(
                                                 <span class="text-secondary d-block">{{ '- ' + formatIDR(item.price) + '/' + item.unit }}</span>
                                                 <span class="text-primary d-block">{{ formatIDR(item.total_price) }}</span>
                                             </div>
-                                            <div class="d-flex">
+                                            <div class="d-flex gap-2">
                                                 <button
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#receiptModal"
@@ -1533,7 +1660,6 @@ watch(
                                                     ></i>
                                                     <i class="bi bi-receipt"></i>
                                                 </button>
-                                                <div v-if="is_production" class="border-start border-2 mx-1 my-1"></div>
                                                 <button
                                                     :class="
                                                         'btn btn-sm border-0 ' +
@@ -1545,7 +1671,7 @@ watch(
                                                             alertNotification('This stand is inactive. All feature are disabled.');
                                                         } else {
                                                             confirmation(
-                                                                route('stand.expense.delete', item.id),
+                                                                `/seeo/staff/food/stand/expense/delete/${item.id}`,
                                                                 'Are you sure want to delete ' + (item?.name || '') + ' from Stand ' + (stand?.name || '') + '?'
                                                             );
                                                         }
@@ -1577,11 +1703,47 @@ watch(
                         <div class="card bg-white p-2">
                             <div class="d-flex mb-2">
                                 <span class="text-primary ms-2">
-                                    <i
-                                        class="bi bi-graph-up me-2 d-none d-lg-inline"
-                                    ></i
-                                    >{{ "Income" }}</span
-                                >
+                                    <i class="bi bi-graph-up me-2 d-none d-lg-inline"></i>{{ "Income" }}
+                                </span>
+                                <div class="ms-auto me-2 d-flex gap-1">
+                                    <!-- Validate Stand Button for Super Admin & Operating -->
+                                    <button
+                                        v-if="(auth_user.roles_id == 99 || auth_user.roles_id == 3) && stand.sale_validation == 0"
+                                        @click="confirmation(`/seeo/staff/food/stand/sales/validate/${stand.id}`, 'Finalize and validate all sales for this stand?')"
+                                        class="btn btn-sm btn-success border-0 py-0"
+                                        title="Validate Stand Sales"
+                                    >
+                                        <i class="bi bi-check-all"></i>
+                                    </button>
+
+                                    <button
+                                        v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id"
+                                        @click="
+                                            (stand_status == 'Inactive' && auth_user.roles_id != 99)
+                                                ? ''
+                                                : showCashierStaffModal(true)
+                                        "
+                                        :class="
+                                            'btn btn-sm border-0 py-0 btn-outline-' +
+                                            (stand_status == 'Inactive' && auth_user.roles_id != 99
+                                                ? 'secondary disabled'
+                                                : 'primary')
+                                        "
+                                        title="Cashier Staff"
+                                    >
+                                        <i class="bi bi-person-badge"></i>
+                                    </button>
+
+                                    <!-- Open Cashier Panel Button -->
+                                    <a
+                                        v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id"
+                                        :href="`/seeo/staff/blaterian/foods/cashier/${stand.id}`"
+                                        class="btn btn-sm btn-outline-info border-0 py-0"
+                                        title="Open Cashier Panel"
+                                    >
+                                        <i class="bi bi-cart-plus"></i>
+                                    </a>
+                                </div>
                             </div>
                             <div class="d-flex">
                                 <div class="input-group">
@@ -1912,20 +2074,44 @@ watch(
                             </thead>
                             <tbody>
                                 <tr v-for="comp in form_attach_recipe.components" :key="comp.stand_expense_id">
-                                    <td><span class="text-primary-emphasis d-block" :title="comp.name">{{ comp.name }}</span></td>
-                                    <td><span class="text-secondary">{{ comp.unit }}</span></td>
-                                    <td><span class="text-dark">{{ formatIDR(Math.round(comp.total_price / (comp.qty || 1))) }}</span></td>
-                                    <td><span class="text-secondary">{{ comp.qty }}</span></td>
+                                    <td><span class="text-primary-emphasis d-block fw-medium" :title="comp.name">{{ comp.name }}</span></td>
+                                    <td><span class="text-secondary small">{{ comp.unit }}</span></td>
+                                    <td><span class="text-dark small">{{ formatIDR(comp.price) }}</span></td>
+                                    <td><span class="text-secondary small">{{ comp.qty }}</span></td>
                                     <td>
-                                        <input type="number" min="0" step="0.001" class="form-control form-control-sm" v-model.number="comp.quantity_used" />
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" min="0" step="0.001" class="form-control" v-model.number="comp.quantity_used" />
+                                            <span class="input-group-text">{{ comp.unit }}</span>
+                                        </div>
                                     </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-secondary" @click="comp.quantity_used = 0" type="button">
-                                            <i class="bi bi-x"></i>
+                                    <td class="text-end">
+                                        <div class="small fw-bold text-primary">{{ formatIDR(Math.round(comp.quantity_used * comp.price)) }}</div>
+                                        <button class="btn btn-sm btn-link text-danger p-0 border-0" @click="comp.quantity_used = 0" type="button" title="Clear">
+                                            <i class="bi bi-trash-fill" style="font-size: 0.75rem;"></i>
                                         </button>
                                     </td>
                                 </tr>
                             </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="4" class="text-end fw-bold">Total Modal / Porsi:</td>
+                                    <td colspan="2" class="text-end fw-bold text-danger">
+                                        {{ formatIDR(form_attach_recipe.components.reduce((acc, curr) => acc + (curr.quantity_used * curr.price), 0)) }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-end fw-bold">Harga Jual:</td>
+                                    <td colspan="2" class="text-end fw-bold text-primary">
+                                        {{ formatIDR(selected_menu?.price || 0) }}
+                                    </td>
+                                </tr>
+                                <tr class="table-success border-top border-2 border-success border-opacity-25">
+                                    <td colspan="4" class="text-end fw-bold">Estimasi Keuntungan / Porsi:</td>
+                                    <td colspan="2" class="text-end fw-bold" :class="(selected_menu?.price || 0) - form_attach_recipe.components.reduce((acc, curr) => acc + (curr.quantity_used * curr.price), 0) >= 0 ? 'text-success' : 'text-danger'">
+                                        {{ formatIDR((selected_menu?.price || 0) - form_attach_recipe.components.reduce((acc, curr) => acc + (curr.quantity_used * curr.price), 0)) }}
+                                    </td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                     <div v-else class="text-center py-3">
@@ -1936,6 +2122,59 @@ watch(
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary btn-sm" @click="handleAttachRecipe" :disabled="!selected_menu">Save Ingredients</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Menu Modal -->
+    <div class="modal fade" id="editMenuModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title fw-bold">Edit Menu Details</h5>
+                    <button type="button" class="btn-close btn-close-white" @click="showEditMenuModal(false)"></button>
+                </div>
+                <form @submit.prevent="handleEditMenu">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">MENU NAME</label>
+                            <input type="text" v-model="form_edit_menu.name" class="form-control" placeholder="e.g. Nasi Goreng Special" required />
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small text-muted">PRICE (Rp)</label>
+                                <input type="number" v-model="form_edit_menu.price" class="form-control" placeholder="0" required />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small text-muted">CATEGORY</label>
+                                <v-select
+                                    v-model="form_edit_menu.category"
+                                    :options="category_options"
+                                    placeholder="Select Category"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label fw-bold small text-muted">FOOD TAGS</label>
+                            <v-select
+                                v-model="form_edit_menu.food_tag"
+                                :options="food_tags"
+                                label="name"
+                                :reduce="tag => tag.id"
+                                multiple
+                                placeholder="Select Tags"
+                            />
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light px-4" @click="showEditMenuModal(false)">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4" :disabled="form_edit_menu.processing">
+                            <span v-if="form_edit_menu.processing" class="spinner-border spinner-border-sm me-2"></span>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1991,7 +2230,7 @@ watch(
                             </label>
                             <v-select
                                 v-model="form_add_menu.category"
-                                :options="Object.keys(menu_category)"
+                                :options="[...new Set([...(all_categories || []), 'Main Course', 'Drink', 'Snack', 'Dessert'])]"
                                 id="addMenuCategory"
                                 class="basic-single"
                                 :class="{
@@ -1999,7 +2238,7 @@ watch(
                                 }"
                                 placeholder="Select Category"
                                 :disabled="
-                                    auth_user.roles_id == 3 || auth_user.roles_id == 99 ||
+                                    auth_user.roles_id != 99 &&
                                     stand_status !== 'Waiting for menu lock'
                                 "
                             />
@@ -2019,14 +2258,16 @@ watch(
                                 v-model="form_add_menu.food_tag"
                                 :options="food_tag_list"
                                 label="name"
+                                :reduce="tag => tag.id"
                                 id="addMenuFoodTag"
                                 class="basic-single"
+                                multiple
                                 :class="{
                                     'is-invalid': errors.food_tag,
                                 }"
                                 placeholder="Select Food Tag"
                                 :disabled="
-                                    auth_user.roles_id == 3 || auth_user.roles_id == 99 ||
+                                    auth_user.roles_id != 99 &&
                                     stand_status !== 'Waiting for menu lock'
                                 "
                             />
@@ -2210,10 +2451,11 @@ watch(
                                 {{ "Menu Item" }}
                             </label>
                             <input
-                                :value="(selected_stock && selected_stock.value ? selected_stock.value.name : '')"
+                                :value="selected_stock?.name || ''"
                                 type="text"
-                                class="form-control form-control-sm"
+                                class="form-control bg-light"
                                 id="addStockItem"
+                                readonly
                                 disabled
                             />
                         </div>
@@ -2473,7 +2715,14 @@ watch(
                             <div><span class="text-secondary">Qty:</span> {{ selected_expense.qty }}</div>
                             <div><span class="text-secondary">Unit Price:</span> {{ formatIDR(selected_expense.price) }}</div>
                             <div><span class="text-secondary">Total:</span> {{ formatIDR(selected_expense.total_price) }}</div>
-                            <div><span class="text-secondary">Validated:</span> {{ (selected_expense.operational_id && selected_expense.operational_id > 0) ? 'Yes' : 'No' }}</div>
+                            <div class="mt-1">
+                                <span v-if="selected_expense.operational_id && selected_expense.operational_id > 0" class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>Validated
+                                </span>
+                                <span v-else class="badge bg-warning text-dark">
+                                    <i class="bi bi-clock me-1"></i>Pending Validation
+                                </span>
+                            </div>
                         </div>
                         <div v-if="expenseReceiptUrl" class="text-center">
                             <div v-if="expenseReceiptLoading" class="py-3">
@@ -2484,7 +2733,7 @@ watch(
                             </div>
                             <img
                                 v-show="!expenseReceiptLoading && !expenseReceiptError"
-                                :src="expenseReceiptUrl"
+                                :src="expenseReceiptSrc"
                                 alt="Receipt"
                                 class="img-fluid rounded border"
                                 style="max-height:300px"
@@ -2496,12 +2745,475 @@ watch(
                                 <button type="button" class="btn btn-sm btn-outline-primary" @click="downloadExpenseReceipt" :disabled="expenseReceiptLoading || expenseReceiptError">Download</button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" @click="copyExpenseReceiptLink" :disabled="expenseReceiptLoading || expenseReceiptError">Copy Link</button>
                                 <button type="button" class="btn btn-sm btn-outline-success" @click="shareExpenseReceiptWhatsApp" :disabled="expenseReceiptLoading || expenseReceiptError">Share WA</button>
+                                
+                                <!-- Validation Button for Role 99 & 3 -->
+                                <button 
+                                    v-if="(auth_user.roles_id == 99 || auth_user.roles_id == 3) && !selected_expense.operational_id"
+                                    type="button" 
+                                    class="btn btn-sm btn-primary px-4 shadow-sm" 
+                                    @click="confirmation(`/seeo/staff/food/stand/expense/validate/${selected_expense.id}`, 'Validate this expense?')"
+                                >
+                                    <i class="bi bi-check2-circle me-1"></i>Validate Expense
+                                </button>
                             </div>
                         </div>
                         <div v-else class="text-center text-muted small">No receipt image.</div>
                     </div>
                     <div v-else class="text-center text-muted small">No expense selected.</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Guide Modal -->
+    <div class="modal fade" id="workflowGuideModal" tabindex="-1" aria-labelledby="workflowGuideModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0" style="background-color:#412f55;">
+                    <h5 class="modal-title fw-bold text-white" id="workflowGuideModalLabel">
+                        <i class="bi bi-map me-2"></i>Stand Management — Panduan Lengkap
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+
+                    <!-- Timeline header -->
+                    <div class="px-4 pt-3 pb-2 bg-light border-bottom">
+                        <p class="small text-muted mb-0">Ikuti urutan langkah berikut dari awal hingga stand siap berjualan dan ditutup. Setiap langkah memiliki peran yang bertanggung jawab.</p>
+                    </div>
+
+                    <!-- Steps -->
+                    <div class="px-4 py-3">
+
+                        <!-- STEP 1 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="d-flex flex-column align-items-center" style="min-width:36px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:36px;height:36px;background:#412f55;flex-shrink:0;">1</div>
+                                <div style="width:2px;flex:1;background:#dee2e6;margin-top:4px;"></div>
+                            </div>
+                            <div class="pb-3" style="flex:1;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="fw-bold mb-0">Buat Stand</h6>
+                                    <span class="badge bg-primary" style="font-size:0.6rem;">Operating (3)</span>
+                                    <span class="badge bg-dark" style="font-size:0.6rem;">Super Admin (99)</span>
+                                </div>
+                                <p class="small text-muted mb-2">Buat stand baru dari halaman <strong>Stand List</strong>. Isi nama, tempat, tanggal, tipe (Live / Pre-Order), dan tentukan PIC.</p>
+                                <div class="bg-light rounded p-2 small">
+                                    <i class="bi bi-info-circle text-primary me-1"></i>
+                                    Setelah dibuat, stand berstatus <strong>"Waiting for menu lock"</strong> — semua fitur editing terbuka.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 2 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="d-flex flex-column align-items-center" style="min-width:36px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:36px;height:36px;background:#412f55;flex-shrink:0;">2</div>
+                                <div style="width:2px;flex:1;background:#dee2e6;margin-top:4px;"></div>
+                            </div>
+                            <div class="pb-3" style="flex:1;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="fw-bold mb-0">Daftarkan Production Staff & Cashier</h6>
+                                    <span class="badge bg-primary" style="font-size:0.6rem;">Operating (3)</span>
+                                    <span class="badge" style="font-size:0.6rem;background:#412f55;">PIC Stand</span>
+                                </div>
+                                <p class="small text-muted mb-2">Klik ikon <i class="bi bi-people"></i> (Production Staff) dan <i class="bi bi-person-badge"></i> (Cashier) di tab Expense dan Income untuk mendaftarkan anggota tim.</p>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="border rounded p-2 small h-100">
+                                            <i class="bi bi-people text-warning me-1"></i><strong>Production Staff</strong><br>
+                                            <span class="text-muted">Bisa input expense & set resep menu.</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="border rounded p-2 small h-100">
+                                            <i class="bi bi-person-badge text-info me-1"></i><strong>Cashier Staff</strong><br>
+                                            <span class="text-muted">Bisa akses panel kasir & catat transaksi.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 3 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="d-flex flex-column align-items-center" style="min-width:36px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:36px;height:36px;background:#412f55;flex-shrink:0;">3</div>
+                                <div style="width:2px;flex:1;background:#dee2e6;margin-top:4px;"></div>
+                            </div>
+                            <div class="pb-3" style="flex:1;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="fw-bold mb-0">Input Expense (Belanja Bahan)</h6>
+                                    <span class="badge bg-warning text-dark" style="font-size:0.6rem;">Production Staff</span>
+                                </div>
+                                <p class="small text-muted mb-2">Di tab <strong>Expense</strong>, klik <i class="bi bi-plus-lg"></i> untuk input setiap bahan yang dibeli. Isi nama, harga satuan, jumlah, satuan, dan foto nota.</p>
+                                <div class="bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded p-2 small">
+                                    <i class="bi bi-exclamation-triangle text-warning me-1"></i>
+                                    Expense yang belum divalidasi <strong>tidak bisa</strong> digunakan sebagai bahan resep.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 4 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="d-flex flex-column align-items-center" style="min-width:36px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:36px;height:36px;background:#412f55;flex-shrink:0;">4</div>
+                                <div style="width:2px;flex:1;background:#dee2e6;margin-top:4px;"></div>
+                            </div>
+                            <div class="pb-3" style="flex:1;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="fw-bold mb-0">Validasi Expense</h6>
+                                    <span class="badge bg-primary" style="font-size:0.6rem;">Operating (3)</span>
+                                    <span class="badge bg-dark" style="font-size:0.6rem;">Super Admin (99)</span>
+                                </div>
+                                <p class="small text-muted mb-2">Klik ikon <i class="bi bi-receipt"></i> pada setiap expense, cek foto nota, lalu klik <strong>Validate Expense</strong>. Expense yang tervalidasi ditandai badge hijau <span class="badge bg-success" style="font-size:0.6rem;">Validated</span>.</p>
+                                <div class="bg-light rounded p-2 small">
+                                    <i class="bi bi-check-circle text-success me-1"></i>
+                                    Setelah divalidasi, total expense stand otomatis terupdate.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 5 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="d-flex flex-column align-items-center" style="min-width:36px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:36px;height:36px;background:#412f55;flex-shrink:0;">5</div>
+                                <div style="width:2px;flex:1;background:#dee2e6;margin-top:4px;"></div>
+                            </div>
+                            <div class="pb-3" style="flex:1;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="fw-bold mb-0">Tambah Menu & Set Resep</h6>
+                                    <span class="badge bg-info text-dark" style="font-size:0.6rem;">Sales Distribution (10)</span>
+                                    <span class="badge bg-warning text-dark" style="font-size:0.6rem;">Production Staff</span>
+                                </div>
+                                <p class="small text-muted mb-2">Di tab <strong>Menu</strong>, klik <i class="bi bi-plus-lg"></i> untuk tambah item menu (nama, kategori, harga, stok, foto). Lalu klik <i class="bi bi-clipboard-plus"></i> untuk set takaran bahan per porsi.</p>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="border rounded p-2 small h-100">
+                                            <i class="bi bi-plus-circle text-primary me-1"></i><strong>Tambah Menu</strong><br>
+                                            <span class="text-muted">Isi nama, harga, stok awal, foto (rasio 1:1).</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="border rounded p-2 small h-100">
+                                            <i class="bi bi-clipboard-plus text-success me-1"></i><strong>Set Resep</strong><br>
+                                            <span class="text-muted">Input qty bahan per porsi → modal & untung terhitung otomatis.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 6 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="d-flex flex-column align-items-center" style="min-width:36px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:36px;height:36px;background:#412f55;flex-shrink:0;">6</div>
+                                <div style="width:2px;flex:1;background:#dee2e6;margin-top:4px;"></div>
+                            </div>
+                            <div class="pb-3" style="flex:1;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="fw-bold mb-0">Menu Lock — Stand Siap Berjualan</h6>
+                                    <span class="badge bg-primary" style="font-size:0.6rem;">Operating (3)</span>
+                                    <span class="badge bg-dark" style="font-size:0.6rem;">Super Admin (99)</span>
+                                </div>
+                                <p class="small text-muted mb-2">Klik ikon <i class="bi bi-unlock"></i> (gembok) di tab Menu untuk mengunci daftar menu. Status stand berubah menjadi <strong class="text-success">Active</strong>.</p>
+                                <div class="bg-success bg-opacity-10 border border-success border-opacity-25 rounded p-2 small">
+                                    <i class="bi bi-lock-fill text-success me-1"></i>
+                                    Setelah dikunci, menu tidak bisa diubah. Kasir bisa mulai mencatat transaksi via panel kasir <i class="bi bi-cart-plus"></i>.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 7 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="d-flex flex-column align-items-center" style="min-width:36px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:36px;height:36px;background:#412f55;flex-shrink:0;">7</div>
+                                <div style="width:2px;flex:1;background:#dee2e6;margin-top:4px;"></div>
+                            </div>
+                            <div class="pb-3" style="flex:1;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="fw-bold mb-0">Operasional — Catat Transaksi</h6>
+                                    <span class="badge bg-secondary" style="font-size:0.6rem;">Cashier Staff</span>
+                                </div>
+                                <p class="small text-muted mb-2">Kasir membuka panel kasir via tombol <i class="bi bi-cart-plus"></i> di tab Income. Pilih menu → isi customer → submit transaksi → cetak/share receipt.</p>
+                                <div class="bg-light rounded p-2 small">
+                                    <i class="bi bi-lightbulb text-warning me-1"></i>
+                                    Stok menu berkurang otomatis setiap transaksi. Update stok manual via ikon <i class="bi bi-box-seam"></i> jika diperlukan.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 8 -->
+                        <div class="d-flex gap-3">
+                            <div class="d-flex flex-column align-items-center" style="min-width:36px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:36px;height:36px;background:#412f55;flex-shrink:0;">8</div>
+                            </div>
+                            <div style="flex:1;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="fw-bold mb-0">Tutup Stand — Validasi Sales</h6>
+                                    <span class="badge bg-primary" style="font-size:0.6rem;">Operating (3)</span>
+                                    <span class="badge bg-dark" style="font-size:0.6rem;">Super Admin (99)</span>
+                                </div>
+                                <p class="small text-muted mb-2">Setelah selesai berjualan, klik <i class="bi bi-check-all"></i> di tab Income untuk memvalidasi semua sales. Stand berubah menjadi <strong class="text-secondary">Inactive</strong>.</p>
+                                <div class="bg-light rounded p-2 small">
+                                    <i class="bi bi-bar-chart text-primary me-1"></i>
+                                    Income, expense, dan profit stand otomatis terekap di halaman <strong>Insight</strong>.
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Icon legend -->
+                    <div class="px-4 pb-3 pt-0">
+                        <div class="border rounded p-3 bg-light">
+                            <p class="small fw-bold text-muted mb-2">LEGENDA IKON</p>
+                            <div class="row g-1" style="font-size:0.78rem;">
+                                <div class="col-6"><i class="bi bi-plus-lg text-primary me-1"></i>Tambah item</div>
+                                <div class="col-6"><i class="bi bi-unlock text-success me-1"></i>Lock / Unlock menu</div>
+                                <div class="col-6"><i class="bi bi-receipt text-secondary me-1"></i>Lihat nota expense</div>
+                                <div class="col-6"><i class="bi bi-clipboard-plus text-success me-1"></i>Set resep / ingredient</div>
+                                <div class="col-6"><i class="bi bi-people text-warning me-1"></i>Kelola production staff</div>
+                                <div class="col-6"><i class="bi bi-person-badge text-info me-1"></i>Kelola cashier staff</div>
+                                <div class="col-6"><i class="bi bi-cart-plus text-info me-1"></i>Buka panel kasir</div>
+                                <div class="col-6"><i class="bi bi-check-all text-success me-1"></i>Validasi sales (tutup stand)</div>
+                                <div class="col-6"><i class="bi bi-box-seam text-secondary me-1"></i>Update stok menu</div>
+                                <div class="col-6"><i class="bi bi-pencil-square text-primary me-1"></i>Edit detail menu</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light rounded-bottom">
+                    <button type="button" class="btn btn-sm px-4 text-white" style="background-color:#412f55;" data-bs-dismiss="modal">Saya Mengerti</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Menu Image Modal -->
+    <div class="modal fade" id="editMenuImageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-secondary text-white border-0">
+                    <h5 class="modal-title fw-bold">Update Menu Image</h5>
+                    <button type="button" class="btn-close btn-close-white" @click="showEditMenuImageModal(false)"></button>
+                </div>
+                <form @submit.prevent="handleEditMenuImage">
+                    <div class="modal-body p-4 text-center">
+                        <p class="small text-muted mb-3">Update image for <strong>{{ selected_menu?.name }}</strong>.</p>
+                        <div class="alert alert-warning py-2 small mb-3">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Image <strong>MUST</strong> be square (Ratio 1:1) or it will be rejected.
+                        </div>
+                        <div class="mb-3">
+                            <input
+                                ref="fileEditMenuImageRef"
+                                @change="handleFileEditMenuImage"
+                                class="form-control"
+                                type="file"
+                                accept="image/*"
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light px-4" @click="showEditMenuImageModal(false)">Cancel</button>
+                        <button type="submit" class="btn btn-secondary px-4" :disabled="form_edit_menu_image.processing">
+                            <span v-if="form_edit_menu_image.processing" class="spinner-border spinner-border-sm me-2"></span>
+                            Update Image
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attach Recipe Modal (Clipboard Icon) -->
+    <div class="modal fade" id="attachRecipeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-success text-white border-0">
+                    <h5 class="modal-title fw-bold">Set Ingredients for {{ selected_menu?.name }}</h5>
+                    <button type="button" class="btn-close btn-close-white" @click="showAttachRecipeModal(false)"></button>
+                </div>
+                <form @submit.prevent="handleAttachRecipe">
+                    <div class="modal-body p-4">
+                        <p class="small text-muted mb-4">Input the quantity of each validated ingredient used per portion. Cost and profit will be calculated automatically.</p>
+                        
+                        <div class="scroll-container-3 pe-2">
+                            <div v-if="form_attach_recipe.components.length === 0" class="text-center py-5">
+                                <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                                <p class="text-muted">No validated ingredients found for this stand.<br>Please add and validate expenses first.</p>
+                            </div>
+                            
+                            <div v-for="(comp, index) in form_attach_recipe.components" :key="comp.stand_expense_id" class="card border-0 bg-light mb-3">
+                                <div class="card-body p-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-5">
+                                            <div class="fw-bold text-primary">{{ comp.name }}</div>
+                                            <div class="small text-muted">Stock: {{ comp.qty }} {{ comp.unit }} | Price: {{ formatIDR(comp.price) }}</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" step="0.001" v-model="comp.quantity_used" class="form-control" placeholder="0.00" />
+                                                <span class="input-group-text bg-white border-start-0">{{ comp.unit }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-end">
+                                            <div class="small text-muted mb-0">Cost per portion:</div>
+                                            <div class="fw-bold">{{ formatIDR(comp.quantity_used * comp.price) }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Calculation Summary -->
+                        <div class="mt-4 p-3 bg-dark text-white rounded-3">
+                            <div class="row align-items-center">
+                                <div class="col-sm-4">
+                                    <div class="small opacity-75">Modal per portion:</div>
+                                    <div class="fs-5 fw-bold">{{ formatIDR(form_attach_recipe.components.reduce((acc, curr) => acc + (curr.quantity_used * curr.price), 0)) }}</div>
+                                </div>
+                                <div class="col-sm-4 border-start border-white border-opacity-25">
+                                    <div class="small opacity-75">Selling Price:</div>
+                                    <div class="fs-5 fw-bold">{{ formatIDR(selected_menu?.price || 0) }}</div>
+                                </div>
+                                <div class="col-sm-4 border-start border-white border-opacity-25 text-warning">
+                                    <div class="small opacity-75 text-warning">Estimated Profit:</div>
+                                    <div class="fs-5 fw-bold text-warning">{{ formatIDR((selected_menu?.price || 0) - form_attach_recipe.components.reduce((acc, curr) => acc + (curr.quantity_used * curr.price), 0)) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light px-4" @click="showAttachRecipeModal(false)">Cancel</button>
+                        <button type="submit" class="btn btn-success px-4" :disabled="form_attach_recipe.processing">
+                            <span v-if="form_attach_recipe.processing" class="spinner-border spinner-border-sm me-2"></span>
+                            Save Ingredients
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <ToastNotification ref="toastNotifRef" />
+
+    <!-- Production Staff Modal -->
+    <div class="modal fade" id="prouctionStaffModal" tabindex="-1" aria-labelledby="productionStaffModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productionStaffModalLabel">
+                        <i class="bi bi-people me-2"></i>Production Staff
+                    </h5>
+                    <button type="button" class="btn-close" @click="showProductionStaffModal(false)"></button>
+                </div>
+                <form @submit.prevent="handleSetProductionStaff">
+                    <div class="modal-body">
+                        <p class="text-secondary small mb-3">Staff yang terdaftar sebagai Production dapat menambahkan expense dan mengatur resep menu.</p>
+                        <!-- Current list -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium small text-muted">CURRENT PRODUCTION STAFF</label>
+                            <div v-if="form_production_staff.staff_list.filter(s => !s.deleted_at).length === 0" class="text-secondary small fst-italic">Belum ada production staff.</div>
+                            <ul class="list-group list-group-flush">
+                                <li
+                                    v-for="(staff, index) in form_production_staff.staff_list"
+                                    :key="staff.id"
+                                    v-show="!staff.deleted_at"
+                                    class="list-group-item px-0 py-1 d-flex align-items-center"
+                                >
+                                    <i class="bi bi-person-fill text-primary me-2"></i>
+                                    <span class="me-auto">{{ staff.name }}</span>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger border-0 py-0"
+                                        @click="removeProductionStaff(index)"
+                                    >
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                        <!-- Add staff -->
+                        <div>
+                            <label class="form-label fw-medium small text-muted">ADD STAFF</label>
+                            <v-select
+                                :options="users.filter(u => !form_production_staff.staff_list.some(s => s.id === u.id && !s.deleted_at))"
+                                label="name"
+                                placeholder="Search staff..."
+                                @option:selected="(user) => { if (user) { form_production_staff.staff_list.push({ id: user.id, name: user.name }); } }"
+                            />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" @click="showProductionStaffModal(false)">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm" :disabled="form_production_staff.processing">
+                            <span v-if="form_production_staff.processing" class="spinner-border spinner-border-sm me-1"></span>
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cashier Staff Modal -->
+    <div class="modal fade" id="cashierStaffModal" tabindex="-1" aria-labelledby="cashierStaffModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cashierStaffModalLabel">
+                        <i class="bi bi-person-badge me-2"></i>Cashier Staff
+                    </h5>
+                    <button type="button" class="btn-close" @click="showCashierStaffModal(false)"></button>
+                </div>
+                <form @submit.prevent="handleSetCashierStaff">
+                    <div class="modal-body">
+                        <p class="text-secondary small mb-3">Staff yang terdaftar sebagai Cashier dapat mengakses panel kasir dan mencatat transaksi.</p>
+                        <!-- Current list -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium small text-muted">CURRENT CASHIER STAFF</label>
+                            <div v-if="form_cashier_staff.staff_list.filter(s => !s.deleted_at).length === 0" class="text-secondary small fst-italic">Belum ada cashier staff.</div>
+                            <ul class="list-group list-group-flush">
+                                <li
+                                    v-for="(staff, index) in form_cashier_staff.staff_list"
+                                    :key="staff.id"
+                                    v-show="!staff.deleted_at"
+                                    class="list-group-item px-0 py-1 d-flex align-items-center"
+                                >
+                                    <i class="bi bi-person-badge text-primary me-2"></i>
+                                    <span class="me-auto">{{ staff.name }}</span>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger border-0 py-0"
+                                        @click="removeCashierStaff(index)"
+                                    >
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                        <!-- Add staff -->
+                        <div>
+                            <label class="form-label fw-medium small text-muted">ADD STAFF</label>
+                            <v-select
+                                :options="users.filter(u => !form_cashier_staff.staff_list.some(s => s.id === u.id && !s.deleted_at))"
+                                label="name"
+                                placeholder="Search staff..."
+                                @option:selected="(user) => { if (user) { form_cashier_staff.staff_list.push({ id: user.id, name: user.name }); } }"
+                            />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" @click="showCashierStaffModal(false)">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm" :disabled="form_cashier_staff.processing">
+                            <span v-if="form_cashier_staff.processing" class="spinner-border spinner-border-sm me-1"></span>
+                            Save
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

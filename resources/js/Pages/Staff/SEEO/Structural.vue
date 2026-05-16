@@ -65,11 +65,11 @@ function handleSubmitFilter(category) {
         form_filter.category = category;
         form_filter.keyword = null;
     }
-    form_filter.post(route("structural.filter"));
+    form_filter.post("/seeo/staff/structural");
 }
 
 function handleNewDepartment() {
-    form_new_department.post(route("department.add"), {
+    form_new_department.post("/seeo/staff/department/add", {
         onSuccess: () => {
             showNewDepartmentModal(false);
             form_new_department.reset();
@@ -81,7 +81,7 @@ function handleUpdateDepartment() {
     console.log(form_update_department);
 
     form_update_department.post(
-        route("department.update", active_department.value.id),
+        `/seeo/staff/department/update/${active_department.value.id}`,
         {
             onSuccess: () => {
                 showUpdateDepartmentModal(false);
@@ -98,7 +98,7 @@ function handleUpdateDepartment() {
 
 function handleDeleteDepartment() {
     form_delete_department.post(
-        route("department.delete", active_department.value?.id),
+        `/seeo/staff/department/delete/${active_department.value?.id}`,
         {
             onSuccess: () => {
                 showDeleteDepartmentModal(false);
@@ -242,7 +242,7 @@ watch(
                     <div class="card shadow-sm p-lg-3 p-2">
                         <div class="d-flex">
                             <span
-                                class="text-primary border-end border-secondary-subtle border-3 pe-3 me-3 my-auto"
+                                class="text-primary pe-3 me-3 my-auto"
                                 >{{ "Filter" }}</span
                             >
                             <button
@@ -301,7 +301,7 @@ watch(
                     <div 
                         class="card department-card p-3 mb-3 mb-lg-4" 
                         style="cursor: pointer;"
-                        @click="$inertia.visit(`/seeo/department/${item.id}`)"
+                        @click="$inertia.visit(`/seeo/staff/department/${item.id}`)"
                     >
                         <div class="d-flex">
                             <div class="" style="font-size: 0.8rem">

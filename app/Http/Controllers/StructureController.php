@@ -18,7 +18,7 @@ class StructureController extends Controller
         return Inertia::render('Staff/Marketing/Structures', [
             'structures' => $structures->map(function ($q) {
                 // Add absolute URL for image
-                $q->image_url = $q->image_path ? Storage::url($q->image_path) : null;
+                $q->image_url = $q->image_path ? Storage::disk('public')->url($q->image_path) : null;
                 return $q;
             })
         ]);

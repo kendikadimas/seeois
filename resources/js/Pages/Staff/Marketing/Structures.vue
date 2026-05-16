@@ -55,14 +55,14 @@ function submitForm() {
         form.transform((data) => ({
             ...data,
             _method: 'put'
-        })).post(route('marketing.structures.update', form.id), {
+        })).post(`/seeo/marketing/structures/${form.id}`, {
             onSuccess: () => {
                 hideModal();
                 notifRef.value?.showToast('success', 'Struktur berhasil diupdate.');
             }
         });
     } else {
-        form.post(route('marketing.structures.store'), {
+        form.post("/seeo/marketing/structures", {
             onSuccess: () => {
                 hideModal();
                 notifRef.value?.showToast('success', 'Struktur berhasil ditambahkan.');
@@ -73,7 +73,7 @@ function submitForm() {
 
 function deleteStructure(id) {
     if (confirm('Yakin ingin menghapus data struktur ini?')) {
-        form.delete(route('marketing.structures.destroy', id), {
+        form.delete(`/seeo/marketing/structures/${id}`, {
             onSuccess: () => {
                 notifRef.value?.showToast('success', 'Struktur berhasil dihapus.');
             }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff\SEEO;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\ScopedByYear;
 use App\Models\Department;
 use App\Models\PayrollBalance;
 use App\Models\PayrollLevel;
@@ -14,48 +15,60 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
+    use ScopedByYear;
+
     /**
      * Display the employee's roles edit table.
      */
     public function index(Request $request)
     {
+        [$activeYear, $yearId] = $this->activeYearScope();
+
         $unemployee_session = session('unemployee', ['category' => 'name', 'order' => 'asc', 'keyword' => '']);
-        $employee_session = session('employee', ['category' => 'name', 'order' => 'asc', 'keyword' => '']);
+        $employee_session   = session('employee',   ['category' => 'name', 'order' => 'asc', 'keyword' => '']);
         // Save to session
         $request->session()->put('unemployee', $unemployee_session);
-        $request->session()->put('employee', $employee_session);
+        $request->session()->put('employee',   $employee_session);
         // Stand filter
-        $employee_category = $employee_session['category'];
-        $employee_order = $employee_session['order'];
-        $employee_keyword = $employee_session['keyword'];
+        $employee_category   = $employee_session['category'];
+        $employee_order      = $employee_session['order'];
+        $employee_keyword    = $employee_session['keyword'];
         $unemployee_category = $unemployee_session['category'];
-        $unemployee_order = $unemployee_session['order'];
-        $unemployee_keyword = $unemployee_session['keyword'];
-        $employees = $employee_keyword !== null ?
-            User::where('roles_id', '!=', null)->orderByRaw("
+        $unemployee_order    = $unemployee_session['order'];
+        $unemployee_keyword  = $unemployee_session['keyword'];
+
+        // --- Staff (users with roles), scoped by active year ---
+        $empQuery = User::where('roles_id', '!=', null)->with(['department', 'roles']);
+        $this->applyYearScope($empQuery, $yearId);
+        $employees = $employee_keyword !== null
+            ? $empQuery->orderByRaw("
                 CASE
                     WHEN name = ? THEN 1
                     WHEN name LIKE ? THEN 2
                     WHEN name LIKE ? THEN 3
                     ELSE 4
                 END 
-            ", [$employee_keyword, "$employee_keyword%", "%$employee_keyword%"],)->with(['department', 'roles'])->get() :
-            User::where('roles_id', '!=', null)->orderBy($employee_category, $employee_order)->with(['department', 'roles'])->get();
+            ", [$employee_keyword, "$employee_keyword%", "%$employee_keyword%"])->get()
+            : $empQuery->orderBy($employee_category, $employee_order)->get();
+
+        // --- Non-staff (customers), not scoped by year ---
+        $unemployees = $unemployee_keyword !== null
+            ? User::where('roles_id', '=', null)->orderByRaw("
+                CASE
+                    WHEN name = ? THEN 1
+                    WHEN name LIKE ? THEN 2
+                    WHEN name LIKE ? THEN 3
+                    ELSE 4
+                END 
+            ", [$unemployee_keyword, "$unemployee_keyword%", "%$unemployee_keyword%"])->get()
+            : User::where('roles_id', '=', null)->orderBy($unemployee_category, $unemployee_order)->get();
+
         $payroll_balance = PayrollBalance::first();
-        $unemployees = $unemployee_keyword !== null ?
-            User::where('roles_id', '=', null)->orderByRaw("
-                CASE
-                    WHEN name = ? THEN 1
-                    WHEN name LIKE ? THEN 2
-                    WHEN name LIKE ? THEN 3
-                    ELSE 4
-                END 
-            ", [$unemployee_keyword, "$unemployee_keyword%", "%$unemployee_keyword%"],)->get() :
-            User::where('roles_id', '=', null)->orderBy($unemployee_category, $unemployee_order)->get();
         if (!$payroll_balance) {
             PayrollBalance::create(['balance' => 0]);
+            $payroll_balance = PayrollBalance::first();
         }
-        $payroll_balance = $payroll_balance ? $payroll_balance->balance : 0;
+        $payroll_balance = $payroll_balance->balance;
         $data = [
             'employees' => $employees,
             'unemployees' => $unemployees,

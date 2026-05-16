@@ -46,7 +46,7 @@ function navigateToStaff(id) {
 }
 
 function handleAddStaff() {
-    form_add_staff.post(route("department.staff.add", props.department.id), {
+    form_add_staff.post(`/seeo/staff/department/staff/add/${props.department.id}`, {
         onSuccess: () => {
             showAddStaffModal(false);
             form_add_staff.reset();
@@ -60,7 +60,7 @@ function handleAddStaff() {
 }
 
 function handleNewProgram() {
-    form_new_program.post(route("program.add", props.department.id), {
+    form_new_program.post(`/seeo/staff/program/add/${props.department.id}`, {
         onSuccess: () => {
             showNewProgramModal(false);
             form_new_program.reset();
@@ -121,7 +121,7 @@ watch(
         <ModalConfirmation ref="modalConfirmationRef" />
         <template #header>
             <a
-                :href="route('structural')"
+                href="/seeo/staff/structural"
                 class="bg-opacity-0 text-decoration-none text-primary-emphasis"
             >
                 <span class="fw-light">{{ "Structural" }}</span>
@@ -364,7 +364,7 @@ watch(
                                 >
                                     <a
                                         :id="'staff_' + (staff.id * 7 - 3)"
-                                        :href="route('profile.edit', staff.id)"
+                                        :href="`/profile/${staff.id}`"
                                     ></a>
                                     <div class="d-flex">
                                         <span
@@ -382,10 +382,7 @@ watch(
                                             class="btn btn-sm btn-outline-secondary border-0 ms-auto py-0"
                                             @click.stop="
                                                 confirmation(
-                                                    route(
-                                                        'department.staff.remove',
-                                                        staff.id
-                                                    ),
+                                                    `/seeo/staff/department/staff/remove/${staff.id}`,
                                                     'Are you sure want to remove ' +
                                                         staff.name +
                                                         ' from Department ' +
@@ -444,7 +441,7 @@ watch(
                                     }}</span>
                                 </ul>
                                 <ul
-                                    @click.stop="$inertia.visit('/seeo/program/' + program.id)"
+                                    @click.stop="$inertia.visit('/seeo/staff/program/' + program.id)"
                                     class="list-group-item list-group-item-action mb-0 py-2 px-0"
                                     v-if="department.program.length > 0"
                                     v-for="(
@@ -467,10 +464,7 @@ watch(
                                             class="btn btn-sm btn-outline-secondary border-0 ms-auto py-0"
                                             @click.stop="
                                                 confirmation(
-                                                    route(
-                                                        'program.delete',
-                                                        program.id
-                                                    ),
+                                                    `/seeo/staff/program/delete/${program.id}`,
                                                     'Are you sure want to remove ' +
                                                         program.name +
                                                         ' from Department ' +
