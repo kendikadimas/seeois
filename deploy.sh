@@ -167,16 +167,10 @@ if [ -f "$PUBLIC_HTML/index.php" ]; then
     log_success "index.php backed up"
     
     # Update path references in index.php (Laravel 11 Structure)
-    # 1. Maintenance mode path
-    sed -i "s|__DIR__.'/../storage/framework/maintenance.php'|'/home/seej2596/sis/seeois/storage/framework/maintenance.php'|g" "$PUBLIC_HTML/index.php"
+    # This will change __DIR__.'/../ to __DIR__.'/../sis/seeois/ for all instances
+    sed -i "s|__DIR__.'/../|__DIR__.'/../sis/seeois/|g" "$PUBLIC_HTML/index.php"
     
-    # 2. Autoloader path
-    sed -i "s|require __DIR__.'/../vendor/autoload.php'|require '/home/seej2596/sis/seeois/vendor/autoload.php'|g" "$PUBLIC_HTML/index.php"
-    
-    # 3. Bootstrap app path (Laravel 11 uses require_once)
-    sed -i "s|require_once __DIR__.'/../bootstrap/app.php'|require_once '/home/seej2596/sis/seeois/bootstrap/app.php'|g" "$PUBLIC_HTML/index.php"
-    
-    log_success "index.php paths updated (Maintenance, Vendor, and Bootstrap) to reference /home/seej2596/sis/seeois/"
+    log_success "index.php paths updated to reference sis/seeois/ directory structure"
 else
     log_error "index.php not found in public_html"
     exit 1
