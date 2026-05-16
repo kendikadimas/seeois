@@ -139,9 +139,18 @@ else
 fi
 
 # Also copy index.php and .htaccess
+log_info "Copying index.php and .htaccess to public_html..."
 if [ -f "$PROJECT_DIR/public/index.php" ]; then
     cp "$PROJECT_DIR/public/index.php" "$PUBLIC_HTML/index.php"
-    log_success "index.php copied"
+    if [ -f "$PUBLIC_HTML/index.php" ]; then
+        log_success "index.php copied and verified"
+    else
+        log_error "Failed to copy index.php to $PUBLIC_HTML"
+        exit 1
+    fi
+else
+    log_error "CRITICAL: Source index.php NOT FOUND at $PROJECT_DIR/public/index.php"
+    exit 1
 fi
 
 if [ -f "$PROJECT_DIR/public/.htaccess" ]; then
