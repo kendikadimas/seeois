@@ -23,7 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Vite::prefetch(concurrency: 3);
+        if (method_exists(Vite::class, 'prefetch')) {
+            Vite::prefetch(concurrency: 3);
+        }
 
         // Override Google Drive Storage Setup to Disable SSL Verify for Local (Laragon issue)
         \Illuminate\Support\Facades\Storage::extend('google', function ($app, $config) {
