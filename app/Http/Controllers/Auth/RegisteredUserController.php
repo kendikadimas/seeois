@@ -49,6 +49,9 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('dashboard');
+        return redirect()->route('homepage')->with('notif', [
+            'type' => 'info',
+            'message' => 'Selamat ' . $user->name . ', akun Anda berhasil dibuat! Silakan tunggu admin memberikan hak akses Staff untuk dapat mengakses Dashboard.'
+        ]);
     }
 }

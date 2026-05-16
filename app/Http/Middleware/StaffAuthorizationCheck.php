@@ -26,7 +26,10 @@ class StaffAuthorizationCheck
         }
 
         if ($user->roles_id == null) {
-            abort(403, 'Only SEEO Staff are allowed.');
+            return redirect()->route('homepage')->with('notif', [
+                'type' => 'warning',
+                'message' => 'Akses ditolak. Anda belum memiliki hak akses Staff. Silakan hubungi admin.'
+            ]);
         }
         return $next($request);
     }
