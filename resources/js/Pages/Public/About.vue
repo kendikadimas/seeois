@@ -17,7 +17,7 @@
                     About <span class="text-[#FFD700]">SEEO</span>
                 </h1>
                 <p class="text-gray-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
-                    Student Entrepreneur and Empowerment Organization (SEEO) adalah Unit Kegiatan Mahasiswa resmi di lingkungan Fakultas Teknik Universitas Jenderal Soedirman.
+                    Soedirman Engineering Entrepreneurship Organization (SEEO) adalah Unit Kegiatan Mahasiswa resmi di lingkungan Fakultas Teknik Universitas Jenderal Soedirman.
                 </p>
             </div>
             <!-- Background Decoration -->

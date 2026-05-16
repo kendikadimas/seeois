@@ -48,11 +48,17 @@ class AppServiceProvider extends ServiceProvider
                 $client->setAccessToken($config['accessToken']);
             }
 
-            $service = new \Google\Service\Drive($client);
-            $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $config['folder'] ?? '/', $options);
-            $driver = new \League\Flysystem\Filesystem($adapter);
+            try {
+                $service = new \Google\Service\Drive($client);
+                $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $config['folder'] ?? '/', $options);
+                $driver = new \League\Flysystem\Filesystem($adapter);
 
-            return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter);
+                return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Google Drive Adapter Initialization Failed: ' . $e->getMessage());
+                // Fallback to local public disk to keep the app running
+                return \Illuminate\Support\Facades\Storage::disk('public');
+            }
         });
 
         // Force HTTPS in production

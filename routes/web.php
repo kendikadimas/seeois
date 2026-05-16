@@ -115,6 +115,10 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::middleware(['role:99'])->group(function () {
         Route::get('/super-admin', [SuperAdminController::class, 'index'])->name('super.admin.panel');
         Route::post('/super-admin/google-drive', [SuperAdminController::class, 'saveConfig'])->name('super.admin.save_config');
+        
+        // Google Drive Token Management
+        Route::get('/google-drive/auth', [GoogleDriveAuthController::class, 'redirect'])->name('google.drive.auth');
+        Route::get('/google-drive/callback', [GoogleDriveAuthController::class, 'callback'])->name('google.drive.callback');
     });
 
     // SEEO Management

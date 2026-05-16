@@ -1,0 +1,2 @@
+import{e as m,I as i,c as s,o as t,f as r,F as o,x as c,t as a}from"./app-N2MQs07v.js";const l={class:"text-danger mb-1",style:{"font-size":"smaller"}},g={key:1,class:"text-danger mb-1",style:{"font-size":"smaller"}},f={__name:"InputError",props:{message:{type:[String,Array]}},setup(e){return(y,u)=>m((t(),s("div",null,[Array.isArray(e.message)?(t(!0),s(o,{key:0},c(e.message,n=>(t(),s("p",l,a(n),1))),256)):r("",!0),Array.isArray(e.message)?r("",!0):(t(),s("p",g,a(e.message),1))],512)),[[i,e.message]])}};export{f as _};
+//# sourceMappingURL=InputError-q35VCsrW.js.map

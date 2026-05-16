@@ -24,12 +24,19 @@ class StorageController extends Controller
 
     public function show_gdrive($path = '/')
     {
-        // Check if the file exists in the Google Drive disk
-        if (Storage::disk('google')->exists($path)) {
-            $file = Storage::disk('google')->get($path);
-            $mimeType = Storage::disk('google')->mimeType($path);
-            return response($file, 200)->header('Content-Type', $mimeType);
+        try {
+            // Check if the file exists in the Google Drive disk
+            if (Storage::disk('google')->exists($path)) {
+                $file = Storage::disk('google')->get($path);
+                $mimeType = Storage::disk('google')->mimeType($path);
+                return response($file, 200)->header('Content-Type', $mimeType);
+            }
+        } catch (\Exception $e) {
+            \Log::error('StorageController GDrive Error: ' . $e->getMessage());
+            // Fallback to local storage if Google Drive fails to avoid 500 error
+            return $this->show_local($path);
         }
+
         // If file does not exist, return a 404 response
         abort(404);
     }
