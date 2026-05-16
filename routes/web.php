@@ -116,9 +116,6 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
         Route::get('/super-admin', [SuperAdminController::class, 'index'])->name('super.admin.panel');
         Route::post('/super-admin/google-drive', [SuperAdminController::class, 'saveConfig'])->name('super.admin.save_config');
         
-        // Google Drive Token Management
-        Route::get('/google-drive/auth', [GoogleDriveAuthController::class, 'redirect'])->name('google.drive.auth');
-        Route::get('/google-drive/callback', [GoogleDriveAuthController::class, 'callback'])->name('google.drive.callback');
     });
 
     // SEEO Management
@@ -374,6 +371,12 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/seeo/internship/certificates', [InternshipCertificateController::class, 'index'])->name('certificate.index');
     Route::get('/seeo/internship/certificate/download/{id}', [InternshipCertificateController::class, 'download'])->name('certificate.download');
+});
+
+// Google Drive Authentication Routes
+Route::middleware(['auth', 'verified', 'staff', 'role:99'])->group(function () {
+    Route::get('/google-drive/auth', [GoogleDriveAuthController::class, 'redirect'])->name('google.drive.auth');
+    Route::get('/google-drive/callback', [GoogleDriveAuthController::class, 'callback'])->name('google.drive.callback');
 });
 
 require __DIR__ . '/auth.php';
