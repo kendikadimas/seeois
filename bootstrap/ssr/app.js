@@ -4,7 +4,14 @@ import { createInertiaApp } from "@inertiajs/vue3";
 import * as bootstrap from "bootstrap/dist/js/bootstrap.bundle.min.js";
 window.axios = axios;
 window.axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
-window.route = function(name, params) {
+const ziggyRoute = window.route;
+window.route = function(name, params, absolute, config) {
+  if (ziggyRoute && typeof ziggyRoute === "function") {
+    try {
+      return ziggyRoute(name, params, absolute, config);
+    } catch (e) {
+    }
+  }
   const routes = {
     login: "/login",
     register: "/register",
@@ -14,7 +21,13 @@ window.route = function(name, params) {
     structure: "/structure",
     activity: "/activity",
     contact: "/contact",
-    about: "/about"
+    about: "/about",
+    "password.request": "/forgot-password",
+    "password.email": "/forgot-password",
+    "password.reset": "/reset-password/{token}",
+    "password.store": "/reset-password",
+    "password.update": "/password",
+    "logout": "/logout"
   };
   let url = routes[name] || name;
   if (params && typeof params === "object") {
