@@ -119,28 +119,58 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
         Route::get('/super-admin', [SuperAdminController::class, 'index'])->name('super.admin.panel');
         Route::post('/super-admin/google-drive', [SuperAdminController::class, 'saveConfig'])->name('super.admin.save_config');
         Route::get('/super-admin/debug-logs', function () {
+            $diagnostics = [];
+            
+            // 1. Check Google config
+            $clientId = config('filesystems.disks.google.clientId');
+            $folder = config('filesystems.disks.google.folder');
+            $hasSecret = !empty(config('filesystems.disks.google.clientSecret'));
+            $hasRefreshToken = !empty(config('filesystems.disks.google.refreshToken'));
+            
+            $diagnostics[] = "=== CONFIGURATION DIAGNOSTICS ===";
+            $diagnostics[] = "App Env: " . config('app.env');
+            $diagnostics[] = "Client ID: " . ($clientId ? substr($clientId, 0, 15) . '...' : 'NULL');
+            $diagnostics[] = "Client Secret Set: " . ($hasSecret ? 'YES' : 'NO');
+            $diagnostics[] = "Folder ID: " . ($folder ?? 'NULL');
+            $diagnostics[] = "Refresh Token Set: " . ($hasRefreshToken ? 'YES' : 'NO');
+            
+            // 2. Check Disk resolution
+            try {
+                $disk = \Illuminate\Support\Facades\Storage::disk('google');
+                $adapterClass = get_class($disk->getAdapter());
+                $diagnostics[] = "Disk 'google' Adapter Class: " . $adapterClass;
+                
+                // 3. Test list contents in root
+                $files = [];
+                foreach ($disk->listContents('', false) as $item) {
+                    $files[] = ($item['type'] === 'dir' ? '[DIR] ' : '[FILE] ') . ($item['path'] ?? '');
+                }
+                $diagnostics[] = "Root Files Count: " . count($files);
+                $diagnostics[] = "Files list: \n" . implode("\n", array_slice($files, 0, 20));
+            } catch (\Throwable $e) {
+                $diagnostics[] = "Disk Initialization ERROR: " . $e->getMessage();
+            }
+            
+            $diagnosticsHtml = '<pre style="background: #222; color: #0f0; padding: 15px; border-radius: 8px; font-family: monospace;">' . htmlspecialchars(implode("\n", $diagnostics)) . '</pre>';
+            
             $logPath = storage_path('logs/laravel.log');
-            if (!file_exists($logPath)) {
-                return 'Log file not found';
+            $logHtml = 'Log file not found';
+            if (file_exists($logPath)) {
+                $size = filesize($logPath);
+                $file = fopen($logPath, 'r');
+                if ($file) {
+                    $maxReadBytes = 200 * 1024;
+                    $startOffset = max(0, $size - $maxReadBytes);
+                    fseek($file, $startOffset);
+                    $data = fread($file, $maxReadBytes);
+                    fclose($file);
+                    $lines = explode("\n", $data);
+                    $lastLines = array_slice($lines, -150);
+                    $logHtml = '<pre style="font-family: monospace;">Log File Size: ' . round($size / 1024 / 1024, 2) . ' MB | Showing last 150 lines:<br><br>' . htmlspecialchars(implode("\n", $lastLines)) . '</pre>';
+                }
             }
             
-            $size = filesize($logPath);
-            $file = fopen($logPath, 'r');
-            if (!$file) {
-                return 'Could not open log file';
-            }
-            
-            // Read last 200KB of the file to be safe and extremely fast
-            $maxReadBytes = 200 * 1024;
-            $startOffset = max(0, $size - $maxReadBytes);
-            
-            fseek($file, $startOffset);
-            $data = fread($file, $maxReadBytes);
-            fclose($file);
-            
-            $lines = explode("\n", $data);
-            $lastLines = array_slice($lines, -150);
-            return '<pre>Log File Size: ' . round($size / 1024 / 1024, 2) . ' MB | Showing last 150 lines:<br><br>' . htmlspecialchars(implode("\n", $lastLines)) . '</pre>';
+            return '<h1>System & Storage Diagnostics</h1>' . $diagnosticsHtml . '<h2>Recent Server Logs</h2>' . $logHtml;
         })->name('super.admin.debug_logs');
     });
 
