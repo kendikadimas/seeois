@@ -19,6 +19,16 @@ class GoogleDriveProxyController extends Controller
 
             if (!$disk->exists($path)) {
                 Log::warning('Google Drive Proxy: File does not exist: ' . $path);
+                try {
+                    $contents = collect($disk->listContents('', true)->toArray())
+                        ->map(fn($item) => $item['path'] ?? '')
+                        ->filter()
+                        ->take(20)
+                        ->toArray();
+                    Log::warning('Google Drive Proxy: First 20 files found on disk: ', $contents);
+                } catch (\Throwable $err) {
+                    Log::error('Google Drive Proxy: Failed listing files: ' . $err->getMessage());
+                }
                 abort(404, 'File not found');
             }
 

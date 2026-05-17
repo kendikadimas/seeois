@@ -118,7 +118,16 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::middleware(['role:99'])->group(function () {
         Route::get('/super-admin', [SuperAdminController::class, 'index'])->name('super.admin.panel');
         Route::post('/super-admin/google-drive', [SuperAdminController::class, 'saveConfig'])->name('super.admin.save_config');
-        
+        Route::get('/super-admin/debug-logs', function () {
+            $logPath = storage_path('logs/laravel.log');
+            if (!file_exists($logPath)) {
+                return 'Log file not found';
+            }
+            $content = file_get_contents($logPath);
+            $lines = explode("\n", $content);
+            $lastLines = array_slice($lines, -150);
+            return '<pre>' . htmlspecialchars(implode("\n", $lastLines)) . '</pre>';
+        })->name('super.admin.debug_logs');
     });
 
     // SEEO Management
