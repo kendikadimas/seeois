@@ -172,6 +172,16 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
                 $diagnostics[] = "\n=== PROFILE FILES (images/profile) ===";
                 $diagnostics[] = count($profiles) > 0 ? implode("\n", $profiles) : "No files found in images/profile";
 
+                // 6. Live Read Test
+                $diagnostics[] = "\n=== LIVE READ TEST ===";
+                try {
+                    $testPath = 'images/billboard/BB_1_image.webp';
+                    $content = $disk->get($testPath);
+                    $diagnostics[] = "Read '$testPath' SUCCESS! Size: " . strlen($content) . " bytes";
+                } catch (\Throwable $e) {
+                    $diagnostics[] = "Read '$testPath' FAILED: " . $e->getMessage() . "\nStack: " . substr($e->getTraceAsString(), 0, 1000);
+                }
+
             } catch (\Throwable $e) {
                 $diagnostics[] = "Disk Initialization ERROR: " . $e->getMessage();
             }
