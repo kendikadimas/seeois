@@ -198,7 +198,7 @@ watch(
                                     <div class="row">
                                         <div class="col-12">
                                             <div
-                                                class="card border-0 border-bottom border-primary rounded-0 rounded-top d-flex"
+                                                class="card border-0  rounded-0 rounded-top d-flex"
                                             >
                                                 <div class="d-flex mb-1">
                                                     <div
@@ -339,7 +339,7 @@ watch(
                                     <div class="row">
                                         <div class="col-12">
                                             <div
-                                                class="card border-0 border-bottom border-primary rounded-0 rounded-top d-flex"
+                                                class="card border-0  rounded-0 rounded-top d-flex"
                                             >
                                                 <span
                                                     class="h5 text-primary-emphasis fw-bold mx-auto"
@@ -427,7 +427,7 @@ watch(
                                     <div class="row">
                                         <div class="col-12">
                                             <div
-                                                class="d-flex border-primary border-bottom pb-2"
+                                                class="d-flex  pb-2"
                                             >
                                                 <span
                                                     class="text-primary-emphasis me-auto my-auto h6"
@@ -599,7 +599,7 @@ watch(
                                     <div class="row">
                                         <div class="col-12">
                                             <div
-                                                class="d-flex border-primary border-bottom pb-2"
+                                                class="d-flex  pb-2"
                                             >
                                                 <span
                                                     class="text-primary-emphasis me-auto my-auto h6"

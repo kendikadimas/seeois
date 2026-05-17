@@ -1056,7 +1056,7 @@ watch(
             <div class="row gx-4 mt-4 mb-5">
                 <div class="col-12">
                     <div class="card bg-white p-3">
-                        <div class="d-flex border-bottom border-primary">
+                        <div class="d-flex ">
                             <span class="h5 text-primary-emphasis me-auto">
                                 <i class="bi bi-shop me-2"></i>{{ "Stand " + (stand?.name || 'Unknown') }}
                             </span>
@@ -2771,7 +2771,7 @@ watch(
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header border-0" style="background-color:#412f55;">
                     <h5 class="modal-title fw-bold text-white" id="workflowGuideModalLabel">
-                        <i class="bi bi-map me-2"></i>Stand Management — Panduan Lengkap
+                        <i class="bi bi-map me-2"></i>Stand Management â€” Panduan Lengkap
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -2800,7 +2800,7 @@ watch(
                                 <p class="small text-muted mb-2">Buat stand baru dari halaman <strong>Stand List</strong>. Isi nama, tempat, tanggal, tipe (Live / Pre-Order), dan tentukan PIC.</p>
                                 <div class="bg-light rounded p-2 small">
                                     <i class="bi bi-info-circle text-primary me-1"></i>
-                                    Setelah dibuat, stand berstatus <strong>"Waiting for menu lock"</strong> — semua fitur editing terbuka.
+                                    Setelah dibuat, stand berstatus <strong>"Waiting for menu lock"</strong> â€” semua fitur editing terbuka.
                                 </div>
                             </div>
                         </div>
@@ -2897,7 +2897,7 @@ watch(
                                     <div class="col-6">
                                         <div class="border rounded p-2 small h-100">
                                             <i class="bi bi-clipboard-plus text-success me-1"></i><strong>Set Resep</strong><br>
-                                            <span class="text-muted">Input qty bahan per porsi → modal & untung terhitung otomatis.</span>
+                                            <span class="text-muted">Input qty bahan per porsi â†’ modal & untung terhitung otomatis.</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2912,7 +2912,7 @@ watch(
                             </div>
                             <div class="pb-3" style="flex:1;">
                                 <div class="d-flex align-items-center gap-2 mb-1">
-                                    <h6 class="fw-bold mb-0">Menu Lock — Stand Siap Berjualan</h6>
+                                    <h6 class="fw-bold mb-0">Menu Lock â€” Stand Siap Berjualan</h6>
                                     <span class="badge bg-primary" style="font-size:0.6rem;">Operating (3)</span>
                                     <span class="badge bg-dark" style="font-size:0.6rem;">Super Admin (99)</span>
                                 </div>
@@ -2932,10 +2932,10 @@ watch(
                             </div>
                             <div class="pb-3" style="flex:1;">
                                 <div class="d-flex align-items-center gap-2 mb-1">
-                                    <h6 class="fw-bold mb-0">Operasional — Catat Transaksi</h6>
+                                    <h6 class="fw-bold mb-0">Operasional â€” Catat Transaksi</h6>
                                     <span class="badge bg-secondary" style="font-size:0.6rem;">Cashier Staff</span>
                                 </div>
-                                <p class="small text-muted mb-2">Kasir membuka panel kasir via tombol <i class="bi bi-cart-plus"></i> di tab Income. Pilih menu → isi customer → submit transaksi → cetak/share receipt.</p>
+                                <p class="small text-muted mb-2">Kasir membuka panel kasir via tombol <i class="bi bi-cart-plus"></i> di tab Income. Pilih menu â†’ isi customer â†’ submit transaksi â†’ cetak/share receipt.</p>
                                 <div class="bg-light rounded p-2 small">
                                     <i class="bi bi-lightbulb text-warning me-1"></i>
                                     Stok menu berkurang otomatis setiap transaksi. Update stok manual via ikon <i class="bi bi-box-seam"></i> jika diperlukan.
@@ -2950,7 +2950,7 @@ watch(
                             </div>
                             <div style="flex:1;">
                                 <div class="d-flex align-items-center gap-2 mb-1">
-                                    <h6 class="fw-bold mb-0">Tutup Stand — Validasi Sales</h6>
+                                    <h6 class="fw-bold mb-0">Tutup Stand â€” Validasi Sales</h6>
                                     <span class="badge bg-primary" style="font-size:0.6rem;">Operating (3)</span>
                                     <span class="badge bg-dark" style="font-size:0.6rem;">Super Admin (99)</span>
                                 </div>

@@ -475,7 +475,7 @@ watch(
                         <div class="row">
                             <div class="col-12">
                                 <div
-                                    class="d-flex border-primary border-bottom pb-0"
+                                    class="d-flex  pb-0"
                                 >
                                     <span class="h5 text-primary-emphasis">
                                         {{ program.name + " Program" }}

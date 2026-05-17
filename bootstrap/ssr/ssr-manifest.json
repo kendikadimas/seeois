@@ -15,13 +15,13 @@
     "/build/assets/Login-B7V0G-71.css"
   ],
   "resources/js/Components/IncomeReceiptTemplate.vue": [
-    "/build/assets/StandDetail-xhVhDQMV.js",
-    "/build/assets/StandDetail-CpPUXKGJ.css",
+    "/build/assets/StandDetail-B7pQsCgr.js",
+    "/build/assets/StandDetail-D69Y6a7i.css",
     "/build/assets/vue-select-Cc06Veje.css"
   ],
   "resources/js/Components/IncomeReceiptTemplate.vue?vue&type=style&index=0&scoped=3b72352c&lang.css": [
-    "/build/assets/StandDetail-xhVhDQMV.js",
-    "/build/assets/StandDetail-CpPUXKGJ.css",
+    "/build/assets/StandDetail-B7pQsCgr.js",
+    "/build/assets/StandDetail-D69Y6a7i.css",
     "/build/assets/vue-select-Cc06Veje.css"
   ],
   "resources/js/Components/InputError.vue": [
@@ -45,8 +45,8 @@
     "/build/assets/MarketingCms-DyZ09oVv.css"
   ],
   "resources/js/Components/ToastNotification.vue": [
-    "/build/assets/StandDetail-xhVhDQMV.js",
-    "/build/assets/StandDetail-CpPUXKGJ.css",
+    "/build/assets/StandDetail-B7pQsCgr.js",
+    "/build/assets/StandDetail-D69Y6a7i.css",
     "/build/assets/vue-select-Cc06Veje.css"
   ],
   "resources/js/Components/VueSelect.vue": [
@@ -226,10 +226,10 @@
     "/build/assets/Welcome-hrdq3TVn.js"
   ],
   "resources/js/Pages/Staff/Business/Insight.vue": [
-    "/build/assets/Insight-BsUOJqVk.js"
+    "/build/assets/Insight-Bv-BfutC.js"
   ],
   "resources/js/Pages/Staff/Business/InsightCashflow.vue": [
-    "/build/assets/InsightCashflow-BUlnQXBe.js"
+    "/build/assets/InsightCashflow-xACgfJ4x.js"
   ],
   "resources/js/Pages/Staff/Business/MenuBoard.vue": [
     "/build/assets/MenuBoard-B6a6SfVH.js",
@@ -249,17 +249,17 @@
     "/build/assets/vue-select-Cc06Veje.css"
   ],
   "resources/js/Pages/Staff/Business/StandCashier.vue": [
-    "/build/assets/StandCashier-uNb11zLZ.js",
+    "/build/assets/StandCashier-vVO6H1-0.js",
     "/build/assets/vue-select-Cc06Veje.css"
   ],
   "resources/js/Pages/Staff/Business/StandDetail.vue": [
-    "/build/assets/StandDetail-xhVhDQMV.js",
-    "/build/assets/StandDetail-CpPUXKGJ.css",
+    "/build/assets/StandDetail-B7pQsCgr.js",
+    "/build/assets/StandDetail-D69Y6a7i.css",
     "/build/assets/vue-select-Cc06Veje.css"
   ],
-  "resources/js/Pages/Staff/Business/StandDetail.vue?vue&type=style&index=0&scoped=c4780d52&lang.css": [
-    "/build/assets/StandDetail-xhVhDQMV.js",
-    "/build/assets/StandDetail-CpPUXKGJ.css",
+  "resources/js/Pages/Staff/Business/StandDetail.vue?vue&type=style&index=0&scoped=c9afc237&lang.css": [
+    "/build/assets/StandDetail-B7pQsCgr.js",
+    "/build/assets/StandDetail-D69Y6a7i.css",
     "/build/assets/vue-select-Cc06Veje.css"
   ],
   "resources/js/Pages/Staff/Internship/CertificatesManage.vue": [
@@ -293,7 +293,7 @@
     "/build/assets/Structures-4BqqfAko.js"
   ],
   "resources/js/Pages/Staff/Profile.vue": [
-    "/build/assets/Profile-CYaXAsUY.js"
+    "/build/assets/Profile-hODbPwUw.js"
   ],
   "resources/js/Pages/Staff/SEEO/Birthdays.vue": [
     "/build/assets/Birthdays-7VnmvKm2.js",
@@ -304,7 +304,7 @@
     "/build/assets/Birthdays-B1bMaQOC.css"
   ],
   "resources/js/Pages/Staff/SEEO/CashFlow.vue": [
-    "/build/assets/CashFlow-CaW3ybsY.js"
+    "/build/assets/CashFlow-DmQGRur8.js"
   ],
   "resources/js/Pages/Staff/SEEO/CeoPanel.vue": [
     "/build/assets/CeoPanel-qlJ80iUl.js",
@@ -323,15 +323,15 @@
     "/build/assets/Dashboard-BeGjJgLQ.css"
   ],
   "resources/js/Pages/Staff/SEEO/Department.vue": [
-    "/build/assets/Department-BkYwwoEH.js",
+    "/build/assets/Department-CKcwNLwX.js",
     "/build/assets/vue-select-Cc06Veje.css"
   ],
   "resources/js/Pages/Staff/SEEO/Employee.vue": [
-    "/build/assets/Employee-CxaWOPPc.js",
+    "/build/assets/Employee-BcJYWXWj.js",
     "/build/assets/vue-select-Cc06Veje.css"
   ],
   "resources/js/Pages/Staff/SEEO/FinanceFeature.vue": [
-    "/build/assets/FinanceFeature-CPJFoa6x.js"
+    "/build/assets/FinanceFeature-DVO5V3FV.js"
   ],
   "resources/js/Pages/Staff/SEEO/FinancePanel.vue": [
     "/build/assets/FinancePanel-BcHs46Nh.js",
@@ -361,12 +361,12 @@
     "/build/assets/PinnedDocs-CkufpWGy.css"
   ],
   "resources/js/Pages/Staff/SEEO/Program.vue": [
-    "/build/assets/Program-C8aumMnr.js",
-    "/build/assets/Program-Kmrfp6aP.css"
+    "/build/assets/Program-D2A1W9UO.js",
+    "/build/assets/Program-D40gq8G6.css"
   ],
-  "resources/js/Pages/Staff/SEEO/Program.vue?vue&type=style&index=0&scoped=3050465c&lang.css": [
-    "/build/assets/Program-C8aumMnr.js",
-    "/build/assets/Program-Kmrfp6aP.css"
+  "resources/js/Pages/Staff/SEEO/Program.vue?vue&type=style&index=0&scoped=de54e79f&lang.css": [
+    "/build/assets/Program-D2A1W9UO.js",
+    "/build/assets/Program-D40gq8G6.css"
   ],
   "resources/js/Pages/Staff/SEEO/SeminarRegistrations.vue": [
     "/build/assets/SeminarRegistrations-CwVmphxN.js",

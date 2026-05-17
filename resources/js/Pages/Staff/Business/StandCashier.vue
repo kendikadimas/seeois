@@ -217,7 +217,7 @@ function showCashierHelpModal(is_show) {
 function openTodayReceiptModal(sale) {
     selectedTodaySale.value = sale;
     form_print_receipt.value.date = format(new Date(sale.created_at), "EE, dd/MM/yy HH:mm");
-    form_print_receipt.value.customer = sale.customer?.name ?? sale.customer ?? "—";
+    form_print_receipt.value.customer = sale.customer?.name ?? sale.customer ?? "â€”";
     form_print_receipt.value.customer_id = sale.customer_id;
     form_print_receipt.value.order_list = sale.order; // items have .menu.name / .menu.price / .amount
     form_print_receipt.value.subtotal = (sale.transaction ?? 0) + (sale.discount ?? 0);
@@ -271,7 +271,7 @@ const printReceipt = async () => {
         toastNotifRef.value.showToast("info", "Generating receipt...");
 
         // Clone outside modal to bypass Bootstrap overflow/transform issues.
-        // Use left: -9999px (off-screen) instead of opacity:0 — html2canvas
+        // Use left: -9999px (off-screen) instead of opacity:0 â€” html2canvas
         // cannot capture invisible elements.
         const clone = element.cloneNode(true);
         clone.style.position = "absolute";
@@ -431,7 +431,7 @@ watch(
             <div class="row gx-4 mt-4">
                 <div class="col-12 col-lg-5">
                     <div class="card bg-white p-3">
-                        <div class="d-flex border-bottom border-primary">
+                        <div class="d-flex ">
                             <span class="h5 text-primary-emphasis me-auto"
                                 ><i class="bi bi-shop me-2"></i
                                 >{{ "Stand " + stand.name }}</span
@@ -487,7 +487,7 @@ watch(
                                 {{ "Cashier" }}
                             </button>
                             <!--
-                            SELF-ORDER TAB BUTTON (MOBILE) — ARCHIVED
+                            SELF-ORDER TAB BUTTON (MOBILE) â€” ARCHIVED
                             <button
                                 :class="
                                     'btn btn-sm btn-outline-primary border-0 ' +
@@ -609,10 +609,10 @@ watch(
                             </li>
                         </div>
                     </div>
-                    <!-- SELF-ORDER ORDER LIST CARD (LEFT COLUMN) — ARCHIVED
+                    <!-- SELF-ORDER ORDER LIST CARD (LEFT COLUMN) â€” ARCHIVED
                     <div class="card p-3 bg-white mt-4" v-if="active_tab == 2">
                         <div
-                            class="d-flex border-primary border-bottom border-1 pb-2"
+                            class="d-flex  border-1 pb-2"
                         >
                             <span class="h6 mb-0 text-primary-emphasis">
                                 <i class="fa-solid fa-user-group me-2"></i
@@ -695,7 +695,7 @@ watch(
                                 {{ "Cashier" }}
                             </button>
                             <!--
-                            SELF-ORDER TAB BUTTON (DESKTOP) — ARCHIVED
+                            SELF-ORDER TAB BUTTON (DESKTOP) â€” ARCHIVED
                             <button
                                 :class="
                                     'btn btn-sm btn-outline-primary border-0 ' +
@@ -1159,9 +1159,9 @@ watch(
                             </button>
                         </div>
                     </div>
-                    <!-- SELF-ORDER ORDER DETAIL CARD (RIGHT COLUMN) — ARCHIVED
+                    <!-- SELF-ORDER ORDER DETAIL CARD (RIGHT COLUMN) â€” ARCHIVED
                     <div class="card p-3 my-4" v-if="active_tab == 2">
-                        <div class="d-flex pb-2 border-bottom border-primary">
+                        <div class="d-flex pb-2 ">
                             <span class="text-primary-emphasis h6 mb-0">
                                 <i class="bi bi-info-circle-fill me-1"></i>
                                 {{ "Order Detail" }}
@@ -1509,7 +1509,7 @@ watch(
                     END ARCHIVED -->
                     <!-- Today's Transactions Tab -->
                     <div class="card p-3 my-4" v-if="active_tab == 3">
-                        <div class="d-flex pb-2 border-bottom border-primary">
+                        <div class="d-flex pb-2 ">
                             <span class="text-primary-emphasis h6 mb-0 me-auto">
                                 <i class="bi bi-receipt me-2"></i>
                                 {{ "Today's Transactions" }}
@@ -1547,10 +1547,10 @@ watch(
                                         <!-- Customer & time -->
                                         <div class="me-auto">
                                             <span class="d-block text-primary-emphasis fw-semibold">
-                                                {{ sale.customer?.name ?? sale.customer ?? "—" }}
+                                                {{ sale.customer?.name ?? sale.customer ?? "â€”" }}
                                             </span>
                                             <span class="text-secondary d-block" style="font-size:0.75rem">
-                                                <i class="bi bi-telephone me-1"></i>{{ sale.customer?.phone ?? "—" }}
+                                                <i class="bi bi-telephone me-1"></i>{{ sale.customer?.phone ?? "â€”" }}
                                             </span>
                                             <span class="text-secondary" style="font-size:0.75rem">
                                                 <i class="bi bi-clock me-1"></i>{{ formatDate(sale.created_at) }}
@@ -1562,7 +1562,7 @@ watch(
                                                 {{ formatIDR(sale.transaction ?? 0) }}
                                             </span>
                                             <span class="text-secondary d-block" style="font-size:0.75rem">
-                                                {{ payment_method_list.find(p => p.id == sale.payment_method_id)?.name ?? "—" }}
+                                                {{ payment_method_list.find(p => p.id == sale.payment_method_id)?.name ?? "â€”" }}
                                             </span>
                                         </div>
                                         <!-- Receipt button -->
@@ -1618,7 +1618,7 @@ watch(
                     </button>
                 </div>
                 <div class="modal-body p-0">
-                    <!-- Receipt Container — fixed 9:16 ratio (360×640px) -->
+                    <!-- Receipt Container â€” fixed 9:16 ratio (360Ã—640px) -->
                     <div
                         ref="receiptContentRef"
                         style="
@@ -1635,7 +1635,7 @@ watch(
                             font-family: 'Segoe UI', Arial, sans-serif;
                         "
                     >
-                        <!-- ── HEADER ── -->
+                        <!-- â”€â”€ HEADER â”€â”€ -->
                         <div style="background-color:#412f55; padding:20px 16px 16px; flex-shrink:0; display:flex; justify-content:center; align-items:center; gap:10px;">
                             <img
                                 :src="'/storage/local/images/shop/brand/blaterian_logo.png'"
@@ -1649,7 +1649,7 @@ watch(
                             />
                         </div>
 
-                        <!-- ── BODY ── -->
+                        <!-- â”€â”€ BODY â”€â”€ -->
                         <div style="flex:1; padding:16px 20px; display:flex; flex-direction:column; gap:0; overflow:hidden;">
 
                             <!-- Transaction Info: 2-col grid -->
@@ -1696,7 +1696,7 @@ watch(
                             <!-- Divider -->
                             <div style="border-top:1.5px dashed #c8c8c8; margin-bottom:10px;"></div>
 
-                            <!-- Total — 3 columns -->
+                            <!-- Total â€” 3 columns -->
                             <div style="margin-bottom:10px;">
                                 <div style="font-size:1rem; font-weight:700; color:#412f55; margin-bottom:8px;">Total</div>
                                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;">
@@ -1718,13 +1718,13 @@ watch(
                             <!-- Divider -->
                             <div style="border-top:1.5px dashed #c8c8c8; margin-bottom:10px;"></div>
 
-                            <!-- Payment — 3 columns -->
+                            <!-- Payment â€” 3 columns -->
                             <div>
                                 <div style="font-size:1rem; font-weight:700; color:#412f55; margin-bottom:8px;">Payment</div>
                                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;">
                                     <div>
                                         <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Method</div>
-                                        <div style="font-size:0.88rem; color:#222;">{{ payment_method_list.find(p => p.id == form_print_receipt?.payment_method_id)?.name ?? '—' }}</div>
+                                        <div style="font-size:0.88rem; color:#222;">{{ payment_method_list.find(p => p.id == form_print_receipt?.payment_method_id)?.name ?? 'â€”' }}</div>
                                     </div>
                                     <div>
                                         <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">Price</div>
@@ -1739,7 +1739,7 @@ watch(
 
                         </div>
 
-                        <!-- ── FOOTER ── -->
+                        <!-- â”€â”€ FOOTER â”€â”€ -->
                         <div style="background-color:#412f55; border-top:2px dashed #efc55c; padding:10px 16px; flex-shrink:0; display:flex; justify-content:center; align-items:center; gap:8px;">
                             <i class="bi bi-instagram" style="color:#efc55c; font-size:1rem;"></i>
                             <span style="color:#efc55c; font-size:0.85rem; font-weight:500;">blaterian.id</span>
@@ -2040,10 +2040,10 @@ watch(
                         <div>
                             <h6 class="fw-bold mb-2" style="color:#412f55;"><i class="bi bi-info-circle me-2"></i>Indikator Stok di Daftar Menu</h6>
                             <div class="d-flex flex-column gap-1 small">
-                                <div><span class="text-dark fw-bold me-2">( sold / stock )</span>— angka terjual vs stok total</div>
-                                <div><span class="text-danger fw-bold me-2">Merah</span>— stok habis (sold = stock)</div>
-                                <div><span class="text-warning fw-bold me-2">Kuning</span>— stok hampir habis (sisa ≤ 5)</div>
-                                <div><span class="text-dark fw-bold me-2">Hitam</span>— stok masih aman</div>
+                                <div><span class="text-dark fw-bold me-2">( sold / stock )</span>â€” angka terjual vs stok total</div>
+                                <div><span class="text-danger fw-bold me-2">Merah</span>â€” stok habis (sold = stock)</div>
+                                <div><span class="text-warning fw-bold me-2">Kuning</span>â€” stok hampir habis (sisa â‰¤ 5)</div>
+                                <div><span class="text-dark fw-bold me-2">Hitam</span>â€” stok masih aman</div>
                             </div>
                         </div>
 
@@ -2051,7 +2051,7 @@ watch(
                         <div>
                             <h6 class="fw-bold mb-2" style="color:#412f55;"><i class="bi bi-credit-card me-2"></i>Metode Pembayaran</h6>
                             <div class="small text-muted">
-                                Pilih metode sesuai cara bayar customer. Untuk pembayaran <strong>DANA</strong>, minta customer upload bukti transfer — kasir perlu memverifikasi sebelum submit.
+                                Pilih metode sesuai cara bayar customer. Untuk pembayaran <strong>DANA</strong>, minta customer upload bukti transfer â€” kasir perlu memverifikasi sebelum submit.
                             </div>
                         </div>
 

@@ -112,9 +112,23 @@ class InsightController extends Controller
 
 
         $stands = Stand::where('year_id', $yearId)->get();
-        $balance = BlaterianGoodBalance::find(1);
-        $balance = $balance ? $balance : BlaterianGoodBalance::create();
+        $foods_dynamic_income = FoodsIncome::whereYear('created_at', $selected_year)->sum('price');
+        $foods_dynamic_expense = FoodsExpense::whereYear('created_at', $selected_year)->sum('price');
+        $foods_balance_dynamic = [
+            'income' => $foods_dynamic_income,
+            'expense' => $foods_dynamic_expense,
+            'profit' => $foods_dynamic_income - $foods_dynamic_expense,
+            'balance' => $foods_dynamic_income - $foods_dynamic_expense,
+        ];
 
+        $goods_dynamic_income = GoodsIncome::whereYear('created_at', $selected_year)->sum('price');
+        $goods_dynamic_expense = GoodsExpense::whereYear('created_at', $selected_year)->sum('price');
+        $goods_balance_dynamic = [
+            'income' => $goods_dynamic_income,
+            'expense' => $goods_dynamic_expense,
+            'profit' => $goods_dynamic_income - $goods_dynamic_expense,
+            'balance' => $goods_dynamic_income - $goods_dynamic_expense,
+        ];
         $goods_income = GoodsSales::where('operational_id', '>', 0)->whereYear('created_at', $selected_year)->sum('transaction');
         $goods_expense = GoodsCapital::where('operational_id', '>', 0)->whereYear('created_at', $selected_year)->sum('total_price');
 
@@ -133,12 +147,12 @@ class InsightController extends Controller
                 'bottom' => $menu_performance_bottom,
             ],
             'goods' => [
-                'balance' => $balance,
+                'balance' => $goods_balance_dynamic,
                 'total_income' => $goods_income,
                 'total_expense' => $goods_expense,
             ],
             'foods' => [
-                'balance' => BlaterianBalance::find(1),
+                'balance' => $foods_balance_dynamic,
                 'total_income' => $stands->sum('income'),
                 'total_expense' => $stands->sum('expense'),
             ],
@@ -177,14 +191,28 @@ class InsightController extends Controller
         $cash_in_list = GoodsIncome::whereYear('created_at', $selected_year)->orderBy($goods_category, $goods_order)->with(['program', 'sales'])->get();
         $cash_out_list = GoodsExpense::whereYear('created_at', $selected_year)->orderBy($goods_category, $goods_order)->with(['withdraw', 'capital'])->get();
 
-        $balance = BlaterianGoodBalance::find(1);
-        $balance = $balance ? $balance : BlaterianGoodBalance::create();
+        $foods_dynamic_income = FoodsIncome::whereYear('created_at', $selected_year)->sum('price');
+        $foods_dynamic_expense = FoodsExpense::whereYear('created_at', $selected_year)->sum('price');
+        $foods_balance_dynamic = [
+            'income' => $foods_dynamic_income,
+            'expense' => $foods_dynamic_expense,
+            'profit' => $foods_dynamic_income - $foods_dynamic_expense,
+            'balance' => $foods_dynamic_income - $foods_dynamic_expense,
+        ];
 
+        $goods_dynamic_income = GoodsIncome::whereYear('created_at', $selected_year)->sum('price');
+        $goods_dynamic_expense = GoodsExpense::whereYear('created_at', $selected_year)->sum('price');
+        $goods_balance_dynamic = [
+            'income' => $goods_dynamic_income,
+            'expense' => $goods_dynamic_expense,
+            'profit' => $goods_dynamic_income - $goods_dynamic_expense,
+            'balance' => $goods_dynamic_income - $goods_dynamic_expense,
+        ];
         $goods_income = GoodsSales::where('operational_id', '>', 0)->whereYear('created_at', $selected_year)->sum('transaction');
         $goods_expense = GoodsCapital::where('operational_id', '>', 0)->whereYear('created_at', $selected_year)->sum('total_price');
         return Inertia::render('Staff/Business/InsightCashflow', [
             'goods' => [
-                'balance' => $balance,
+                'balance' => $goods_balance_dynamic,
                 'total_income' => $goods_income,
                 'total_expense' => $goods_expense,
                 'income_list' => $cash_in_list,
@@ -196,7 +224,7 @@ class InsightController extends Controller
                 ]
             ],
             'foods' => [
-                'balance' => BlaterianBalance::find(1),
+                'balance' => $foods_balance_dynamic,
                 'total_income' => $stands->sum('income'),
                 'total_expense' => $stands->sum('expense'),
                 'income_list' => $foods_income_list,

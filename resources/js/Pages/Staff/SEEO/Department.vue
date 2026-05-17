@@ -134,7 +134,7 @@ watch(
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card p-3">
-                        <div class="d-flex border-bottom border-primary pb-1">
+                        <div class="d-flex  pb-1">
                             <span class="h5 text-primary-emphasis">
                                 <i class="bi bi-building me-2"></i>
                                 {{ "Department " + department.name }}
@@ -317,7 +317,7 @@ watch(
                         <div class="row">
                             <div class="col-12">
                                 <div
-                                    class="d-flex border-primary border-bottom pb-2"
+                                    class="d-flex  pb-2"
                                 >
                                     <span
                                         class="text-primary-emphasis me-auto my-auto h6"
@@ -405,7 +405,7 @@ watch(
                         <div class="row">
                             <div class="col-12">
                                 <div
-                                    class="d-flex border-primary border-bottom pb-2"
+                                    class="d-flex  pb-2"
                                 >
                                     <span
                                         class="text-primary-emphasis me-auto my-auto h6"

@@ -673,7 +673,7 @@ watch(
                         </transition>
                         <!-- Staff Detail -->
                         <div
-                            class="card border-top border-0 border-primary rounded-top-0"
+                            class="card  rounded-top-0"
                         >
                             <div class="row g-2 mt-2">
                                 <div class="col-12 col-lg-3">
@@ -1369,7 +1369,7 @@ watch(
                             <div class="row">
                                 <div class="col-12">
                                     <div
-                                        class="d-flex border-primary border-bottom pb-2"
+                                        class="d-flex  pb-2"
                                     >
                                         <span
                                             class="text-primary-emphasis me-auto my-auto h6"

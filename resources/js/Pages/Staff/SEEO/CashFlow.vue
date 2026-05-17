@@ -149,7 +149,7 @@ watch(
                         <div class="col-12">
                             <div class="card p-3">
                                 <div
-                                    class="d-flex border-bottom border-1 border-primary"
+                                    class="d-flex "
                                 >
                                     <span class="h5 text-primary-emphasis">{{
                                         "General Cashflow"
@@ -229,7 +229,7 @@ watch(
                                             <div class="row">
                                                 <div class="col-12">
                                                     <div
-                                                        class="d-flex border-primary border-bottom pb-2 px-0"
+                                                        class="d-flex  pb-2 px-0"
                                                     >
                                                         <span
                                                             class="text-primary-emphasis ms-0 me-auto my-auto h6"
@@ -708,7 +708,7 @@ watch(
                                             <div class="row px-0">
                                                 <div class="col-12">
                                                     <div
-                                                        class="d-flex border-primary border-bottom px-0 pb-2"
+                                                        class="d-flex  px-0 pb-2"
                                                     >
                                                         <span
                                                             class="text-primary-emphasis ms-0 me-auto my-auto h6"

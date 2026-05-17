@@ -130,7 +130,7 @@ function renderChart(data) {
                         callback: function (value, index, ticks) {
                             let label = this.getLabelForValue(value);
                             return label.length > 10
-                                ? label.slice(0, 10) + "…"
+                                ? label.slice(0, 10) + "â€¦"
                                 : label;
                         },
                     },
@@ -310,7 +310,7 @@ watch(
                             <div class="col-12">
                                 <div class="card p-3 border-0">
                                     <div
-                                        class="d-flex border-bottom border-primary pb-2"
+                                        class="d-flex  pb-2"
                                     >
                                         <span
                                             class="text-primary-emphasis h6 my-auto"
@@ -343,7 +343,7 @@ watch(
                             <div class="col-12">
                                 <div class="card p-3 border-0">
                                     <div
-                                        class="d-flex border-bottom border-primary pb-2"
+                                        class="d-flex  pb-2"
                                     >
                                         <span
                                             class="text-primary-emphasis h6 my-auto"
@@ -493,7 +493,7 @@ watch(
                     <!-- Combo Pattern -->
                     <div class="col-12 col-lg-4">
                         <div class="card p-3 border-0">
-                            <div class="d-flex border-bottom border-primary">
+                            <div class="d-flex ">
                                 <span class="h6 text-primary-emphasis">
                                     {{ "Menu Combo Pattern" }}
                                 </span>
@@ -569,7 +569,7 @@ watch(
                 <div v-if="active_tab == 2" class="row mt-0 g-4">
                     <div class="col-12 col-lg-6">
                         <div class="card p-3">
-                            <div class="d-flex border-bottom border-primary">
+                            <div class="d-flex ">
                                 <span class="text-primary-emphasis h6">{{
                                     "Customer Lifetime Value"
                                 }}</span>
@@ -628,7 +628,7 @@ watch(
                     </div>
                     <div class="col-12 col-lg-6">
                         <div class="card p-3">
-                            <div class="d-flex border-bottom border-primary">
+                            <div class="d-flex ">
                                 <span class="text-primary-emphasis h6">{{
                                     "Customer Rating & Feedback"
                                 }}</span>
@@ -703,7 +703,7 @@ watch(
                     <div class="col-12 col-lg-6">
                         <div class="card bg-white p-3">
                             <div
-                                class="border-bottom border-1 border-primary d-flex"
+                                class=" d-flex"
                             >
                                 <span class="text-primary-emphasis h6">{{
                                     "Cashflow"

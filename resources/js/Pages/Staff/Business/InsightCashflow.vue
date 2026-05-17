@@ -170,7 +170,7 @@ watch(
                     <!-- Foods -->
                     <div class="card bg-white p-3">
                         <div
-                            class="border-bottom border-1 border-primary pb-1 d-flex"
+                            class=" pb-1 d-flex"
                         >
                             <span class="text-primary-emphasis h5">{{
                                 "Foods"
@@ -303,7 +303,7 @@ watch(
                     <!-- Goods -->
                     <div class="card bg-white p-3 mt-4">
                         <div
-                            class="border-bottom border-1 border-primary pb-1 d-flex"
+                            class=" pb-1 d-flex"
                         >
                             <span class="text-primary-emphasis h5">{{
                                 "Goods"

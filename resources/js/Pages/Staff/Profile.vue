@@ -891,7 +891,7 @@ watch(
                                     v-if="activeTab == 2 || isLargeScreen"
                                 >
                                     <div
-                                        class="d-flex border-bottom border-primary"
+                                        class="d-flex "
                                     >
                                         <span
                                             class="w-100 text-primary-emphasis h5"
@@ -1119,7 +1119,7 @@ watch(
                                     v-if="activeTab == 3 || isLargeScreen"
                                 >
                                     <div
-                                        class="d-flex border-bottom border-primary"
+                                        class="d-flex "
                                     >
                                         <span
                                             class="w-100 text-primary-emphasis h5"
