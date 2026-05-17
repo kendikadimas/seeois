@@ -59,16 +59,26 @@ const copyToClipboard = (text) => {
                             </div>
                         </div>
 
-                        <form @submit.prevent="submitConfig" class="space-y-6 mb-10">
+                        <div class="bg-[#004182]/5 text-[#004182] rounded-3xl p-6 border border-[#004182]/10 mb-8 text-xs font-bold flex gap-4">
+                            <div class="w-10 h-10 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 shrink-0">
+                                <i class="bi bi-shield-lock-fill text-xl"></i>
+                            </div>
+                            <div>
+                                <span class="uppercase tracking-widest text-[9px] block text-amber-600 font-black mb-1">Konfigurasi Dikunci Secara Aman</span>
+                                Semua kredensial Google Drive telah ditetapkan dan dikunci secara aman pada file konfigurasi sistem (<code class="bg-[#004182]/10 px-1.5 py-0.5 rounded font-black">filesystems.php</code>) untuk mencegah kesalahan data. Anda hanya perlu melakukan <strong>Refresh Google Token</strong> di bawah jika token kedaluwarsa.
+                            </div>
+                        </div>
+
+                        <form @submit.prevent class="space-y-6 mb-10 opacity-75">
                             <div>
                                 <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ps-1">Application URL (APP_URL)</label>
                                 <input 
                                     v-model="form.app_url"
                                     type="text" 
-                                    class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-[#004182] focus:ring-2 focus:ring-[#004182]/10 focus:border-[#004182] transition-all"
+                                    disabled
+                                    class="w-full px-5 py-4 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-gray-500 cursor-not-allowed transition-all"
                                     placeholder="Contoh: http://localhost:8000"
                                 />
-                                <p class="text-[10px] text-gray-400 mt-2 font-medium ps-1">Pastikan URL ini sesuai dengan yang Anda buka di browser saat ini.</p>
                             </div>
                             
                             <div class="grid grid-cols-2 gap-4">
@@ -77,7 +87,8 @@ const copyToClipboard = (text) => {
                                     <input 
                                         v-model="form.google_client_id"
                                         type="text" 
-                                        class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-[#004182] focus:ring-2 focus:ring-[#004182]/10 focus:border-[#004182] transition-all"
+                                        disabled
+                                        class="w-full px-5 py-4 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-gray-500 cursor-not-allowed transition-all"
                                         placeholder="Google Client ID"
                                     />
                                 </div>
@@ -86,7 +97,8 @@ const copyToClipboard = (text) => {
                                     <input 
                                         v-model="form.google_client_secret"
                                         type="password" 
-                                        class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-[#004182] focus:ring-2 focus:ring-[#004182]/10 focus:border-[#004182] transition-all"
+                                        disabled
+                                        class="w-full px-5 py-4 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-gray-500 cursor-not-allowed transition-all"
                                         placeholder="Google Client Secret"
                                     />
                                 </div>
@@ -97,14 +109,10 @@ const copyToClipboard = (text) => {
                                 <input 
                                     v-model="form.google_drive_folder"
                                     type="text" 
-                                    class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-[#004182] focus:ring-2 focus:ring-[#004182]/10 focus:border-[#004182] transition-all"
-                                    placeholder="Google Drive Folder ID (Contoh: 1A2B3C4D...)"
+                                    disabled
+                                    class="w-full px-5 py-4 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-gray-500 cursor-not-allowed transition-all"
+                                    placeholder="Google Drive Folder ID"
                                 />
-                                <p class="text-[10px] text-orange-500 mt-2 font-medium ps-1">
-                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                                    <strong>PENTING:</strong> Masukkan <strong>Folder ID</strong> Anda (deretan karakter unik dari URL folder Google Drive), <strong>BUKAN</strong> nama folder.
-                                    Ini sangat penting untuk mencegah bug duplikasi folder tak terbatas di Google Drive Anda.
-                                </p>
                             </div>
 
                             <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
@@ -123,25 +131,9 @@ const copyToClipboard = (text) => {
                                 <span v-if="env.has_refresh_token" class="px-3 py-1 bg-green-100 text-green-600 rounded-full text-[9px] font-black uppercase tracking-widest">Active</span>
                                 <span v-else class="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-[9px] font-black uppercase tracking-widest">Not Set</span>
                             </div>
-
-                            <button 
-                                type="submit"
-                                :disabled="form.processing"
-                                class="w-full py-4 bg-[#FFD700] text-[#004182] rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                <i class="bi bi-save2 me-2"></i>
-                                {{ form.processing ? 'Menyimpan...' : 'Simpan Konfigurasi' }}
-                            </button>
                         </form>
 
-                        <div class="bg-[#004182]/5 rounded-3xl p-6 border border-[#004182]/10 mb-6">
-                            <p class="text-xs text-gray-600 leading-relaxed font-medium">
-                                <i class="bi bi-info-circle-fill text-[#004182] mr-2"></i>
-                                Setelah menyimpan Client ID & Secret, klik tombol di bawah untuk mendapatkan <strong>Refresh Token</strong> baru.
-                            </p>
-                        </div>
-
-                        <a href="/google-drive/auth" class="flex items-center justify-center gap-3 w-full py-5 border-2 border-[#004182] text-[#004182] rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#004182] hover:text-white transition-all">
+                        <a href="/google-drive/auth" class="flex items-center justify-center gap-3 w-full py-5 bg-[#004182] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#003162] hover:shadow-xl transition-all">
                             <i class="bi bi-arrow-repeat text-lg"></i>
                             Refresh Google Token
                         </a>
