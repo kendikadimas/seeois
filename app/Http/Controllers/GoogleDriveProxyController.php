@@ -14,29 +14,18 @@ class GoogleDriveProxyController extends Controller
      */
     public function stream($path)
     {
+        $cacheKey = 'gd_proxy_' . md5($path);
         try {
             $disk = Storage::disk('google');
 
-            if (!$disk->exists($path)) {
-                Log::warning('Google Drive Proxy: File does not exist: ' . $path);
-                try {
-                    $contents = collect($disk->listContents('', true)->toArray())
-                        ->map(fn($item) => $item['path'] ?? '')
-                        ->filter()
-                        ->take(20)
-                        ->toArray();
-                    Log::warning('Google Drive Proxy: First 20 files found on disk: ', $contents);
-                } catch (\Throwable $err) {
-                    Log::error('Google Drive Proxy: Failed listing files: ' . $err->getMessage());
-                }
-                abort(404, 'File not found');
-            }
-
-            // Cache binary files for 24 hours to ensure high speed and low Google API overhead
-            $cacheKey = 'gd_proxy_' . md5($path);
             $fileData = Cache::remember($cacheKey, 86400, function () use ($disk, $path) {
+                // Read the file directly, which is extremely robust
+                $content = $disk->get($path);
+                if ($content === false || $content === null) {
+                    throw new \Exception("File data is empty or could not be read");
+                }
                 return [
-                    'content' => $disk->get($path),
+                    'content' => $content,
                     'mime' => $disk->mimeType($path) ?? 'image/webp'
                 ];
             });
@@ -48,6 +37,7 @@ class GoogleDriveProxyController extends Controller
             ]);
         } catch (\Throwable $e) {
             Log::error('Google Drive Proxy Error for path (' . $path . '): ' . $e->getMessage());
+            Cache::forget($cacheKey);
             abort(404, 'Error loading assets');
         }
     }
