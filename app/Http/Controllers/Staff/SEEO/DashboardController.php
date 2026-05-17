@@ -29,26 +29,18 @@ class DashboardController extends Controller
             Log::warning('Failed to resolve storage disk', ['error' => $e->getMessage()]);
         }
 
-        $billboard_list = Billboard::all()->map(function ($billboard) use ($disk) {
-            if ($billboard->image && $disk) {
-                try {
-                    $billboard->full_image_url = $disk->url('images/billboard/' . $billboard->image);
-                } catch (\Throwable $e) {
+        $billboard_list = Billboard::all()->map(function ($billboard) {
+            if ($billboard->image) {
+                if (config('app.env') === 'production') {
+                    $billboard->full_image_url = url('/storage/google/images/billboard/' . $billboard->image);
+                } else {
                     $billboard->full_image_url = '/storage/images/billboard/' . $billboard->image;
                 }
             }
             return $billboard;
         });
 
-        // Resolve profile disk once
-        $profileDisk = null;
-        if (config('app.env') === 'production') {
-            try {
-                $profileDisk = Storage::disk('google');
-            } catch (\Throwable $e) {}
-        }
-
-        $post_list = Post::with('user')->orderBy('created_at', 'desc')->limit(50)->get()->map(function ($post) use ($profileDisk) {
+        $post_list = Post::with('user')->orderBy('created_at', 'desc')->limit(50)->get()->map(function ($post) {
             if ($post->anonymus) {
                 $post->full_profile_image_url = '/storage/local/images/compro/anonymous.png'; // Path icon anonim
                 return $post;
@@ -56,11 +48,11 @@ class DashboardController extends Controller
 
             $fallbackUrl = 'https://ui-avatars.com/api/?name=' . urlencode($post->user?->name ?? 'User') . '&color=7F9CF5&background=EBF4FF';
             
-            if ($post->user && $post->user->profile_image && $profileDisk) {
-                try {
-                    $post->user->full_profile_image_url = $profileDisk->url('images/profile/' . $post->user->profile_image);
-                } catch (\Throwable $e) {
-                    $post->user->full_profile_image_url = $fallbackUrl;
+            if ($post->user && $post->user->profile_image) {
+                if (config('app.env') === 'production') {
+                    $post->user->full_profile_image_url = url('/storage/google/images/profile/' . $post->user->profile_image);
+                } else {
+                    $post->user->full_profile_image_url = '/storage/images/profile/' . $post->user->profile_image;
                 }
             } else {
                 if ($post->user) {

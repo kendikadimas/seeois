@@ -41,12 +41,7 @@ class ProfileController extends Controller
             try {
                 $path = 'images/profile/' . $profile->profile_image;
                 if (config('app.env') === 'production') {
-                    $disk = Storage::disk('google');
-                    if ($disk->exists($path)) {
-                        $profile->full_profile_image_url = '/storage/images/profile/' . $profile->profile_image;
-                    } else {
-                        $profile->full_profile_image_url = $fallbackUrl;
-                    }
+                    $profile->full_profile_image_url = url('/storage/google/images/profile/' . $profile->profile_image);
                 } else {
                     // In local, if we have a filename but no google drive access, check local public disk
                     if (Storage::disk('public')->exists($path)) {

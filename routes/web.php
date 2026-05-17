@@ -76,6 +76,9 @@ Route::get('/bingo', function () {
 // Google Authentication
 Route::get('/google/auth/callback', [GoogleController::class, 'callback']);
 
+// Google Drive Asset Secure Proxy Route
+Route::get('/storage/google/{path}', [App\Http\Controllers\GoogleDriveProxyController::class, 'stream'])->where('path', '.*')->name('google.drive.proxy');
+
 // Customer
 Route::get('/shop/home/{tab?}', [ShopController::class, 'index'])->name('shop');
 
