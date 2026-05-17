@@ -117,12 +117,12 @@
     "/build/assets/RegisterGoogle-B_DA3RmB.css"
   ],
   "resources/js/Pages/Auth/ResetPassword.vue": [
-    "/build/assets/ResetPassword-BAocvqUq.js",
-    "/build/assets/ResetPassword-DJXNwB7H.css"
+    "/build/assets/ResetPassword-DwDV-eLs.js",
+    "/build/assets/ResetPassword-BWfT4x2O.css"
   ],
-  "resources/js/Pages/Auth/ResetPassword.vue?vue&type=style&index=0&scoped=f550f921&lang.css": [
-    "/build/assets/ResetPassword-BAocvqUq.js",
-    "/build/assets/ResetPassword-DJXNwB7H.css"
+  "resources/js/Pages/Auth/ResetPassword.vue?vue&type=style&index=0&scoped=1507ebc0&lang.css": [
+    "/build/assets/ResetPassword-DwDV-eLs.js",
+    "/build/assets/ResetPassword-BWfT4x2O.css"
   ],
   "resources/js/Pages/Auth/VerifyEmail.vue": [
     "/build/assets/VerifyEmail-C-IEKhJJ.js",

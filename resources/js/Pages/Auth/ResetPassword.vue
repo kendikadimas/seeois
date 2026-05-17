@@ -83,7 +83,6 @@ const submit = () => {
                                     autofocus
                                     autocomplete="username"
                                     placeholder="user@mail.com"
-                                    readonly 
                                 />
                                 <label for="email">Email</label>
                                 <InputError class="mt-1" :message="form.errors.email" />
