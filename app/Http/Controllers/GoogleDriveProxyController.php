@@ -22,7 +22,8 @@ class GoogleDriveProxyController extends Controller
             $fileData = Cache::get($cacheKey);
 
             // If cache is empty or has invalid/empty content, fetch fresh from Google Drive
-            if (!$fileData || !is_array($fileData) || empty($fileData['content'])) {
+            // Using content_base64 is 100% safe for database-backed cache drivers (preventing SQLSTATE encoding errors)
+            if (!$fileData || !is_array($fileData) || empty($fileData['content_base64'])) {
                 // Clear the cache key to be clean
                 Cache::forget($cacheKey);
 
@@ -32,7 +33,7 @@ class GoogleDriveProxyController extends Controller
                 }
 
                 $fileData = [
-                    'content' => $content,
+                    'content_base64' => base64_encode($content),
                     'mime' => $disk->mimeType($path) ?? 'image/webp'
                 ];
 
@@ -40,12 +41,14 @@ class GoogleDriveProxyController extends Controller
                 Cache::put($cacheKey, $fileData, 86400);
             }
 
+            $rawContent = base64_decode($fileData['content_base64']);
+
             // Safely clear any previous output buffers to avoid contamination and browser ERR_INVALID_RESPONSE
             if (ob_get_level()) {
                 ob_end_clean();
             }
 
-            return Response::make($fileData['content'], 200, [
+            return Response::make($rawContent, 200, [
                 'Content-Type' => $fileData['mime'],
                 'Cache-Control' => 'public, max-age=31536000, immutable',
                 'Access-Control-Allow-Origin' => '*',
