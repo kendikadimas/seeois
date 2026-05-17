@@ -10,6 +10,7 @@ const props = defineProps({
 const form = useForm({
     google_client_id: props.env.google_client_id || '',
     google_client_secret: props.env.google_client_secret || '',
+    google_drive_folder: props.env.google_drive_folder || '',
     app_url: props.env.app_url || '',
 });
 
@@ -89,6 +90,21 @@ const copyToClipboard = (text) => {
                                         placeholder="Google Client Secret"
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ps-1">Google Drive Folder ID</label>
+                                <input 
+                                    v-model="form.google_drive_folder"
+                                    type="text" 
+                                    class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-[#004182] focus:ring-2 focus:ring-[#004182]/10 focus:border-[#004182] transition-all"
+                                    placeholder="Google Drive Folder ID (Contoh: 1A2B3C4D...)"
+                                />
+                                <p class="text-[10px] text-orange-500 mt-2 font-medium ps-1">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                    <strong>PENTING:</strong> Masukkan <strong>Folder ID</strong> Anda (deretan karakter unik dari URL folder Google Drive), <strong>BUKAN</strong> nama folder.
+                                    Ini sangat penting untuk mencegah bug duplikasi folder tak terbatas di Google Drive Anda.
+                                </p>
                             </div>
 
                             <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">

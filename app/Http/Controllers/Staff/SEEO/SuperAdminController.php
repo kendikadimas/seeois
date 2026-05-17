@@ -22,6 +22,7 @@ class SuperAdminController extends Controller
                 'has_refresh_token' => !empty(env('GOOGLE_DRIVE_REFRESH_TOKEN')),
                 'google_client_id'  => env('GOOGLE_DRIVE_CLIENT_ID'),
                 'google_client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+                'google_drive_folder'  => env('GOOGLE_DRIVE_FOLDER'),
                 'app_url'           => env('APP_URL'),
                 'callback_uri'      => url('/google-drive/callback'),
             ]
@@ -36,16 +37,19 @@ class SuperAdminController extends Controller
         $data = $request->validate([
             'google_client_id'     => 'required|string',
             'google_client_secret' => 'required|string',
+            'google_drive_folder'  => 'required|string',
             'app_url'              => 'required|url',
         ]);
 
         $this->updateEnv('GOOGLE_DRIVE_CLIENT_ID', $data['google_client_id']);
         $this->updateEnv('GOOGLE_DRIVE_CLIENT_SECRET', $data['google_client_secret']);
+        $this->updateEnv('GOOGLE_DRIVE_FOLDER', $data['google_drive_folder']);
         $this->updateEnv('APP_URL', $data['app_url']);
 
         // Update current process environment so the redirect works correctly
         putenv("GOOGLE_DRIVE_CLIENT_ID={$request->google_client_id}");
         putenv("GOOGLE_DRIVE_CLIENT_SECRET={$request->google_client_secret}");
+        putenv("GOOGLE_DRIVE_FOLDER={$request->google_drive_folder}");
 
         return redirect()->back()->with('notif', [
             'type'    => 'success',
