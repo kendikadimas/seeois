@@ -15,8 +15,8 @@ class GoogleDriveAuthController extends Controller
     public function __construct()
     {
         $this->client = new Client();
-        $this->client->setClientId(env('GOOGLE_DRIVE_CLIENT_ID'));
-        $this->client->setClientSecret(env('GOOGLE_DRIVE_CLIENT_SECRET'));
+        $this->client->setClientId(config('filesystems.disks.google.clientId'));
+        $this->client->setClientSecret(config('filesystems.disks.google.clientSecret'));
         
         // Callback URL (Pastikan URL ini didaftarkan di Google Cloud Console)
         $this->client->setRedirectUri(url('/google-drive/callback'));
@@ -71,22 +71,31 @@ class GoogleDriveAuthController extends Controller
         $path = base_path('.env');
         if (File::exists($path)) {
             $contents = File::get($path);
-            
-            // Hapus whitespace berlebih
             $value = trim($value);
             
-            // Cek apakah key sudah ada di .env
-            if (preg_match("/^{$key}=/m", $contents)) {
-                $newContents = preg_replace(
-                    "/^{$key}=.*/m",
-                    "{$key}=" . (preg_match('/\s/', $value) ? "\"{$value}\"" : $value),
-                    $contents
-                );
-            } else {
-                // Jika belum ada, tambahkan di baris baru
-                $newContents = $contents . "\n{$key}=" . (preg_match('/\s/', $value) ? "\"{$value}\"" : $value);
+            // Format value: quote it if it contains spaces or special characters
+            $formattedValue = (preg_match('/\s/', $value) || preg_match('/[\'"#]/', $value)) 
+                ? '"' . str_replace('"', '\\"', $value) . '"' 
+                : $value;
+
+            // Split file into lines (handling both Unix and Windows line endings)
+            $lines = explode("\n", str_replace("\r", "", $contents));
+            $keyExists = false;
+
+            foreach ($lines as $i => $line) {
+                // Check if the line starts with KEY= (ignoring leading spaces)
+                if (strpos(trim($line), $key . '=') === 0) {
+                    $lines[$i] = $key . '=' . $formattedValue;
+                    $keyExists = true;
+                    break;
+                }
             }
-            
+
+            if (!$keyExists) {
+                $lines[] = $key . '=' . $formattedValue;
+            }
+
+            $newContents = implode("\n", $lines);
             File::put($path, $newContents);
         }
     }

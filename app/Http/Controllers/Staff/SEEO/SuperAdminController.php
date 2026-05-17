@@ -61,16 +61,29 @@ class SuperAdminController extends Controller
             $contents = \File::get($path);
             $value = trim($value);
             
-            if (preg_match("/^{$key}=/m", $contents)) {
-                $newContents = preg_replace(
-                    "/^{$key}=.*/m",
-                    "{$key}=" . (preg_match('/\s/', $value) ? "\"{$value}\"" : $value),
-                    $contents
-                );
-            } else {
-                $newContents = $contents . "\n{$key}=" . (preg_match('/\s/', $value) ? "\"{$value}\"" : $value);
+            // Format value: quote it if it contains spaces or special characters
+            $formattedValue = (preg_match('/\s/', $value) || preg_match('/[\'"#]/', $value)) 
+                ? '"' . str_replace('"', '\\"', $value) . '"' 
+                : $value;
+
+            // Split file into lines (handling both Unix and Windows line endings)
+            $lines = explode("\n", str_replace("\r", "", $contents));
+            $keyExists = false;
+
+            foreach ($lines as $i => $line) {
+                // Check if the line starts with KEY= (ignoring leading spaces)
+                if (strpos(trim($line), $key . '=') === 0) {
+                    $lines[$i] = $key . '=' . $formattedValue;
+                    $keyExists = true;
+                    break;
+                }
             }
-            
+
+            if (!$keyExists) {
+                $lines[] = $key . '=' . $formattedValue;
+            }
+
+            $newContents = implode("\n", $lines);
             \File::put($path, $newContents);
         }
     }
