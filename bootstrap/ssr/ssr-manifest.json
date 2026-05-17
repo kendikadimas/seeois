@@ -323,7 +323,7 @@
     "/build/assets/Dashboard-BeGjJgLQ.css"
   ],
   "resources/js/Pages/Staff/SEEO/Department.vue": [
-    "/build/assets/Department-CKcwNLwX.js",
+    "/build/assets/Department-DBPEJJPG.js",
     "/build/assets/vue-select-Cc06Veje.css"
   ],
   "resources/js/Pages/Staff/SEEO/Employee.vue": [
@@ -361,12 +361,12 @@
     "/build/assets/PinnedDocs-CkufpWGy.css"
   ],
   "resources/js/Pages/Staff/SEEO/Program.vue": [
-    "/build/assets/Program-D2A1W9UO.js",
-    "/build/assets/Program-D40gq8G6.css"
+    "/build/assets/Program-BkEj0pZP.js",
+    "/build/assets/Program-D4bCWZeq.css"
   ],
-  "resources/js/Pages/Staff/SEEO/Program.vue?vue&type=style&index=0&scoped=de54e79f&lang.css": [
-    "/build/assets/Program-D2A1W9UO.js",
-    "/build/assets/Program-D40gq8G6.css"
+  "resources/js/Pages/Staff/SEEO/Program.vue?vue&type=style&index=0&scoped=2769cac8&lang.css": [
+    "/build/assets/Program-BkEj0pZP.js",
+    "/build/assets/Program-D4bCWZeq.css"
   ],
   "resources/js/Pages/Staff/SEEO/SeminarRegistrations.vue": [
     "/build/assets/SeminarRegistrations-CwVmphxN.js",

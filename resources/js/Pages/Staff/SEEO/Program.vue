@@ -852,7 +852,7 @@ watch(
                                                         >
                                                             <img
                                                                 :src="
-                                                                    '/storage/local/images/log/' +
+                                                                    '/storage/images/log/' +
                                                                     program.id +
                                                                     '/' +
                                                                     logbook.image
@@ -910,7 +910,7 @@ watch(
                                                                             >
                                                                                 <img
                                                                                     :src="
-                                                                                        '/storage/local/images/log/' +
+                                                                                        '/storage/images/log/' +
                                                                                         program.id +
                                                                                         '/' +
                                                                                         selectedLogbookImage
@@ -925,7 +925,7 @@ watch(
                                                                         >
                                                                             <a
                                                                                 :href="
-                                                                                    '/storage/local/images/log/' +
+                                                                                    '/storage/images/log/' +
                                                                                     program.id +
                                                                                     '/' +
                                                                                     selectedLogbookImage
@@ -959,12 +959,11 @@ watch(
                                                                 >
                                                                 <button
                                                                     v-if="
-                                                                        auth_user.roles_id == 99 || auth_user.id ==
-                                                                        program.pic_id
+                                                                        auth_user.roles_id == 99 || auth_user.roles_id == 3
                                                                     "
                                                                     @click="
                                                                         confirmation(
-                                                                            `/seeo/staff/program/logbook/validate/${logbook.id}`,
+                                                                            `/seeo/staff/logbook/validate/${logbook.id}`,
                                                                             'Are you sure this log book is ' +
                                                                                 (logbook.validated >
                                                                                 0
@@ -990,8 +989,7 @@ watch(
                                                                 </button>
                                                                 <span
                                                                     v-if="
-                                                                        auth_user.id !==
-                                                                        program.pic_id
+                                                                        auth_user.roles_id != 99 && auth_user.roles_id != 3
                                                                     "
                                                                     :class="
                                                                         'text-' +

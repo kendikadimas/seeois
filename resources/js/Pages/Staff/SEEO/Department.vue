@@ -364,7 +364,7 @@ watch(
                                 >
                                     <a
                                         :id="'staff_' + (staff.id * 7 - 3)"
-                                        :href="`/profile/${staff.id}`"
+                                        :href="`/seeo/staff/profile/${staff.id}`"
                                     ></a>
                                     <div class="d-flex">
                                         <span

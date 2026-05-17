@@ -75,6 +75,11 @@ class LogbookController extends Controller
 
     function validateLog(Request $request, $id)
     {
+        $auth_user = Auth::user();
+        if (!in_array((int) $auth_user->roles_id, [3, 99])) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Only Operating role and Super Admin can validate logbooks.']);
+        }
+
         $log = Logbook::find($id);
         if (!$log) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'This log is not found. Please contact admin or try other log. ']);

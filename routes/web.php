@@ -216,7 +216,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logbook/add/{id?}', [LogbookController::class, 'insertLog'])->name('logbook.add');
     Route::post('/logbook/delete/{id?}', [LogbookController::class, 'deleteLog'])->name('logbook.delete');
-    Route::post('/logbook/validate/{id?}', [LogbookController::class, 'validateLog'])->name('logbook.validate');
+    Route::post('/logbook/validate/{id?}', [LogbookController::class, 'validateLog'])->middleware('role:3,99')->name('logbook.validate');
     Route::get('/dashboard/{advance?}', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/post/add', [DashboardController::class, 'addPost'])->name('post.add');
     Route::get('/user', [UserController::class, 'index'])->name('role');
