@@ -18,17 +18,27 @@ class GoogleDriveProxyController extends Controller
         try {
             $disk = Storage::disk('google');
 
-            $fileData = Cache::remember($cacheKey, 86400, function () use ($disk, $path) {
-                // Read the file directly, which is extremely robust
+            // Retrieve from cache
+            $fileData = Cache::get($cacheKey);
+
+            // If cache is empty or has invalid/empty content, fetch fresh from Google Drive
+            if (!$fileData || !is_array($fileData) || empty($fileData['content'])) {
+                // Clear the cache key to be clean
+                Cache::forget($cacheKey);
+
                 $content = $disk->get($path);
-                if ($content === false || $content === null) {
+                if ($content === false || $content === null || empty($content)) {
                     throw new \Exception("File data is empty or could not be read");
                 }
-                return [
+
+                $fileData = [
                     'content' => $content,
                     'mime' => $disk->mimeType($path) ?? 'image/webp'
                 ];
-            });
+
+                // Cache successful read for 24 hours
+                Cache::put($cacheKey, $fileData, 86400);
+            }
 
             return Response::make($fileData['content'], 200, [
                 'Content-Type' => $fileData['mime'],
@@ -38,7 +48,7 @@ class GoogleDriveProxyController extends Controller
         } catch (\Throwable $e) {
             Log::error('Google Drive Proxy Error for path (' . $path . '): ' . $e->getMessage());
             Cache::forget($cacheKey);
-            abort(404, 'Error loading assets');
+            abort(404, 'Error loading assets: ' . $e->getMessage());
         }
     }
 }
