@@ -32,7 +32,7 @@ class DashboardController extends Controller
         $billboard_list = Billboard::all()->map(function ($billboard) {
             if ($billboard->image) {
                 if (config('app.env') === 'production') {
-                    $billboard->full_image_url = url('/storage/google/images/billboard/' . $billboard->image);
+                    $billboard->full_image_url = url('/google-media/images/billboard/' . $billboard->image);
                 } else {
                     $billboard->full_image_url = '/storage/images/billboard/' . $billboard->image;
                 }
@@ -50,7 +50,7 @@ class DashboardController extends Controller
             
             if ($post->user && $post->user->profile_image) {
                 if (config('app.env') === 'production') {
-                    $post->user->full_profile_image_url = url('/storage/google/images/profile/' . $post->user->profile_image);
+                    $post->user->full_profile_image_url = url('/google-media/images/profile/' . $post->user->profile_image);
                 } else {
                     $post->user->full_profile_image_url = '/storage/images/profile/' . $post->user->profile_image;
                 }
