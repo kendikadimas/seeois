@@ -50,6 +50,7 @@ class SuperAdminController extends Controller
         return redirect()->back()->with('notif', [
             'type'    => 'success',
             'message' => 'Configuration updated successfully! Your changes have been saved to the environment.',
+            
         ]);
     }
 
