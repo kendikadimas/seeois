@@ -48,7 +48,8 @@ class GoogleDriveProxyController extends Controller
         } catch (\Throwable $e) {
             Log::error('Google Drive Proxy Error for path (' . $path . '): ' . $e->getMessage());
             Cache::forget($cacheKey);
-            abort(404, 'Error loading assets: ' . $e->getMessage());
+            return response("Google Drive Proxy Error for path [$path]:\n" . $e->getMessage() . "\n\nStack Trace:\n" . $e->getTraceAsString(), 500)
+                ->header('Content-Type', 'text/plain');
         }
     }
 }
