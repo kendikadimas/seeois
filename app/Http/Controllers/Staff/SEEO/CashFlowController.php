@@ -95,17 +95,17 @@ class CashFlowController extends Controller
             if ($latestConfig) {
                 $contribution_config = ContributionConfig::create([
                     'price' => $latestConfig->price ?? 0,
-                    'start' => $latestConfig->start ?? (int)date('n'),
-                    'period' => $latestConfig->period ?? 12,
+                    'start' => $latestConfig->start ?? 4,
+                    'period' => $latestConfig->period ?? 9,
                     'financial_id' => $latestConfig->financial_id ?? 0,
                     'year_id' => $yearId,
                 ]);
             } else {
-                // Safe fallback: use current month as start (1-based) and full-year period
+                // Safe fallback: use April as start (4) and 9 months period (April to December)
                 $contribution_config = ContributionConfig::create([
                     'price' => 0,
-                    'start' => (int)date('n'),
-                    'period' => 12,
+                    'start' => 4,
+                    'period' => 9,
                     'financial_id' => 0,
                     'year_id' => $yearId,
                 ]);
@@ -118,10 +118,10 @@ class CashFlowController extends Controller
             $normalizeFinancial = $contribution_config->financial_id === null;
             if ($normalizeStart || $normalizePeriod || $normalizePrice || $normalizeFinancial) {
                 $contribution_config->start = $normalizeStart
-                    ? ($latestConfig->start ?? (int)date('n'))
+                    ? ($latestConfig->start ?? 4)
                     : $contribution_config->start;
                 $contribution_config->period = $normalizePeriod
-                    ? ($latestConfig->period ?? 12)
+                    ? ($latestConfig->period ?? 9)
                     : $contribution_config->period;
                 $contribution_config->price = $normalizePrice
                     ? ($latestConfig->price ?? 0)

@@ -72,13 +72,13 @@ const form_contribution_setting = useForm({
     start:
         props.contribution_config?.financial_id > 0
             ? props.contribution_config.start
-            : new Date().getMonth() + 1,
+            : 4,
     end:
         props.contribution_config?.financial_id > 0
             ? props.contribution_config.period +
               props.contribution_config.start -
               1
-            : new Date().getMonth() + 1,
+            : 12,
 });
 const form_contribution_filter = useForm({
     keyword: props.filter.contribution.keyword,
