@@ -147,6 +147,31 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
                 }
                 $diagnostics[] = "Root Files Count: " . count($files);
                 $diagnostics[] = "Files list: \n" . implode("\n", array_slice($files, 0, 20));
+
+                // 4. Test list contents in images/billboard
+                $billboards = [];
+                try {
+                    foreach ($disk->listContents('images/billboard', false) as $item) {
+                        $billboards[] = ($item['type'] === 'dir' ? '[DIR] ' : '[FILE] ') . ($item['path'] ?? '');
+                    }
+                } catch (\Throwable $e) {
+                    $billboards[] = "Error listing: " . $e->getMessage();
+                }
+                $diagnostics[] = "\n=== BILLBOARD FILES (images/billboard) ===";
+                $diagnostics[] = count($billboards) > 0 ? implode("\n", $billboards) : "No files found in images/billboard";
+
+                // 5. Test list contents in images/profile
+                $profiles = [];
+                try {
+                    foreach ($disk->listContents('images/profile', false) as $item) {
+                        $profiles[] = ($item['type'] === 'dir' ? '[DIR] ' : '[FILE] ') . ($item['path'] ?? '');
+                    }
+                } catch (\Throwable $e) {
+                    $profiles[] = "Error listing: " . $e->getMessage();
+                }
+                $diagnostics[] = "\n=== PROFILE FILES (images/profile) ===";
+                $diagnostics[] = count($profiles) > 0 ? implode("\n", $profiles) : "No files found in images/profile";
+
             } catch (\Throwable $e) {
                 $diagnostics[] = "Disk Initialization ERROR: " . $e->getMessage();
             }
