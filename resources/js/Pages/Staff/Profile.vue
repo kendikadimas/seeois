@@ -73,7 +73,7 @@ const formAddContribution = useForm({
 });
 
 function handleSubmitUpdateProfile() {
-    formUpdateProfile.post("/seeo/profile/update", {
+    formUpdateProfile.post("/seeo/staff/profile/update", {
         onSuccess: () => {
             showUpdateProfileModal(false);
         },
@@ -86,7 +86,7 @@ function handleSubmitUpdateProfile() {
 }
 
 function handleSubmitUpdatePassword() {
-    formUpdatePassword.post("/seeo/profile/password", {
+    formUpdatePassword.post("/seeo/staff/profile/password", {
         onSuccess: () => {
             showUpdatePasswordModal(false);
             formUpdatePassword.reset();
@@ -95,7 +95,7 @@ function handleSubmitUpdatePassword() {
 }
 
 function handleSubmitLogbook() {
-    formAddLogbook.post("/seeo/logbook/add", {
+    formAddLogbook.post("/seeo/staff/logbook/add", {
         onSuccess: () => {
             formAddLogbook.reset();
             if (logbookImageRef.value) {
@@ -106,7 +106,7 @@ function handleSubmitLogbook() {
 }
 
 function handleSubmitContribution() {
-    formAddContribution.post("/seeo/contribution/insert", {
+    formAddContribution.post("/seeo/staff/contribution/insert", {
         onSuccess: () => {
             formAddContribution.reset();
             if (contributionReceiptRef.value) {
@@ -780,7 +780,7 @@ watch(
                                                 {{ "Role" }}
                                             </p>
                                             <p class="text-secondary-emphasis">
-                                                {{ profile.roles.name }}
+                                                {{ profile.roles?.name }}
                                             </p>
                                         </div>
                                     </div>
@@ -1065,7 +1065,7 @@ watch(
                                             <a
                                                 v-for="program in program_list"
                                                 :href="
-                                                    `/seeo/logbook/check/${program.program_id}/${auth_user.id}`
+                                                    `/seeo/staff/program/${program.program_id}/logbook/${auth_user.id}`
                                                 "
                                                 :class="'text-decoration-none '"
                                             >
@@ -1333,7 +1333,7 @@ watch(
                                             class="ms-auto text-primary text-decoration-none"
                                             style="font-size: 0.7rem"
                                             :href="
-                                                `/seeo/contribution/${auth_user.id}`
+                                                `/seeo/staff/contribution/${auth_user.id}`
                                             "
                                         >
                                             {{ "check my contribution" }}

@@ -28,6 +28,10 @@ class InsightController extends Controller
 {
     function index(Request $request)
     {
+        $selected_year = session('selected_year', now()->year);
+        $yearModel = \App\Models\GovernanceYear::where('year', $selected_year)->first();
+        $yearId = $yearModel ? $yearModel->id : -1;
+
         // Taste Preference
         $tasteStats = FoodsTag::select('food_tag.*')
             ->selectSub(function ($query) {
@@ -73,7 +77,9 @@ class InsightController extends Controller
         }
 
         // Customer Lifetime
-        $customer_lifetime_list = StandSales::where('customer_id', '>', 0)->select(['customer_id', 'transaction'])->get()->groupBy('customer_id');
+        $customer_lifetime_list = StandSales::where('customer_id', '>', 0)
+            ->whereYear('created_at', $selected_year)
+            ->select(['customer_id', 'transaction'])->get()->groupBy('customer_id');
         $customer_lifetime_id = collect([]);
         foreach ($customer_lifetime_list as $key => $value) {
             $customer_lifetime_id->push($key);
@@ -99,17 +105,18 @@ class InsightController extends Controller
         }
 
         // Rating and Feedback
-        $feedback = CustomerFeedback::orderBy('created_at', 'desc')->with(['customer' => function ($query) {
+        $feedback = CustomerFeedback::whereYear('created_at', $selected_year)
+            ->orderBy('created_at', 'desc')->with(['customer' => function ($query) {
             $query->select('id', 'name');
         }])->take(20)->get();
 
 
-        $stands = Stand::all();
+        $stands = Stand::where('year_id', $yearId)->get();
         $balance = BlaterianGoodBalance::find(1);
         $balance = $balance ? $balance : BlaterianGoodBalance::create();
 
-        $goods_income = GoodsSales::where('operational_id', '>', 0)->sum('transaction');
-        $goods_expense = GoodsCapital::where('operational_id', '>', 0)->sum('total_price');
+        $goods_income = GoodsSales::where('operational_id', '>', 0)->whereYear('created_at', $selected_year)->sum('transaction');
+        $goods_expense = GoodsCapital::where('operational_id', '>', 0)->whereYear('created_at', $selected_year)->sum('total_price');
 
         return Inertia::render('Staff/Business/Insight', [
             'taste_chart' => $tasteStats,
@@ -142,6 +149,10 @@ class InsightController extends Controller
 
     function cashflow(Request $request)
     {
+        $selected_year = session('selected_year', now()->year);
+        $yearModel = \App\Models\GovernanceYear::where('year', $selected_year)->first();
+        $yearId = $yearModel ? $yearModel->id : -1;
+
         // Foods
         $foods_filter_session = session('foods_balance_filter', ['category' => 'price', 'order' => 'desc']);
         // Save session to database
@@ -150,10 +161,10 @@ class InsightController extends Controller
         $foods_category = $foods_filter_session['category'];
         // $foods_category = 'created_at';
         $foods_order = $foods_filter_session['order'];
-        $foods_income_list = FoodsIncome::orderBy($foods_category, $foods_order)->with(['program', 'stand'])->get();
-        $foods_expense_list = FoodsExpense::orderBy($foods_category, $foods_order)->with(['withdraw', 'stand'])->get();
+        $foods_income_list = FoodsIncome::whereYear('created_at', $selected_year)->orderBy($foods_category, $foods_order)->with(['program', 'stand'])->get();
+        $foods_expense_list = FoodsExpense::whereYear('created_at', $selected_year)->orderBy($foods_category, $foods_order)->with(['withdraw', 'stand'])->get();
 
-        $stands = Stand::all();
+        $stands = Stand::where('year_id', $yearId)->get();
 
         // Goods
         $goods_filter_session = session('goods_balance_filter', ['category' => 'price', 'order' => 'desc']);
@@ -163,14 +174,14 @@ class InsightController extends Controller
         $goods_category = $goods_filter_session['category'];
         // $foods_category = 'created_at';
         $goods_order = $goods_filter_session['order'];
-        $cash_in_list = GoodsIncome::orderBy($goods_category, $goods_order)->with(['program', 'sales'])->get();
-        $cash_out_list = GoodsExpense::orderBy($goods_category, $goods_order)->with(['withdraw', 'capital'])->get();
+        $cash_in_list = GoodsIncome::whereYear('created_at', $selected_year)->orderBy($goods_category, $goods_order)->with(['program', 'sales'])->get();
+        $cash_out_list = GoodsExpense::whereYear('created_at', $selected_year)->orderBy($goods_category, $goods_order)->with(['withdraw', 'capital'])->get();
 
         $balance = BlaterianGoodBalance::find(1);
         $balance = $balance ? $balance : BlaterianGoodBalance::create();
 
-        $goods_income = GoodsSales::where('operational_id', '>', 0)->sum('transaction');
-        $goods_expense = GoodsCapital::where('operational_id', '>', 0)->sum('total_price');
+        $goods_income = GoodsSales::where('operational_id', '>', 0)->whereYear('created_at', $selected_year)->sum('transaction');
+        $goods_expense = GoodsCapital::where('operational_id', '>', 0)->whereYear('created_at', $selected_year)->sum('total_price');
         return Inertia::render('Staff/Business/InsightCashflow', [
             'goods' => [
                 'balance' => $balance,
@@ -204,8 +215,12 @@ class InsightController extends Controller
 
     function foodsChart()
     {
+        $selected_year = session('selected_year', now()->year);
+        $yearModel = \App\Models\GovernanceYear::where('year', $selected_year)->first();
+        $yearId = $yearModel ? $yearModel->id : -1;
+
         // Chart Data
-        $chart_raw = Stand::orderBy('updated_at', 'desc')->get(['date', 'profit', 'expense', 'income']);
+        $chart_raw = Stand::where('year_id', $yearId)->orderBy('updated_at', 'desc')->get(['date', 'profit', 'expense', 'income']);
         $chart_group = $chart_raw->groupBy(function ($chart_raw) {
             return strval(date_format(date_create($chart_raw->date), 'm'));
         });
