@@ -17,13 +17,13 @@ class SuperAdminController extends Controller
         return Inertia::render('Staff/SEEO/SuperAdminPanel', [
             'notif' => session('notif'),
             'env' => [
-                'has_google_client' => !empty(env('GOOGLE_DRIVE_CLIENT_ID')),
-                'has_google_secret' => !empty(env('GOOGLE_DRIVE_CLIENT_SECRET')),
-                'has_refresh_token' => !empty(env('GOOGLE_DRIVE_REFRESH_TOKEN')),
-                'google_client_id'  => env('GOOGLE_DRIVE_CLIENT_ID'),
-                'google_client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
-                'google_drive_folder'  => env('GOOGLE_DRIVE_FOLDER'),
-                'app_url'           => env('APP_URL'),
+                'has_google_client' => !empty(config('filesystems.disks.google.clientId')),
+                'has_google_secret' => !empty(config('filesystems.disks.google.clientSecret')),
+                'has_refresh_token' => !empty(config('filesystems.disks.google.refreshToken')),
+                'google_client_id'  => config('filesystems.disks.google.clientId'),
+                'google_client_secret' => config('filesystems.disks.google.clientSecret'),
+                'google_drive_folder'  => config('filesystems.disks.google.folder'),
+                'app_url'           => config('app.url'),
                 'callback_uri'      => url('/google-drive/callback'),
             ]
         ]);
@@ -46,6 +46,13 @@ class SuperAdminController extends Controller
         $this->updateEnv('GOOGLE_DRIVE_FOLDER', $data['google_drive_folder']);
         $this->updateEnv('APP_URL', $data['app_url']);
 
+        // Clear config cache programmatically so new env values are loaded immediately
+        try {
+            \Illuminate\Support\Facades\Artisan::call('config:clear');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Artisan config:clear failed: ' . $e->getMessage());
+        }
+
         // Update current process environment so the redirect works correctly
         putenv("GOOGLE_DRIVE_CLIENT_ID={$request->google_client_id}");
         putenv("GOOGLE_DRIVE_CLIENT_SECRET={$request->google_client_secret}");
@@ -54,7 +61,6 @@ class SuperAdminController extends Controller
         return redirect()->back()->with('notif', [
             'type'    => 'success',
             'message' => 'Configuration updated successfully! Your changes have been saved to the environment.',
-            
         ]);
     }
 

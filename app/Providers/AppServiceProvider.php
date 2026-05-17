@@ -52,7 +52,16 @@ class AppServiceProvider extends ServiceProvider
 
             try {
                 $service = new \Google\Service\Drive($client);
-                $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $config['folder'] ?? '/', $options);
+                
+                $folder = $config['folder'] ?? '/';
+                // Detect if the folder option is a Google Drive Folder ID (e.g. 14vpzj0A2vTkiKiDW0PjX_Sx2NbTYXogI)
+                // Google Drive Folder IDs are alphanumeric, may contain dashes or underscores, and are usually 28-33 chars long.
+                if ($folder !== '/' && preg_match('/^[a-zA-Z0-9-_]{25,45}$/', $folder)) {
+                    $options['sharedFolderId'] = $folder;
+                    $folder = null;
+                }
+
+                $adapter = new \Masbug\Flysystem\GoogleDriveAdapter($service, $folder, $options);
                 $driver = new \League\Flysystem\Filesystem($adapter);
 
                 return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter);
