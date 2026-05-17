@@ -15,6 +15,12 @@ window.route = function (name, params) {
     activity: "/activity",
     contact: "/contact",
     about: "/about",
+    "password.request": "/forgot-password",
+    "password.email": "/forgot-password",
+    "password.reset": "/reset-password/{token}",
+    "password.store": "/reset-password",
+    "password.update": "/password",
+    "logout": "/logout",
   };
 
   let url = routes[name] || name;
