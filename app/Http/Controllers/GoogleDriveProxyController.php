@@ -40,6 +40,11 @@ class GoogleDriveProxyController extends Controller
                 Cache::put($cacheKey, $fileData, 86400);
             }
 
+            // Safely clear any previous output buffers to avoid contamination and browser ERR_INVALID_RESPONSE
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+
             return Response::make($fileData['content'], 200, [
                 'Content-Type' => $fileData['mime'],
                 'Cache-Control' => 'public, max-age=31536000, immutable',
@@ -48,6 +53,11 @@ class GoogleDriveProxyController extends Controller
         } catch (\Throwable $e) {
             Log::error('Google Drive Proxy Error for path (' . $path . '): ' . $e->getMessage());
             Cache::forget($cacheKey);
+            
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            
             return response("Google Drive Proxy Error for path [$path]:\n" . $e->getMessage() . "\n\nStack Trace:\n" . $e->getTraceAsString(), 500)
                 ->header('Content-Type', 'text/plain');
         }
