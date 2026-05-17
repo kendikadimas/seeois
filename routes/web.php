@@ -123,10 +123,24 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
             if (!file_exists($logPath)) {
                 return 'Log file not found';
             }
-            $content = file_get_contents($logPath);
-            $lines = explode("\n", $content);
+            
+            $size = filesize($logPath);
+            $file = fopen($logPath, 'r');
+            if (!$file) {
+                return 'Could not open log file';
+            }
+            
+            // Read last 200KB of the file to be safe and extremely fast
+            $maxReadBytes = 200 * 1024;
+            $startOffset = max(0, $size - $maxReadBytes);
+            
+            fseek($file, $startOffset);
+            $data = fread($file, $maxReadBytes);
+            fclose($file);
+            
+            $lines = explode("\n", $data);
             $lastLines = array_slice($lines, -150);
-            return '<pre>' . htmlspecialchars(implode("\n", $lastLines)) . '</pre>';
+            return '<pre>Log File Size: ' . round($size / 1024 / 1024, 2) . ' MB | Showing last 150 lines:<br><br>' . htmlspecialchars(implode("\n", $lastLines)) . '</pre>';
         })->name('super.admin.debug_logs');
     });
 
