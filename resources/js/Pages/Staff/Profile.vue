@@ -911,6 +911,7 @@ watch(
                                     </div>
                                     <!-- Add Logbook -->
                                     <form
+                                        v-if="auth_user.id == profile.id"
                                         @submit.prevent="handleSubmitLogbook()"
                                     >
                                         <div class="mt-2">
@@ -1055,7 +1056,7 @@ watch(
                                                 data-bs-toggle="collapse"
                                                 data-bs-target="#programListCollapse"
                                             >
-                                                {{ "check my logbook" }}
+                                                {{ auth_user.id == profile.id ? "check my logbook" : "check logbook" }}
                                             </button>
                                         </div>
                                         <div
@@ -1065,7 +1066,7 @@ watch(
                                             <a
                                                 v-for="program in program_list"
                                                 :href="
-                                                    `/seeo/staff/program/${program.program_id}/logbook/${auth_user.id}`
+                                                    `/seeo/staff/program/${program.program_id}/logbook/${profile.id}`
                                                 "
                                                 :class="'text-decoration-none '"
                                             >
@@ -1221,6 +1222,7 @@ watch(
                                     </div>
                                     <!-- Add Contribution -->
                                     <form
+                                        v-if="auth_user.id == profile.id"
                                         @submit.prevent="
                                             handleSubmitContribution()
                                         "
@@ -1333,10 +1335,10 @@ watch(
                                             class="ms-auto text-primary text-decoration-none"
                                             style="font-size: 0.7rem"
                                             :href="
-                                                `/seeo/staff/contribution/${auth_user.id}`
+                                                `/seeo/staff/contribution/${profile.id}`
                                             "
                                         >
-                                            {{ "check my contribution" }}
+                                            {{ auth_user.id == profile.id ? "check my contribution" : "check contribution" }}
                                             <i
                                                 class="bi bi-box-arrow-up-right ms-1"
                                             ></i>
