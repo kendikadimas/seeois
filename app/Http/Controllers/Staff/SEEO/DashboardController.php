@@ -42,7 +42,7 @@ class DashboardController extends Controller
 
         $post_list = Post::with('user')->orderBy('created_at', 'desc')->limit(50)->get()->map(function ($post) {
             if ($post->anonymus) {
-                $post->full_profile_image_url = '/storage/local/images/compro/anonymous.png'; // Path icon anonim
+                $post->full_profile_image_url = 'https://ui-avatars.com/api/?name=%3F&color=718096&background=EDF2F7'; // Beautiful anonymous fallback avatar "?"
                 return $post;
             }
 
