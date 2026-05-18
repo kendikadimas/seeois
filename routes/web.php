@@ -223,6 +223,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::post('/user', [UserController::class, 'filterEmployee'])->name('role.filter');
     Route::post('/user/role/update', [UserController::class, 'update'])->name('role.update');
     Route::post('/user/role/remove/{id}', [UserController::class, 'delete'])->name('role.remove');
+    
     Route::post('/user/recruit/{id}', [UserController::class, 'addEmployee'])->name('employee.add');
     Route::post('/user/level/add', [UserController::class, 'addOrEditLevel'])->name('level.add.edit');
     Route::post('/payroll/balance/add', [UserController::class, 'setPayrollBalance'])->name('payroll.balance.add');
