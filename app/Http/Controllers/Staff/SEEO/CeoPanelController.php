@@ -31,10 +31,16 @@ class CeoPanelController extends Controller
             }))
             ->get();
 
-        // Users without roles (not yet staff / customers)
-        $nonStaff = User::whereNull('roles_id')
-            ->orderBy('name')
-            ->get();
+        // Users without roles OR staff from other years (not yet staff in the active year)
+        $nonStaff = User::where(function ($q) use ($activeYear) {
+            $q->whereNull('roles_id')
+              ->when($activeYear, fn($q2) => $q2->orWhere(function ($q3) use ($activeYear) {
+                  $q3->whereNotNull('roles_id')
+                     ->where('year_id', '!=', $activeYear->id);
+              }));
+        })
+        ->orderBy('name')
+        ->get();
 
         $roles = Role::orderBy('id')->get();
 
@@ -149,14 +155,14 @@ class CeoPanelController extends Controller
     /** Promote a non-staff user to staff (assign default role 4 = Staff) */
     public function promoteUser(Request $request, User $user)
     {
-        if ($user->roles_id) {
+        $activeYear = GovernanceYear::current();
+
+        if ($user->roles_id && $user->year_id === $activeYear?->id) {
             return back()->with('notif', [
                 'type'    => 'warning',
                 'message' => "{$user->name} sudah menjadi staff.",
             ]);
         }
-
-        $activeYear = GovernanceYear::current();
 
         $user->roles_id = 4; // default: Staff
         $user->year_id  = $activeYear?->id;

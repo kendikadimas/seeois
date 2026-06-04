@@ -52,8 +52,17 @@ class UserController extends Controller
             : $empQuery->orderBy($employee_category, $employee_order)->get();
 
         // --- Non-staff (customers), not scoped by year ---
+        $unempQuery = User::where(function ($q) use ($yearId) {
+            $q->whereNull('roles_id')
+              ->when($yearId, function ($q2) use ($yearId) {
+                  $q2->orWhere(function ($q3) use ($yearId) {
+                      $q3->whereNotNull('roles_id')
+                         ->where('year_id', '!=', $yearId);
+                  });
+              });
+        });
         $unemployees = $unemployee_keyword !== null
-            ? User::where('roles_id', '=', null)->orderByRaw("
+            ? $unempQuery->orderByRaw("
                 CASE
                     WHEN name = ? THEN 1
                     WHEN name LIKE ? THEN 2
@@ -61,7 +70,7 @@ class UserController extends Controller
                     ELSE 4
                 END 
             ", [$unemployee_keyword, "$unemployee_keyword%", "%$unemployee_keyword%"])->get()
-            : User::where('roles_id', '=', null)->orderBy($unemployee_category, $unemployee_order)->get();
+            : $unempQuery->orderBy($unemployee_category, $unemployee_order)->get();
 
         $payroll_balance = PayrollBalance::first();
         if (!$payroll_balance) {
@@ -131,7 +140,10 @@ class UserController extends Controller
             return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'User not found!']);
         }
 
+        [$activeYear, $yearId] = $this->activeYearScope();
+
         $user->roles_id = 4;
+        $user->year_id  = $yearId;
 
         // save new role
         if ($user->save() > 0) {
@@ -200,6 +212,7 @@ class UserController extends Controller
         }
         $user->roles_id = NULL;
         $user->department_id = NULL;
+        $user->year_id = NULL;
         if ($user->save() > 0) {
             return redirect()->route('role')->with('notif', ['type' => 'info', 'message' => $user->name . ' account has been removed from Employee List.']);
         } else {
