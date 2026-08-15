@@ -79,7 +79,8 @@ describe('CEO POST routes (role 1)', function () {
     test('CEO can assign role to staff', function () {
         $staff = staffUser(4);
 
-        $this->post(STAFF_PREFIX . "/ceo/user/{$staff->id}/role", [
+        $this->post(STAFF_PREFIX . "/user/role/update", [
+            'user_id' => $staff->id,
             'roles_id' => 10,
         ])->assertRedirect();
 
@@ -87,7 +88,8 @@ describe('CEO POST routes (role 1)', function () {
     });
 
     test('CEO cannot change own role', function () {
-        $this->post(STAFF_PREFIX . '/ceo/user/' . $this->ceo->id . '/role', [
+        $this->post(STAFF_PREFIX . "/user/role/update", [
+            'user_id' => $this->ceo->id,
             'roles_id' => 2,
         ])
             ->assertRedirect()

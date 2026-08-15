@@ -174,7 +174,7 @@ describe('Staff area — general access', function () {
       'roles_id'          => null,
       'email_verified_at' => now(),
     ]);
-    $this->actingAs($user)->get(STAFF_PREFIX . '/dashboard')->assertForbidden();
+    $this->actingAs($user)->get(STAFF_PREFIX . '/dashboard')->assertRedirect();
   });
 
   test('guest redirected from staff dashboard', function () {

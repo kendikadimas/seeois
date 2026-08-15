@@ -12,8 +12,8 @@ test('password can be updated', function () {
 
     $response = $this
         ->actingAs($user)
-        ->from('/profile')
-        ->post('/password/change', [
+        ->from('/seeo/staff/profile')
+        ->post('/seeo/staff/profile/password', [
             'old_password' => 'OldPassword123!',
             'password' => 'NewPassword123!',
             'password_confirmation' => 'NewPassword123!',
@@ -21,7 +21,7 @@ test('password can be updated', function () {
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect('/profile');
+        ->assertRedirect('/seeo/staff/profile');
 
     $this->assertTrue(Hash::check('NewPassword123!', $user->refresh()->password));
 });
@@ -35,8 +35,8 @@ test('correct password must be provided to update password', function () {
 
     $response = $this
         ->actingAs($user)
-        ->from('/profile')
-        ->post('/password/change', [
+        ->from('/seeo/staff/profile')
+        ->post('/seeo/staff/profile/password', [
             'old_password' => 'wrong-password',
             'password' => 'NewPassword123!',
             'password_confirmation' => 'NewPassword123!',
@@ -44,5 +44,5 @@ test('correct password must be provided to update password', function () {
 
     $response
         ->assertSessionHas('notif.type', 'warning')
-        ->assertRedirect('/profile');
+        ->assertRedirect('/seeo/staff/profile');
 });

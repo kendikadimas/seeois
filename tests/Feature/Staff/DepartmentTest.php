@@ -4,18 +4,18 @@ use App\Models\Department;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
+
 
 describe('Department - Index', function () {
     test('CEO can access department index page', function () {
         $user = User::factory()->create(['roles_id' => 1]);
-        $this->actingAs($user)->get('/seeo/structural')
+        $this->actingAs($user)->get('/seeo/staff/structural')
             ->assertStatus(200)
             ->assertInertia(fn ($page) => $page->component('Staff/SEEO/Structural'));
     });
 
     test('guest is redirected to login', function () {
-        $this->get('/seeo/structural')->assertRedirect('/login');
+        $this->get('/seeo/staff/structural')->assertRedirect('/login');
     });
 });
 
@@ -28,7 +28,7 @@ describe('Department - Store', function () {
     test('CEO can create new department', function () {
         $manager = User::factory()->create(['roles_id' => 2]); // Manager
 
-        $response = $this->post('/department/add', [
+        $response = $this->post('/seeo/staff/department/add', [
             'name' => 'IT Research',
             'manager_id' => $manager->id,
         ]);
@@ -43,7 +43,7 @@ describe('Department - Store', function () {
     });
 
     test('department creation fails without name', function () {
-        $this->post('/department/add', [
+        $this->post('/seeo/staff/department/add', [
             'manager_id' => 1,
         ])->assertSessionHasErrors('name');
     });
@@ -65,7 +65,7 @@ describe('Department - Update', function () {
     });
 
     test('CEO can update department name and manager', function () {
-        $response = $this->post("/department/update/{$this->department->id}", [
+        $response = $this->post("/seeo/staff/department/update/{$this->department->id}", [
             'name' => 'New Dept Name',
             'manager_id' => $this->manager2->id,
         ]);
@@ -83,7 +83,7 @@ describe('Department - Update', function () {
             'manager_id' => $this->manager1->id,
         ]);
 
-        $this->post("/department/update/{$this->department->id}", [
+        $this->post("/seeo/staff/department/update/{$this->department->id}", [
             'name' => 'Existing Dept', // Duplicate name
             'manager_id' => $this->manager2->id,
         ])->assertSessionHasErrors('name');
@@ -104,11 +104,11 @@ describe('Department - Delete', function () {
             'expense' => 0,
         ]);
 
-        $response = $this->post("/department/delete/{$dept->id}", [
+        $response = $this->post("/seeo/staff/department/delete/{$dept->id}", [
             'password' => 'password'
         ]);
         
-        $response->assertRedirect('/seeo/structural');
+        $response->assertRedirect('/seeo/staff/structural');
         $this->assertSoftDeleted('department', ['id' => $dept->id]);
     });
 
@@ -119,7 +119,7 @@ describe('Department - Delete', function () {
             'budget' => 1000000,
         ]);
 
-        $response = $this->post("/department/delete/{$dept->id}", [
+        $response = $this->post("/seeo/staff/department/delete/{$dept->id}", [
             'password' => 'password'
         ]);
         

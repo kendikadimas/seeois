@@ -5,18 +5,18 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
+
 
 describe('Structure Index', function () {
     test('staff can view structure management page', function () {
         $user = User::factory()->create(['roles_id' => 100]); // role:100 is required for marketing
-        $this->actingAs($user)->get('/marketing/structures')
+        $this->actingAs($user)->get('/seeo/staff/marketing/structures')
             ->assertStatus(200)
             ->assertInertia(fn ($page) => $page->component('Staff/Marketing/Structures'));
     });
 
     test('guest is redirected from structure page', function () {
-        $this->get('/marketing/structures')->assertRedirect('/login');
+        $this->get('/seeo/staff/marketing/structures')->assertRedirect('/login');
     });
 });
 
@@ -28,7 +28,7 @@ describe('Structure Store', function () {
     });
 
     test('staff can create structure without image', function () {
-        $response = $this->post('/marketing/structures', [
+        $response = $this->post('/seeo/staff/marketing/structures', [
             'name'          => 'Budi Santoso',
             'role_title'    => 'Ketua Umum',
             'department_name' => 'Executive',
@@ -44,7 +44,7 @@ describe('Structure Store', function () {
     test('staff can create structure with image', function () {
         $image = UploadedFile::fake()->image('foto.jpg', 400, 400);
 
-        $this->post('/marketing/structures', [
+        $this->post('/seeo/staff/marketing/structures', [
             'name'       => 'Siti Aminah',
             'role_title' => 'Sekretaris',
             'image_path' => $image,
@@ -56,19 +56,19 @@ describe('Structure Store', function () {
     });
 
     test('structure creation fails without name', function () {
-        $this->post('/marketing/structures', [
+        $this->post('/seeo/staff/marketing/structures', [
             'role_title' => 'Bendahara',
         ])->assertSessionHasErrors('name');
     });
 
     test('structure creation fails without role_title', function () {
-        $this->post('/marketing/structures', [
+        $this->post('/seeo/staff/marketing/structures', [
             'name' => 'Ahmad',
         ])->assertSessionHasErrors('role_title');
     });
 
     test('name cannot exceed 255 characters', function () {
-        $this->post('/marketing/structures', [
+        $this->post('/seeo/staff/marketing/structures', [
             'name'       => str_repeat('a', 256),
             'role_title' => 'Anggota',
         ])->assertSessionHasErrors('name');
@@ -77,7 +77,7 @@ describe('Structure Store', function () {
     test('image must be valid image type', function () {
         $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
 
-        $this->post('/marketing/structures', [
+        $this->post('/seeo/staff/marketing/structures', [
             'name'       => 'Test',
             'role_title' => 'Test',
             'image_path' => $file,
@@ -87,7 +87,7 @@ describe('Structure Store', function () {
     test('image cannot exceed 2MB', function () {
         $bigImage = UploadedFile::fake()->image('big.jpg')->size(3000);
 
-        $this->post('/marketing/structures', [
+        $this->post('/seeo/staff/marketing/structures', [
             'name'       => 'Test',
             'role_title' => 'Test',
             'image_path' => $bigImage,
@@ -107,7 +107,7 @@ describe('Structure Update', function () {
     });
 
     test('staff can update structure name and role', function () {
-        $this->post("/marketing/structures/{$this->structure->id}", [
+        $this->post("/seeo/staff/marketing/structures/{$this->structure->id}", [
             'name'       => 'Nama Baru',
             'role_title' => 'Jabatan Baru',
         ])->assertRedirect();
@@ -118,7 +118,7 @@ describe('Structure Update', function () {
     test('staff can update structure image', function () {
         $newImage = UploadedFile::fake()->image('baru.jpg');
 
-        $this->post("/marketing/structures/{$this->structure->id}", [
+        $this->post("/seeo/staff/marketing/structures/{$this->structure->id}", [
             'name'       => 'Nama',
             'role_title' => 'Jabatan',
             'image_path' => $newImage,
@@ -136,7 +136,7 @@ describe('Structure Update', function () {
         $this->structure->save();
 
         $newImage = UploadedFile::fake()->image('new.jpg');
-        $this->post("/marketing/structures/{$this->structure->id}", [
+        $this->post("/seeo/staff/marketing/structures/{$this->structure->id}", [
             'name'       => 'Nama',
             'role_title' => 'Jabatan',
             'image_path' => $newImage,
@@ -146,7 +146,7 @@ describe('Structure Update', function () {
     });
 
     test('update fails without required fields', function () {
-        $this->post("/marketing/structures/{$this->structure->id}", [])
+        $this->post("/seeo/staff/marketing/structures/{$this->structure->id}", [])
             ->assertSessionHasErrors(['name', 'role_title']);
     });
 });
@@ -164,7 +164,7 @@ describe('Structure Delete', function () {
             'role_title' => 'Jabatan',
         ]);
 
-        $this->delete("/marketing/structures/{$structure->id}")->assertRedirect();
+        $this->delete("/seeo/staff/marketing/structures/{$structure->id}")->assertRedirect();
         $this->assertDatabaseMissing('structures', ['id' => $structure->id]);
     });
 
@@ -178,7 +178,8 @@ describe('Structure Delete', function () {
             'image_path' => $path,
         ]);
 
-        $this->delete("/marketing/structures/{$structure->id}");
+        $this->delete("/seeo/staff/marketing/structures/{$structure->id}");
         Storage::disk('public')->assertMissing($path);
     });
 });
+

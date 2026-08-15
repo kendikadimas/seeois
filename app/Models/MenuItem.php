@@ -84,7 +84,7 @@ class MenuItem extends Model
      */
     public function sales(): HasMany
     {
-        return $this->hasMany(Stand::class, 'menu_id');
+        return $this->hasMany(FoodOrder::class, 'menu_id');
     }
 
     /**

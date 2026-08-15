@@ -23,7 +23,6 @@ class DisbursementLetter extends Model
      */
     protected $fillable = [
         'program_id',
-        'disbursement_id',
         'letter',
     ];
 

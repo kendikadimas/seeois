@@ -3,7 +3,6 @@
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
-uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 // ============================================================
 // LOGIN
@@ -15,7 +14,7 @@ describe('Login Form', function () {
     });
 
     test('user cannot access dashboard without login', function () {
-        $this->get('/seeo/dashboard')->assertRedirect('/login');
+        $this->get('/seeo/staff/dashboard')->assertRedirect('/login');
     });
 
     test('user can login with valid credentials', function () {

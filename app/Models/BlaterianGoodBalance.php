@@ -24,6 +24,5 @@ class BlaterianGoodBalance extends Model
         'balance',
         'expense',
         'income',
-        'profit',
     ];
 }

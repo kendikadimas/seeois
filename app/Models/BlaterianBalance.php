@@ -25,7 +25,6 @@ class BlaterianBalance extends Model
         'balance',
         'expense',
         'income',
-        'profit',
     ];
 
     /**

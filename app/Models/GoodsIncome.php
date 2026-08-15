@@ -48,6 +48,6 @@ class GoodsIncome extends Model
      */
     public function program(): BelongsTo
     {
-        return $this->belongsTo(DisbursementItem::class, 'category_id');
+        return $this->belongsTo(Program::class, 'category_id');
     }
 }

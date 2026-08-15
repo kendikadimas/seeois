@@ -11,7 +11,7 @@ test('profile page is displayed', function () {
 
     $response = $this
         ->actingAs($user)
-        ->get('/profile');
+        ->get('/seeo/staff/profile');
 
     $response->assertOk();
 });
@@ -25,15 +25,15 @@ test('profile information can be updated', function () {
 
     $response = $this
         ->actingAs($user)
-        ->from('/profile')
-        ->post('/profile', [
+        ->from('/seeo/staff/profile')
+        ->post('/seeo/staff/profile/update', [
             'name' => 'Test User Long Name',
             'phone' => '081234567891',
         ]);
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect('/profile');
+        ->assertRedirect('/seeo/staff/profile');
 
     $user->refresh();
 
@@ -50,7 +50,7 @@ test('user can delete their account', function () {
 
     $response = $this
         ->actingAs($user)
-        ->delete('/profile', [
+        ->delete('/seeo/staff/profile', [
             'password' => 'password',
         ]);
 
@@ -71,14 +71,14 @@ test('correct password must be provided to delete account', function () {
 
     $response = $this
         ->actingAs($user)
-        ->from('/profile')
-        ->delete('/profile', [
+        ->from('/seeo/staff/profile')
+        ->delete('/seeo/staff/profile', [
             'password' => 'wrong-password',
         ]);
 
     $response
         ->assertSessionHasErrors('password', null, 'userDeletion')
-        ->assertRedirect('/profile');
+        ->assertRedirect('/seeo/staff/profile');
 
     $this->assertNotNull($user->fresh());
 });

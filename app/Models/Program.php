@@ -29,8 +29,6 @@ class Program extends Model
         'financial_id',
         'staff_lock',
         'pic_id',
-        'budget_approval',
-        'expense_approval',
         'budget',
         'expense',
         'disbursement',
@@ -102,6 +100,6 @@ class Program extends Model
      */
     public function disbursementItems(): HasMany
     {
-        return $this->hasMany(BudgetItem::class);
+        return $this->hasMany(DisbursementItem::class);
     }
 }

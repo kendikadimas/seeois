@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('customer_voucher', function (Blueprint $table) {
-            $table->integer('customer_id')->default(0);
-            $table->integer('voucher_id')->default(0);
-            $table->date('use_date')->nullable();
-            $table->softDeletes();
-            $table->timestamps();
+        Schema::table('foods_menu', function (Blueprint $table) {
+            $table->string('image')->nullable()->after('category');
         });
     }
 
@@ -25,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('customer_voucher');
+        Schema::table('foods_menu', function (Blueprint $table) {
+            //
+        });
     }
 };

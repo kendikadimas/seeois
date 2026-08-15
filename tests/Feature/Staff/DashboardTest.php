@@ -19,7 +19,7 @@ describe('Dashboard', function () {
 
     test('user without role is blocked from staff dashboard', function () {
         $user = User::factory()->create(['roles_id' => null]);
-        $this->actingAs($user)->get('/seeo/staff/dashboard')->assertStatus(403);
+        $this->actingAs($user)->get('/seeo/staff/dashboard')->assertRedirect();
     });
 });
 

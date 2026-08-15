@@ -6,7 +6,7 @@ use App\Models\ProgramStaff;
 use App\Models\User;
 use App\Models\BudgetItem;
 
-uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
+
 
 describe('Program Controller - Index', function () {
     beforeEach(function () {
@@ -28,12 +28,12 @@ describe('Program Controller - Index', function () {
     });
 
     test('staff can access program details', function () {
-        $this->get("/seeo/program/{$this->program->id}")
+        $this->get("/seeo/staff/program/{$this->program->id}")
             ->assertStatus(200);
     });
 
     test('redirects to department if program not found', function () {
-        $this->get('/seeo/program/9999')->assertRedirect('/seeo/structural');
+        $this->get('/seeo/staff/program/9999')->assertRedirect('/seeo/staff/structural');
     });
 });
 
@@ -51,7 +51,7 @@ describe('Program Store & Update', function () {
     test('manager can create new program in their department', function () {
         $pic = User::factory()->create(['roles_id' => 4]);
 
-        $response = $this->post("/program/add/{$this->department->id}", [
+        $response = $this->post("/seeo/staff/program/add/{$this->department->id}", [
             'name' => 'Campaign Q1',
             'pic_id' => $pic->id,
         ]);
@@ -75,7 +75,7 @@ describe('Program Store & Update', function () {
     test('cannot create program if not department manager', function () {
         $otherStaff = User::factory()->create(['roles_id' => 4]);
         
-        $response = $this->actingAs($otherStaff)->post("/program/add/{$this->department->id}", [
+        $response = $this->actingAs($otherStaff)->post("/seeo/staff/program/add/{$this->department->id}", [
             'name' => 'Campaign Q1',
             'pic_id' => $otherStaff->id,
         ]);
@@ -94,7 +94,7 @@ describe('Program Store & Update', function () {
             'pic_id' => $pic1->id,
         ]);
 
-        $response = $this->post("/program/update/{$program->id}", [
+        $response = $this->post("/seeo/staff/program/update/{$program->id}", [
             'name' => 'Updated Program Name',
             'pic_id' => $pic2->id,
         ]);
@@ -135,7 +135,7 @@ describe('Program Deletion', function () {
             'title' => 'PIC'
         ]);
 
-        $response = $this->post("/program/delete/{$program->id}");
+        $response = $this->post("/seeo/staff/program/delete/{$program->id}");
         $response->assertRedirect();
         $this->assertSoftDeleted('program', ['id' => $program->id]);
     });
@@ -148,7 +148,7 @@ describe('Program Deletion', function () {
             'budget' => 1000,
         ]);
 
-        $response = $this->post("/program/delete/{$program->id}");
+        $response = $this->post("/seeo/staff/program/delete/{$program->id}");
         $response->assertSessionHas('notif.type', 'warning');
         $this->assertDatabaseHas('program', ['id' => $program->id]);
     });
@@ -168,7 +168,7 @@ describe('Program Staff Management', function () {
     test('can add staff to program', function () {
         $staff = User::factory()->create(['roles_id' => 4]);
 
-        $response = $this->post("/program/staff/add/{$this->program->id}", [
+        $response = $this->post("/seeo/staff/program/staff/add/{$this->program->id}", [
             'staff_id' => $staff->id,
             'staff_title' => 'Developer',
         ]);
@@ -189,7 +189,7 @@ describe('Program Staff Management', function () {
             'title' => 'Developer',
         ]);
 
-        $this->post("/program/staff/delete/{$staff->id}")->assertRedirect();
+        $this->post("/seeo/staff/program/staff/delete/{$staff->id}")->assertRedirect();
         $this->assertSoftDeleted('program_staff', ['id' => $staff->id]);
     });
 });
@@ -207,7 +207,7 @@ describe('Program Budget Validation', function () {
         ]);
 
         // 1 means validate
-        $this->post("/program/budget/validate/{$program->id}/1")->assertRedirect();
+        $this->post("/seeo/staff/program/budget/validate/{$program->id}/1")->assertRedirect();
         
         $this->assertEquals($user->id, $program->fresh()->financial_id);
     });
@@ -224,7 +224,7 @@ describe('Program Budget Validation', function () {
         ]);
 
         // 0 means invalidate
-        $this->post("/program/budget/validate/{$program->id}/0")->assertRedirect();
+        $this->post("/seeo/staff/program/budget/validate/{$program->id}/0")->assertRedirect();
         
         $this->assertEquals(0, $program->fresh()->financial_id);
     });

@@ -34,43 +34,62 @@ if (!function_exists('format_date')) {
 if (!function_exists('format_date_time')) {
   function format_date_time($date_time, $type = 'auto')
   {
+    if ($date_time === null) {
+      return null;
+    }
+
+    if (!($date_time instanceof \Illuminate\Support\Carbon) && !($date_time instanceof \DateTimeInterface)) {
+      $date_time = \Illuminate\Support\Carbon::parse($date_time);
+    }
+
     if ($type == 'auto') {
       switch (true) {
         case $date_time->diffInDays(now()) < 7:
           return week_date_time($date_time);
-          break;
-
         case now()->year - $date_time->year < 1:
           return year_date_time($date_time);
-          break;
-
         default:
           return compact_date_time($date_time);
-          break;
       }
     } elseif ($type == 'complete') {
       return complete_date_time($date_time);
+    } elseif ($type == 'week') {
+      return week_date_time($date_time);
+    } elseif ($type == 'year') {
+      return year_date_time($date_time);
+    } elseif ($type == 'compact') {
+      return compact_date_time($date_time);
+    }
+
+    return $date_time->toDateTimeString();
+  }
+
+  if (!function_exists('week_date_time')) {
+    function week_date_time($date_time)
+    {
+      return $date_time->format('D, H:i');
     }
   }
 
-  function week_date_time($date_time)
-  {
-    return $date_time->format('D, H:i');
+  if (!function_exists('year_date_time')) {
+    function year_date_time($date_time)
+    {
+      return $date_time->format('d M Y H:i');
+    }
   }
 
-  function year_date_time($date_time)
-  {
-    return $date_time->format('d M Y H:i');
+  if (!function_exists('complete_date_time')) {
+    function complete_date_time($date_time)
+    {
+      return $date_time->format('D, d M Y H:i:s a');
+    }
   }
 
-  function complete_date_time($date_time)
-  {
-    return $date_time->format('D, d M Y H:i:s a');
-  }
-
-  function compact_date_time($date_time)
-  {
-    return $date_time->format('d/m/y H:i');
+  if (!function_exists('compact_date_time')) {
+    function compact_date_time($date_time)
+    {
+      return $date_time->format('d/m/y H:i');
+    }
   }
 }
 
