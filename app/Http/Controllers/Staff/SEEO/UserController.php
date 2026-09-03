@@ -181,6 +181,58 @@ class UserController extends Controller
     }
 
     /**
+     * update user profile by admin.
+     */
+    public function updateProfile(Request $request, $id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'User not found!']);
+        }
+
+        $request->flash();
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $id],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'birth_date' => ['nullable', 'date'],
+            'profile_image' => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+        ]);
+
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+        $user->phone = $request->input('phone');
+        $user->birth_date = $request->input('birth_date');
+
+        // Handle profile image upload
+        if ($request->hasFile('profile_image')) {
+            $image = $request->file('profile_image');
+            $disk = config('app.env') === 'production' ? 'google' : 'public';
+            
+            // Delete old image if exists
+            if ($user->profile_image) {
+                \Illuminate\Support\Facades\Storage::disk($disk)->delete('images/profile/' . $user->profile_image);
+            }
+
+            // Upload new image
+            $driver = config('app.env') === 'production' ? new \Intervention\Image\Drivers\Imagick\Driver() : new \Intervention\Image\Drivers\Gd\Driver();
+            $manager = new \Intervention\Image\ImageManager($driver);
+            $profile_image = $manager->read($image->getRealPath());
+            $image_encoded = $profile_image->toWebp(60);
+            $image_name = 'profile_' . $id . '_' . now()->format('dmyhis') . '.webp';
+            \Illuminate\Support\Facades\Storage::disk($disk)->put('images/profile/' . $image_name, $image_encoded);
+            
+            $user->profile_image = $image_name;
+        }
+
+        if ($user->save()) {
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update profile for ' . $user->name . '.']);
+        } else {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Update failed. Please try again or contact administrator.']);
+        }
+    }
+
+    /**
      * remove user from employee list.
      */
     public function delete(Request $request, $id)

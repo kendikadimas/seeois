@@ -316,6 +316,48 @@ class InternshipApplicationController extends Controller
         ]);
     }
 
+    /**
+     * Delete internship application.
+     * Only for cleaning up spam/test data.
+     */
+    public function destroy(InternshipApplication $internshipApplication)
+    {
+        // Check authorization
+        $user = Auth::user();
+        if (!is_super_admin($user) && !in_array($user->roles_id, [1, 5, 6, 15])) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus data pendaftar internship.');
+        }
+
+        $name = $internshipApplication->name;
+        $nim = $internshipApplication->nim;
+
+        // Delete KRS file if exists
+        if ($internshipApplication->krs_path) {
+            try {
+                $disk = config('app.env') === 'production' ? 'google' : 'public';
+                Storage::disk($disk)->delete($internshipApplication->krs_path);
+                Log::info('KRS file deleted', ['path' => $internshipApplication->krs_path]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to delete KRS file: ' . $e->getMessage());
+            }
+        }
+
+        // Delete the application
+        $internshipApplication->delete();
+
+        Log::info('Internship application deleted', [
+            'name' => $name,
+            'nim' => $nim,
+            'deleted_by' => $user->id,
+            'deleted_at' => now()
+        ]);
+
+        return back()->with('notif', [
+            'type' => 'info',
+            'message' => 'Data pendaftaran ' . $name . ' (' . $nim . ') berhasil dihapus.',
+        ]);
+    }
+
     private function availableInternshipYears(): array
     {
         $currentYear = now()->year;

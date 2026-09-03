@@ -72,6 +72,72 @@ class VoucherController extends Controller
         return redirect()->back()->with('notif', ['type' => 'success', 'message' => 'Voucher added successfully!']);
     }
 
+    function updateVoucher(Request $request, $voucher_id)
+    {
+        $voucher = Voucher::find($voucher_id);
+        if (!$voucher) {
+            return redirect()->back()->with('notif', ['type' => 'error', 'message' => 'Voucher not found.']);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:30',
+            'code' => 'nullable|string|max:30|unique:voucher,code,' . $voucher_id,
+            'point' => 'required|integer|min:0',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'image' => 'nullable|image|max:2048|mimes:jpeg,jpg,png,webp|dimensions:ratio=1',
+            'user_quota' => 'required|integer|min:1',
+            'min_transaction' => 'required|numeric|min:0',
+            'discount_type' => 'required|string',
+            'discount_price' => 'nullable|numeric|min:0|required_if:discount_type,price',
+            'discount_percent' => 'nullable|numeric|min:0|max:100|required_if:discount_type,percent',
+            'discount_max_price' => 'nullable|numeric|min:0|required_if:discount_type,percent',
+        ]);
+
+        $data = [
+            'name' => $request->input('name'),
+            'code' => $request->input('code'),
+            'point' => $request->input('point'),
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'user_quota' => $request->input('user_quota'),
+            'min_transaction' => $request->input('min_transaction'),
+            'discount_type' => $request->input('discount_type'),
+            'discount_price' => $request->input('discount_price'),
+            'discount_percent' => $request->input('discount_percent'),
+            'discount_max_price' => $request->input('discount_max_price'),
+            'operational_id' => Auth::user()->id,
+        ];
+
+        // Handle file upload for image if provided
+        $image = $request->file('image');
+        if ($image) {
+            // Delete old image if exists
+            if ($voucher->image) {
+                $disk = config('app.env') === 'production' ? 'google' : 'public';
+                Storage::disk($disk)->delete('images/shop/voucher/' . $voucher->image);
+            }
+
+            // Upload new image
+            $disk = config('app.env') === 'production' ? 'google' : 'public';
+            $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
+            $manager = new ImageManager($driver);
+            $voucher_image = $manager->read($image->getRealPath());
+            $image_encoded = $voucher_image->toWebp(60);
+            $image_name = 'VCH_' . $voucher_id . '_' . now()->format('dmyhis') . '.webp';
+            Storage::disk($disk)->put('images/shop/voucher/' . $image_name, $image_encoded);
+            $data['image'] = $image_name;
+        } else {
+            // Keep existing image if no new image uploaded
+            $data['image'] = $voucher->image;
+        }
+
+        // Update the voucher
+        $voucher->update($data);
+
+        return redirect()->back()->with('notif', ['type' => 'success', 'message' => 'Voucher updated successfully!']);
+    }
+
     function deleteVoucher($voucher_id)
     {
         $voucher = Voucher::find($voucher_id);

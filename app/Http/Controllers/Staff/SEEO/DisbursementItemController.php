@@ -99,6 +99,84 @@ class DisbursementItemController extends Controller
     }
 
     /**
+     * update DisbursementItem.
+     */
+    public function updateDisbursementItem(Request $request, $id)
+    {
+        $disbursementItem = DisbursementItem::find($id);
+        
+        if (!$disbursementItem) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Disbursement item not found.']);
+        }
+
+        $request->flash();
+        // Validating data
+        $request->validate([
+            'name' => ['required', 'string'],
+            'price' => ['required', 'integer'],
+            'letter_id' => ['required', 'integer'],
+            'receipt' => ['nullable', File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024)],
+        ]);
+
+        $old_price = $disbursementItem->price;
+        $new_price = $request->input('price');
+        $price_diff = $new_price - $old_price;
+
+        // Update receipt if new file uploaded
+        if ($request->hasFile('receipt')) {
+            // Delete old receipt
+            $disk = config('app.env') === 'production' ? 'google' : 'public';
+            Storage::disk($disk)->delete('images/receipt/disbursement/' . $disbursementItem->reciept);
+
+            // Format receipt file
+            $receipt = $request->file('receipt');
+            $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
+            $manager = new ImageManager($driver);
+            $receipt_image = $manager->read($receipt->getRealPath());
+            $receipt_encoded = $receipt_image->toWebp(60);
+            $receipt_name = 'DS_' . $disbursementItem->program_id . '_' . $id . '_receipt.webp';
+            Storage::disk($disk)->put('images/receipt/disbursement/' . $receipt_name, $receipt_encoded);
+            
+            $disbursementItem->reciept = $receipt_name;
+        }
+
+        // Update disbursement item
+        $disbursementItem->name = $request->input('name');
+        $disbursementItem->price = $new_price;
+        $disbursementItem->letter_id = $request->input('letter_id');
+        $disbursementItem->financial_id = Auth::user()->id;
+
+        if ($disbursementItem->save()) {
+            // Update program and department disbursement
+            if ($price_diff != 0) {
+                $this->updateProgramDisbursement($disbursementItem->program_id, $price_diff > 0, abs($price_diff));
+            }
+
+            // Update blaterian disbursement if exists
+            $foods_income = FoodsIncome::where('category', 'program disbursement')->where('category_id', $id)->first();
+            $goods_income = GoodsIncome::where('category', 'program disbursement')->where('category_id', $id)->first();
+            
+            if ($foods_income) {
+                $foods_income->name = $request->input('name');
+                $foods_income->price = $new_price;
+                $foods_income->save();
+                BlaterianFoodBalanceController::refreshBalance();
+            }
+            
+            if ($goods_income) {
+                $goods_income->name = $request->input('name');
+                $goods_income->price = $new_price;
+                $goods_income->save();
+                BlaterianGoodBalanceController::refreshBalance();
+            }
+
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update Disbursement Item.']);
+        }
+
+        return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to update Disbursement Item. Please try again or contact admin.']);
+    }
+
+    /**
      * delete DisbursementItem.
      */
     public function deleteDisbursementItem($id)

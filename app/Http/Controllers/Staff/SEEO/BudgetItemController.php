@@ -47,6 +47,55 @@ class BudgetItemController extends Controller
     }
 
     /**
+     * update BudgetItem.
+     */
+    public function updateBudgetItem(Request $request, $id)
+    {
+        $budget = BudgetItem::with(['program'])->find($id);
+        
+        if (!$budget) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Budget item not found.']);
+        }
+
+        $program = $budget->program;
+        
+        // Authorization check
+        if (!is_super_admin(Auth::user()) && Auth::user()->id != $program->pic_id) {
+            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'You are not authorized. Please contact the person in charge of this program.']);
+        }
+
+        $request->flash();
+        // Validating data
+        $request->validate([
+            'name' => ['required', 'string'],
+            'price' => ['required', 'integer'],
+            'qty' => ['required', 'integer'],
+            'unit' => ['required', 'string'],
+        ]);
+
+        $old_budget = $budget->total_price;
+        $new_budget = $request->input('qty') * $request->input('price');
+        $budget_diff = $new_budget - $old_budget;
+
+        // Update budget item
+        $budget->name = $request->input('name');
+        $budget->price = $request->input('price');
+        $budget->qty = $request->input('qty');
+        $budget->unit = $request->input('unit');
+        $budget->total_price = $new_budget;
+
+        if ($budget->save()) {
+            // Update program and department budget
+            if ($budget_diff != 0) {
+                $this->updateProgramBudget($program->id, $budget_diff > 0, abs($budget_diff));
+            }
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update budget item.']);
+        }
+
+        return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to update budget item. Please try again later, or contact admin.']);
+    }
+
+    /**
      * delete BudgetItem.
      */
     public function deleteBudgetItem($id)

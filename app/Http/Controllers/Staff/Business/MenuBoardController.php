@@ -96,60 +96,9 @@ class MenuBoardController extends Controller
         ]);
     }
 
-    public function storeMenu(Request $request)
-    {
-        $validated = $request->validate([
-            'stand_id' => ['required', 'integer', 'exists:stand,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'category' => ['required', 'string', 'max:100'],
-            'food_tag' => ['required', 'array'],
-            'price' => ['required', 'integer', 'min:0'],
-            'stock' => ['required', 'integer', 'min:0'],
-            'volume' => ['nullable', 'numeric', 'min:0'],
-            'volume_unit' => ['nullable', 'string', 'max:50'],
-            'mass' => ['nullable', 'numeric', 'min:0'],
-            'mass_unit' => ['nullable', 'string', 'max:50'],
-            'image' => ['nullable', 'file', 'image', 'max:5120'],
-        ]);
-
-        $stand = Stand::findOrFail($validated['stand_id']);
-        if ((int) $request->user()->roles_id === 11) {
-            abort_unless($stand->production()->where('users.id', $request->user()->id)->exists(), 403, 'Anda tidak ditugaskan pada stand ini.');
-        }
-
-        $data = [
-            'stand_id' => $validated['stand_id'],
-            'name' => $validated['name'],
-            'category' => $validated['category'],
-            'price' => $validated['price'],
-            'stock' => $validated['stock'],
-            'volume' => $validated['volume'] ?? null,
-            'volume_unit' => $validated['volume_unit'] ?? null,
-            'mass' => $validated['mass'] ?? null,
-            'mass_unit' => $validated['mass_unit'] ?? null,
-            'sale' => 0,
-            'is_published' => false,
-            'workflow_status' => 'draft',
-        ];
-
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = 'M_' . time() . '_' . $image->getClientOriginalName();
-            $image->storeAs('images/shop/foods/menu', $imageName, config('app.env') === 'production' ? 'google' : 'public');
-            $data['image'] = $imageName;
-        }
-
-        $menu = MenuItem::create($data);
-        $menu->tags()->attach($validated['food_tag']);
-
-        $destination = (int) $request->user()->roles_id === 11
-            ? 'staff.production.panel.index'
-            : 'staff.sales-distribution.index';
-
-        return redirect()
-            ->route($destination, ['stand_id' => $menu->stand_id])
-            ->with('notif', ['type' => 'info', 'message' => 'Menu baru berhasil dibuat.']);
-    }
+    // REMOVED: storeMenu method - Sales Distribution should NOT create menu
+    // Menu creation is ONLY for Production Panel
+    // Sales Distribution only: attach recipe, publish menu, manage delivery
 
     public function attachRecipe(Request $request, MenuItem $menu)
     {

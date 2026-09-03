@@ -148,6 +148,74 @@ class DashboardController extends Controller
         return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success add new Billboard.']);
     }
 
+    function updateBillboard(Request $request, $id = 0)
+    {
+        if ($id == 0) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Missing parameter.']);
+        }
+
+        $billboard = Billboard::find($id);
+        if (!$billboard) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Billboard doesn`t exist.']);
+        }
+
+        $request->flash();
+        $request->validate([
+            'billboard_title' => 'required',
+            'billboard_text' => Rule::requiredIf($request->boolean('billboard_typeText')),
+            'billboard_image' => ['nullable', Rule::requiredIf($request->boolean('billboard_typeImage') && !$billboard->image), File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024)],
+        ]);
+
+        $data = [
+            'type' => ($request->input('billboard_typeImage') ? 1 : 0) + ($request->input('billboard_typeText') ? 2 : 0),
+            'title' => $request->input('billboard_title'),
+            'text' => $request->input('billboard_text'),
+        ];
+
+        if (!$request->input('billboard_typeImage') && !$request->input('billboard_typeText')) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Please choose the billboard type.']);
+        }
+
+        // Handle image update
+        if ($request->input('billboard_typeImage')) {
+            if ($request->hasFile('billboard_image')) {
+                // Delete old image if exists
+                if ($billboard->image) {
+                    $disk = config('app.env') === 'production' ? 'google' : 'public';
+                    Storage::disk($disk)->delete('images/billboard/' . $billboard->image);
+                }
+
+                // Upload new image
+                $receipt = $request->file('billboard_image');
+                $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
+                $manager = new ImageManager($driver);
+                $receipt_image = $manager->read($receipt->getRealPath());
+                $receipt_encoded = $receipt_image->toWebp(60);
+                $receipt_name = 'BB_' . $id . '_image.webp';
+                $disk = config('app.env') === 'production' ? 'google' : 'public';
+                Storage::disk($disk)->put('images/billboard/' . $receipt_name, $receipt_encoded);
+
+                $data['image'] = $receipt_name;
+            } elseif (!$billboard->image) {
+                return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'The file is empty. Uncheck image if you do not want to use image.']);
+            } else {
+                // Keep existing image
+                $data['image'] = $billboard->image;
+            }
+        } else {
+            // Remove image if type changed to text only
+            if ($billboard->image) {
+                $disk = config('app.env') === 'production' ? 'google' : 'public';
+                Storage::disk($disk)->delete('images/billboard/' . $billboard->image);
+            }
+            $data['image'] = null;
+        }
+
+        $billboard->update($data);
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update billboard.']);
+    }
+
     function removeBillboard($id = 0)
     {
         if ($id == 0) {
@@ -233,6 +301,26 @@ class DashboardController extends Controller
         ]);
 
         return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'New post has been added!']);
+    }
+
+    function updatePost(Request $request, $id)
+    {
+        $post = Post::find($id);
+        if (!$post) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Post is not exist. Please try again later or ask admin.']);
+        }
+
+        $request->flash();
+        $input = $request->validate([
+            'post_text' => 'required|string|max:255',
+        ]);
+
+        $post->update([
+            'text' => $input['post_text'],
+            'anonymus' => $request->input('post_username') == 'on' ? true : false,
+        ]);
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Post has been updated!']);
     }
 
     function removePost($id)

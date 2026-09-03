@@ -88,90 +88,122 @@ const can = (capability) => capabilities.value.includes('*') || capabilities.val
 const nav_list = computed(() => {
     const role = userRole.value;
     const name = roleName.value;
-    const isOperating = role === 3 || name.toLowerCase().includes('operating');
-    const isAdmin = role === 99 || name.toLowerCase().includes('admin');
 
     let list = {
-        Shortcuts: {},
-        Organization: {
-            Dashboard: { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard", icon: "bi-speedometer2" },
-            Structural: { route: route("structural"), active: route.current("structural") || route.current("department") || route.current("program"), title: "Structural", icon: "bi-diagram-3" },
-            Finance: [
-                { route: route("finance"), active: route.current("finance"), title: "Cashflow", icon: "bi-cash-coin" },
-                { route: route("finance.feature"), active: route.current("finance.feature"), title: "Feature", icon: "bi-stars" }
-            ],
-        },
-        Business: {
-            Insight: { route: route("blaterian.insight"), active: route.current("blaterian.insight"), title: "Insight", icon: "bi-graph-up" },
-            Foods: [
-                { route: route("food.stand"), active: route.current("food.stand"), title: "Stand", icon: "bi-shop" },
-            ],
-            Goods: [
-                 { route: route('good.product'), active: route.current("good.product"), title: "Product (Coming Soon)", icon: "bi-box" }
-            ],
-        },
+        Dashboard: {},
+        Management: {},
+        Business: {},
+        'HR & Internship': {},
+        Marketing: {},
+        'Special Access': {},
     };
 
+    // === DASHBOARD (Available for all staff) ===
+    list.Dashboard.Home = { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard", icon: "bi-speedometer2" };
+
+    // === MANAGEMENT (Organization & Finance) ===
+    // Structural & Departments
+    if (can('organization.view') || can('organization.manage')) {
+        list.Management.Structural = { 
+            route: route("structural"), 
+            active: route.current("structural") || route.current("department") || route.current("program"), 
+            title: "Structural", 
+            icon: "bi-diagram-3" 
+        };
+    }
+
+    // User & Employee Management
     if (can('employee.manage')) {
-        list.Organization.User = { route: route("role"), active: route.current("role"), title: "User", icon: "bi-person-badge" };
+        list.Management.User = { route: route("role"), active: route.current("role"), title: "User & Employee", icon: "bi-person-badge" };
     }
 
-    // Add Operating Menus
-    if (can('stands.manage')) {
-        list.Shortcuts.Operating = { route: route("operating.panel"), active: route.current("operating.panel"), title: "Operating Panel", icon: "bi-clipboard-check" };
-        list.Business.Foods.push({ route: route("operating.panel"), active: route.current("operating.panel"), title: "Operating Panel", icon: "bi-clipboard-check" });
+    // Finance
+    if (can('finance.view') || can('finance.manage')) {
+        list.Management.Finance = [
+            { route: route("finance"), active: route.current("finance"), title: "Cashflow", icon: "bi-cash-coin" },
+            { route: route("finance.feature"), active: route.current("finance.feature"), title: "Contribution & Payroll", icon: "bi-stars" }
+        ];
     }
 
-    // Add Sales Menus
-    if (can('sales.manage')) {
-        list.Shortcuts.Sales = { route: route("staff.sales-distribution.index"), active: route.current("staff.sales-distribution.index"), title: "Sales Distribution", icon: "bi-cart-check" };
-        list.Business.Foods.push({ route: route("staff.sales-distribution.index"), active: route.current("staff.sales-distribution.index"), title: "Sales Distribution", icon: "bi-cart-check" });
-    }
-
-    // Add Production Menus
-    if (can('production.manage')) {
-        list.Shortcuts.Production = { route: route("staff.production.panel.index"), active: route.current("staff.production.panel.index"), title: "Production Panel", icon: "bi-tools" };
-        list.Business.Foods.push({ route: route("staff.production.panel.index"), active: route.current("staff.production.panel.index"), title: "Production Panel", icon: "bi-tools" });
-    }
-
-    // Add Seminar Menus
-    if (can('seminar.manage')) {
-        list.Shortcuts.Seminar = { route: route("staff.seminar.registrations.index"), active: route.current("staff.seminar.registrations.index"), title: "Seminar Registrations", icon: "bi-easel" };
-    }
-
-    // Add Finance Panel
+    // Finance Panel (for Finance role)
     if (can('finance.manage')) {
-        list.Shortcuts.Finance = { route: route("finance.pending"), active: route.current("finance.pending"), title: "Pending Docs", icon: "bi-wallet2" };
+        list.Management.FinancePanel = { route: route("finance.pending"), active: route.current("finance.pending"), title: "Pending Validation", icon: "bi-wallet2" };
     }
 
-    // Add IWP Panel
+    // IWP Panel
     if (can('iwp.manage')) {
-        list.Shortcuts.Iwp = { route: route("iwp.receipts"), active: route.current("iwp.receipts"), title: "IWP Receipts", icon: "bi-receipt" };
+        list.Management.IwpPanel = { route: route("iwp.receipts"), active: route.current("iwp.receipts"), title: "IWP Receipts", icon: "bi-receipt" };
     }
 
-    // Add HR Panel
+    // === BUSINESS (Blaterian Foods & Goods) ===
+    // Business Insight
+    if (can('inventory.view') || can('stands.manage') || can('goods.manage')) {
+        list.Business.Insight = { route: route("blaterian.insight"), active: route.current("blaterian.insight"), title: "Business Insight", icon: "bi-graph-up" };
+    }
+
+    // Foods Business
+    const foodsMenu = [];
+    if (can('stands.manage') || can('inventory.view')) {
+        foodsMenu.push({ route: route("food.stand"), active: route.current("food.stand"), title: "Stand Management", icon: "bi-shop" });
+    }
+    if (can('stands.manage')) {
+        foodsMenu.push({ route: route("operating.panel"), active: route.current("operating.panel"), title: "Operating Panel", icon: "bi-clipboard-check" });
+    }
+    if (can('sales.manage')) {
+        foodsMenu.push({ route: route("staff.sales-distribution.index"), active: route.current("staff.sales-distribution.index"), title: "Sales Distribution", icon: "bi-cart-check" });
+    }
+    if (can('production.manage')) {
+        foodsMenu.push({ route: route("staff.production.panel.index"), active: route.current("staff.production.panel.index"), title: "Production Panel", icon: "bi-tools" });
+    }
+    if (foodsMenu.length > 0) {
+        list.Business.Foods = foodsMenu;
+    }
+
+    // Goods Business
+    if (can('goods.manage') || can('inventory.view')) {
+        list.Business.Goods = [
+            { route: route('good.product'), active: route.current("good.product"), title: "Product Management", icon: "bi-box" }
+        ];
+    }
+
+    // === HR & INTERNSHIP ===
     if (can('hr.manage')) {
-        list.Shortcuts.Hr = { route: route("hr.birthdays"), active: route.current("hr.birthdays"), title: "Birthdays", icon: "bi-balloon" };
+        list['HR & Internship'].HRPanel = { route: route("hr.birthdays"), active: route.current("hr.birthdays"), title: "Staff Birthdays", icon: "bi-balloon" };
     }
 
-    // Add Marketing CMS
-    if (can('marketing.manage')) {
-        list.Shortcuts.Marketing = { route: route("marketing.cms"), active: route.current("marketing.cms"), title: "Marketing CMS", icon: "bi-megaphone" };
+    if (can('internship.manage') || can('internship.view')) {
+        list['HR & Internship'].Internship = { route: route("internship.applications.index"), active: route.current("internship.applications.index"), title: "Internship Applications", icon: "bi-briefcase" };
     }
-    
-    // CEO Panel (Governance Year + Staff Management)
+
+    if (can('internship.manage')) {
+        list['HR & Internship'].Certificates = { route: route("certificate.manage"), active: route.current("certificate.manage"), title: "Certificates", icon: "bi-award" };
+    }
+
+    // === MARKETING ===
+    if (can('marketing.manage')) {
+        list.Marketing.CMS = { route: route("marketing.cms"), active: route.current("marketing.cms"), title: "Marketing CMS", icon: "bi-megaphone" };
+        list.Marketing.Structures = { route: route("marketing.structures.index"), active: route.current("marketing.structures"), title: "Company Structure", icon: "bi-diagram-2" };
+        list.Marketing.Activities = { route: route("marketing.activities.index"), active: route.current("marketing.activities"), title: "Activities & News", icon: "bi-newspaper" };
+    }
+
+    if (can('seminar.manage')) {
+        list.Marketing.Seminar = { route: route("staff.seminar.registrations.index"), active: route.current("staff.seminar.registrations"), title: "Seminar Registration", icon: "bi-easel" };
+    }
+
+    // === SPECIAL ACCESS (CEO, Admin, etc) ===
+    // CEO Panel
     if (can('organization.manage')) {
-        list.Shortcuts.CeoPanel = { route: route("ceo.panel"), active: route.current("ceo.panel"), title: "CEO Panel", icon: "bi-award-fill" };
+        list['Special Access'].CeoPanel = { route: route("ceo.panel"), active: route.current("ceo.panel"), title: "CEO Panel", icon: "bi-award-fill" };
+    }
+
+    // Pinned Documents
+    if (can('documents.manage')) {
+        list['Special Access'].PinnedDocs = { route: route("pinneddoc.index"), active: route.current("PinnedDocs"), title: "Pinned Documents", icon: "bi-pin-angle" };
     }
 
     // Super Admin Panel
     if (role === 99) {
-        list.Shortcuts.SuperAdmin = { route: route("super.admin.panel"), active: route.current("super.admin.panel"), title: "Super Admin", icon: "bi-shield-lock-fill" };
-    }
-
-    // CEO/Admin: Pinned Docs
-    if (can('documents.manage')) {
-        list.Shortcuts.PinnedDocs = { route: route("pinneddoc.index"), active: route.current("PinnedDocs"), title: "Dokumen Penting", icon: "bi-pin-angle" };
+        list['Special Access'].SuperAdmin = { route: route("super.admin.panel"), active: route.current("super.admin.panel"), title: "Super Admin Panel", icon: "bi-shield-lock-fill" };
     }
     
     // Filter empty sections
@@ -180,35 +212,76 @@ const nav_list = computed(() => {
 
 const active_section = computed(() => {
     const current = page.component;
-    // Prioritize Shortcuts section if active
-    if (nav_list.value.Shortcuts && Object.values(nav_list.value.Shortcuts).some(s => s.active)) return 'Shortcuts';
-    // Map specific SEEO components to Business if they are displayed in the Business section menu
-    if (current.includes('OperatingPanel') || current.includes('ProductionPanel') || current.includes('MenuBoard')) return 'Business';
-    if (current.startsWith('Staff/SEEO') || current.startsWith('Staff/Marketing')) return 'Organization';
-    if (current.startsWith('Staff/Business')) return 'Business';
-    return 'Organization';
+    
+    // Dashboard
+    if (current === 'Staff/SEEO/Dashboard') return 'Dashboard';
+    
+    // Management section
+    if (current.includes('User') || current.includes('Employee') || 
+        current.includes('Department') || current.includes('Program') || 
+        current.includes('Structural') || current.includes('CashFlow') || 
+        current.includes('Finance') || current.includes('Contribution') ||
+        current.includes('Payroll') || current.includes('IwpPanel')) {
+        return 'Management';
+    }
+    
+    // Business section
+    if (current.includes('Business') || current.includes('Stand') || 
+        current.includes('MenuBoard') || current.includes('OperatingPanel') || 
+        current.includes('ProductionPanel') || current.includes('Insight') ||
+        current.includes('Good')) {
+        return 'Business';
+    }
+    
+    // HR & Internship section
+    if (current.includes('Internship') || current.includes('Birthdays') || 
+        current.includes('Certificate')) {
+        return 'HR & Internship';
+    }
+    
+    // Marketing section
+    if (current.includes('Marketing') || current.includes('Seminar') || 
+        current.includes('Structure') || current.includes('Activities')) {
+        return 'Marketing';
+    }
+    
+    // Special Access section
+    if (current.includes('CeoPanel') || current.includes('SuperAdmin') || 
+        current.includes('PinnedDocs')) {
+        return 'Special Access';
+    }
+    
+    return 'Dashboard';
 });
 
 const active_group = computed(() => {
     const current = page.component;
-    if (current.includes('Finance') || current.includes('CashFlow')) return 'Finance';
+    
+    // Management groups
+    if (current.includes('Finance') || current.includes('CashFlow') || current.includes('Contribution') || current.includes('Payroll')) return 'Finance';
+    
+    // Business groups
     if (current.includes('Foods') || current.includes('Stand') || current.includes('MenuBoard') || current.includes('OperatingPanel') || current.includes('ProductionPanel')) return 'Foods';
     if (current.includes('Goods') || current.includes('Good')) return 'Goods';
+    
     return null;
 });
 
 // Helper for section icons
 function getSectionIcon(sectionKey) {
     const icons = {
-        Shortcuts: 'bi-star-fill',
-        Organization: 'bi-building',
-        Business: 'bi-briefcase'
+        Dashboard: 'bi-speedometer2',
+        Management: 'bi-building',
+        Business: 'bi-briefcase',
+        'HR & Internship': 'bi-people',
+        Marketing: 'bi-megaphone',
+        'Special Access': 'bi-star-fill'
     };
     return icons[sectionKey] || 'bi-layers';
 }
 
 // Local UI state for collapses (allows multiple to be open at once)
-const openedSections = ref({ 'Organization': true });
+const openedSections = ref({ 'Dashboard': true });
 const openedGroups = ref({}); // { 'sectionKey_groupKey': true }
 
 function toggleSection(sectionKey) {

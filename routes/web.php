@@ -112,6 +112,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::middleware(['internship.access'])->group(function () {
         Route::get('/internship', [InternshipApplicationController::class, 'index'])->name('internship.applications.index');
         Route::post('/internship/review/{internshipApplication}', [InternshipApplicationController::class, 'updateDecision'])->middleware('capability:internship.review')->name('internship.applications.decision');
+        Route::delete('/internship/{internshipApplication}', [InternshipApplicationController::class, 'destroy'])->middleware('capability:internship.manage')->name('internship.applications.delete');
     });
 
     // Super Admin Panel
@@ -221,6 +222,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::get('/user', [UserController::class, 'index'])->middleware('capability:employee.manage')->name('role');
     Route::post('/user', [UserController::class, 'filterEmployee'])->name('role.filter');
     Route::post('/user/role/update', [UserController::class, 'update'])->middleware('capability:employee.manage')->name('role.update');
+    Route::post('/user/profile/update/{id}', [UserController::class, 'updateProfile'])->middleware('capability:employee.manage')->name('user.profile.update');
     Route::post('/user/role/remove/{id}', [UserController::class, 'delete'])->middleware('capability:employee.manage')->name('role.remove');
     
     Route::post('/user/recruit/{id}', [UserController::class, 'addEmployee'])->middleware('capability:employee.manage')->name('employee.add');
@@ -240,6 +242,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::post('/program/expense/item/add/{id}', [ExpenseItemController::class, 'insertExpenseItem'])->name('program.expense.add');
     Route::post('/program/expense/item/delete/{id}', [ExpenseItemController::class, 'deleteExpenseItem'])->name('program.expense.delete');
     Route::post('/program/budget/item/add/{id}', [BudgetItemController::class, 'insertBudgetItem'])->name('program.budget.add');
+    Route::post('/program/budget/item/update/{id}', [BudgetItemController::class, 'updateBudgetItem'])->name('program.budget.update');
     Route::post('/program/budget/item/delete/{id}', [BudgetItemController::class, 'deleteBudgetItem'])->name('program.budget.delete');
     Route::post('/program/disbursement/letter/add/{id}', [DisbursementLetterController::class, 'insertDisbursementLetter'])->name('program.disbursement.letter.add');
     Route::post('/program/disbursement/letter/delete/{id}', [DisbursementLetterController::class, 'deleteDisbursementLetter'])->name('program.disbursement.letter.delete');
@@ -338,12 +341,13 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::post('/good/sale/delete/{id}', [GoodSaleController::class, 'deleteSale'])->name('good.sale.delete');
     Route::post('/good/balance/send', [BlaterianGoodBalanceController::class, 'withdrawBalance'])->middleware('capability:goods.manage')->name('good.balance.withdraw');
     Route::post('/shop/voucher/add', [VoucherController::class, 'addVoucher'])->middleware('capability:operations.manage')->name('shop.voucher.add');
-    Route::post('/shop/payment/dana/set', [ShopController::class, 'setDanaContact'])->middleware('capability:operations.manage')->name('shop.payment.dana.set');
+    Route::post('/shop/voucher/update/{voudher_id}', [VoucherController::class, 'updateVoucher'])->middleware('capability:operations.manage')->name('shop.voucher.update');
     Route::post('/shop/voucher/delete/{voudher_id}', [VoucherController::class, 'deleteVoucher'])->middleware('capability:operations.manage')->name('shop.voucher.delete');
+    Route::post('/shop/payment/dana/set', [ShopController::class, 'setDanaContact'])->middleware('capability:operations.manage')->name('shop.payment.dana.set');
 
     // Sales Distribution & Production
     Route::get('/sales-distribution', [MenuBoardController::class, 'index'])->middleware('capability:sales.manage')->name('staff.sales-distribution.index');
-    Route::post('/sales-distribution/menu', [MenuBoardController::class, 'storeMenu'])->middleware('capability:menu.manage,menu.create')->name('staff.sales-distribution.menu.store');
+    // REMOVED: storeMenu route - Sales Distribution should NOT create menu, only Production can
     Route::post('/sales-distribution/menu/{menu}/recipe', [MenuBoardController::class, 'attachRecipe'])->middleware('capability:menu.manage')->name('staff.sales-distribution.menu.recipe.store');
     Route::post('/sales-distribution/menu/{menu}/publish', [MenuBoardController::class, 'togglePublish'])->middleware('capability:menu.publish')->name('staff.sales-distribution.menu.publish');
     Route::post('/sales-distribution/order/{sale}/deliver', [MenuBoardController::class, 'toggleDelivery'])->middleware('capability:sales.manage')->name('staff.sales-distribution.order.deliver');
@@ -370,6 +374,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::post('/program/budget/validate/{id}/{valid}', [ProgramController::class, 'validateBudget'])->middleware('capability:finance.manage')->name('program.budget.validate');
     Route::post('/program/expense/validate/{id?}', [ExpenseItemController::class, 'validateReceipt'])->middleware('capability:finance.manage')->name('program.expense.validate');
     Route::post('/program/disbursement/add/{id}', [DisbursementItemController::class, 'insertDisbursementItem'])->middleware('capability:finance.manage')->name('program.disbursement.add');
+    Route::post('/program/disbursement/update/{id}', [DisbursementItemController::class, 'updateDisbursementItem'])->middleware('capability:finance.manage')->name('program.disbursement.update');
     Route::post('/program/disbursement/delete/{id}', [DisbursementItemController::class, 'deleteDisbursementItem'])->middleware('capability:finance.manage')->name('program.disbursement.delete');
     Route::post('/cash_in_item/item/update', [CashFlowController::class, 'updateCashInItem'])->middleware('capability:finance.manage')->name('cashIn.update');
     Route::post('/cash_in_item/item/add', [CashFlowController::class, 'insertCashInItem'])->middleware('capability:finance.manage')->name('cashIn.add');
@@ -384,11 +389,13 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
 
     // CEO Only Feature
     Route::post('/billboard/add', [DashboardController::class, 'addBillboard'])->middleware('capability:dashboard.manage')->name('billboard.add');
+    Route::post('/billboard/update/{id?}', [DashboardController::class, 'updateBillboard'])->middleware('capability:dashboard.manage')->name('billboard.update');
+    Route::post('/billboard/delete/{id?}', [DashboardController::class, 'removeBillboard'])->middleware('capability:dashboard.manage')->name('billboard.remove');
+    Route::post('/dashboard/post/update/{id?}', [DashboardController::class, 'updatePost'])->name('post.update');
     Route::post('/dashboard/post/remove/{id?}', [DashboardController::class, 'removePost'])->name('post.remove');
     Route::post('/department/delete/{id}', [DepartmentController::class, 'deleteDepartment'])->middleware('capability:organization.manage')->name('department.delete');
     Route::post('/department/update/{id}', [DepartmentController::class, 'updateDepartment'])->middleware('capability:organization.manage')->name('department.update');
     Route::post('/department/add', [DepartmentController::class, 'insertDepartment'])->middleware('capability:organization.manage')->name('department.add');
-    Route::post('/billboard/delete/{id?}', [DashboardController::class, 'removeBillboard'])->middleware('capability:dashboard.manage')->name('billboard.remove');
 
     // CEO Panel — Governance Year & Staff Management (role:1,99)
     Route::middleware('capability:organization.manage')->prefix('ceo')->group(function () {

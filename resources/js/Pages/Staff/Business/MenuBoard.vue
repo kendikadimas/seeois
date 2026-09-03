@@ -259,7 +259,10 @@ function suggestPrice(cost) {
                             <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
                                 <div>
                                     <h4 class="mb-1">Sales Distribution Panel</h4>
-                                    <p class="text-muted mb-0">Buat menu, hitung biaya produksi, publish ke shop, dan pantau pengantaran order.</p>
+                                    <p class="text-muted mb-0">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Hitung biaya produksi, publish menu ke toko, dan pantau pengantaran order.
+                                    </p>
                                 </div>
                                 <div class="d-flex gap-2 align-items-center">
                                     <select v-model="selectedStandId" class="form-select" style="min-width: 220px" @change="filterStand">
@@ -272,14 +275,21 @@ function suggestPrice(cost) {
                 </div>
 
                 <div class="col-12 col-xl-5">
+                    <!-- REMOVED: Add Menu Section - Sales Distribution should NOT create menu -->
+                    <!-- Menu creation is ONLY for Production Panel -->
+                    <!-- Sales Distribution only: attach recipe, publish menu, manage delivery -->
+                    
                     <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-body text-center py-4">
-                            <i class="bi bi-plus-circle text-primary fs-1 mb-3"></i>
-                            <h5>Tambah Menu Baru</h5>
-                            <p class="text-muted small mb-4">Tambahkan item menu baru untuk stand yang dipilih.</p>
-                            <button class="btn btn-primary px-4" @click="showAddMenuModal(true)">
-                                <i class="bi bi-plus-lg me-2"></i>Tambah Menu
-                            </button>
+                        <div class="card-body">
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Info:</strong> Menu dibuat oleh <strong>Production</strong>. Sales Distribution bertugas untuk:
+                                <ul class="mb-0 mt-2">
+                                    <li>Menghitung biaya produksi (attach recipe)</li>
+                                    <li>Publish menu ke toko online</li>
+                                    <li>Memantau dan konfirmasi pengantaran</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
@@ -352,10 +362,16 @@ function suggestPrice(cost) {
                         <div class="card-body table-responsive">
                             <div class="row g-2 mb-3">
                                 <div class="col-md-8">
-                                    <input v-model="menuSearch" type="search" class="form-control" placeholder="Cari menu atau kategori" />
+                                    <label for="menuSearch" class="form-label small mb-1">
+                                        <i class="bi bi-search me-1"></i>Cari Menu
+                                    </label>
+                                    <input id="menuSearch" v-model="menuSearch" type="search" class="form-control" placeholder="Ketik nama menu atau kategori..." />
                                 </div>
                                 <div class="col-md-4 text-md-end">
-                                    <button class="btn btn-outline-secondary w-100" @click="menuSearch = ''">Reset Pencarian</button>
+                                    <label class="form-label small mb-1 d-block">&nbsp;</label>
+                                    <button class="btn btn-outline-secondary w-100" @click="menuSearch = ''">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>Reset Pencarian
+                                    </button>
                                 </div>
                             </div>
                             <table class="table align-middle">
@@ -398,17 +414,26 @@ function suggestPrice(cost) {
                         <div class="card-body table-responsive">
                             <div class="row g-2 mb-3">
                                 <div class="col-md-5">
-                                    <input v-model="buyerSearch" type="search" class="form-control" placeholder="Cari pembeli / menu / opsi kirim" />
+                                    <label for="buyerSearch" class="form-label small mb-1">
+                                        <i class="bi bi-search me-1"></i>Cari Pembeli/Order
+                                    </label>
+                                    <input id="buyerSearch" v-model="buyerSearch" type="search" class="form-control" placeholder="Ketik nama pembeli, menu, atau opsi kirim..." />
                                 </div>
                                 <div class="col-md-4">
-                                    <select v-model="deliveryFilter" class="form-select">
+                                    <label for="deliveryFilter" class="form-label small mb-1">
+                                        <i class="bi bi-filter me-1"></i>Filter Status Pengantaran
+                                    </label>
+                                    <select id="deliveryFilter" v-model="deliveryFilter" class="form-select">
                                         <option value="all">Semua status</option>
                                         <option value="pending">Belum diantar</option>
                                         <option value="delivered">Sudah diantar</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3 text-md-end">
-                                    <button class="btn btn-outline-secondary w-100" @click="buyerSearch = ''; deliveryFilter = 'all'">Reset Filter</button>
+                                    <label class="form-label small mb-1 d-block">&nbsp;</label>
+                                    <button class="btn btn-outline-secondary w-100" @click="buyerSearch = ''; deliveryFilter = 'all'">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>Reset Filter
+                                    </button>
                                 </div>
                             </div>
                             <table class="table align-middle">
