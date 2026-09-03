@@ -38,6 +38,13 @@ class RegisteredGoogleUserController extends Controller
         ]);
 
         $user = User::where('id_google', '=', $request->id_google)->first();
+        if (!$user) {
+            return redirect()->route('login')->with('notif', [
+                'type' => 'warning',
+                'message' => 'Google account registration could not be found. Please try signing in again.',
+            ]);
+        }
+
         if ($user->password == null) {
             $user->update([
                 'phone' => $request->phone,
@@ -48,7 +55,8 @@ class RegisteredGoogleUserController extends Controller
         }
 
         Auth::login($user);
+        $request->session()->regenerate();
 
-        return ($user->roles_id > 0) ? (redirect()->route('dashboard')->with('notif', ['type' => 'info', 'message' => 'Hi ' . $user->name . ', welcome to SEEO Information System!']))  : (redirect()->route('login')->with('notif', ['type' => 'info', 'message' => 'Hi ' . $user->name . ', welcome to Blaterian!']));
+        return ($user->roles_id > 0) ? (redirect()->route('dashboard')->with('notif', ['type' => 'info', 'message' => 'Hi ' . $user->name . ', welcome to SEEO Information System!']))  : (redirect()->route('shop')->with('notif', ['type' => 'info', 'message' => 'Hi ' . $user->name . ', welcome to Blaterian!']));
     }
 }

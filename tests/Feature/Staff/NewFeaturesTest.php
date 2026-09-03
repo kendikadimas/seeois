@@ -167,22 +167,22 @@ describe('Role Access Control', function () {
 
     test('role 3 cannot access sales distribution', function () {
         $user = makeUser(3);
-        $this->actingAs($user)->get('/seeo/staff/sales-distribution')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/sales-distribution')->assertForbidden();
     });
 
     test('role 10 cannot access operating panel', function () {
         $user = makeUser(10);
-        $this->actingAs($user)->get('/seeo/staff/operating/panel')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/operating/panel')->assertForbidden();
     });
 
     test('role 11 cannot access sales distribution', function () {
         $user = makeUser(11);
-        $this->actingAs($user)->get('/seeo/staff/sales-distribution')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/sales-distribution')->assertForbidden();
     });
 
     test('role 12 cannot access production panel', function () {
         $user = makeUser(12);
-        $this->actingAs($user)->get('/seeo/staff/production/panel')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/production/panel')->assertForbidden();
     });
 });
 
@@ -416,6 +416,9 @@ describe('Sales Distribution — Publish/Unpublish', function () {
         $this->user  = makeUser(10);
         $this->stand = makeStand();
         $this->menu  = makeMenu($this->stand);
+        $expense = makeStandExpense($this->stand);
+        RecipeComponent::create(['menu_id' => $this->menu->id, 'stand_expense_id' => $expense->id, 'quantity_used' => 1]);
+        $this->menu->update(['workflow_status' => 'ready']);
         $this->actingAs($this->user);
     });
 
@@ -491,10 +494,18 @@ describe('Sales Distribution — Recipe', function () {
         ])->assertSessionHasErrors('components.0.quantity_used');
     });
 
-    test('attach recipe fails with empty components', function () {
+    test('empty components removes the existing recipe', function () {
+        RecipeComponent::create([
+            'menu_id' => $this->menu->id,
+            'stand_expense_id' => $this->expense->id,
+            'quantity_used' => 1,
+        ]);
+
         $this->post("/seeo/staff/sales-distribution/menu/{$this->menu->id}/recipe", [
             'components' => [],
-        ])->assertSessionHasErrors('components');
+        ])->assertRedirect();
+
+        expect($this->menu->recipeComponents()->count())->toBe(0);
     });
 });
 
@@ -544,6 +555,7 @@ describe('Production Panel', function () {
         $this->user  = makeUser(11);
         $this->stand = makeStand();
         $this->menu  = makeMenu($this->stand, ['stock' => 10]);
+        $this->stand->production()->attach($this->user->id);
         $this->actingAs($this->user);
     });
 
@@ -566,6 +578,13 @@ describe('Production Panel', function () {
         $this->assertDatabaseHas('foods_menu', [
             'id'    => $this->menu->id,
             'stock' => 15,
+        ]);
+        $this->assertDatabaseHas('menu_stock_movements', [
+            'menu_id' => $this->menu->id,
+            'user_id' => $this->user->id,
+            'change' => 5,
+            'stock_before' => 10,
+            'stock_after' => 15,
         ]);
     });
 
@@ -591,23 +610,52 @@ describe('Production Panel', function () {
         ])->assertSessionHasErrors('amount');
     });
 
-    test('role 11 can publish a menu', function () {
+    test('stock cannot become negative', function () {
+        $this->post("/seeo/staff/production/panel/menu/{$this->menu->id}/stock", [
+            'amount' => -11,
+        ])->assertSessionHasErrors('amount');
+
+        expect($this->menu->fresh()->stock)->toBe(10);
+    });
+
+    test('production cannot update a menu outside assigned stand', function () {
+        $otherStand = makeStand();
+        $otherMenu = makeMenu($otherStand);
+
+        $this->post("/seeo/staff/production/panel/menu/{$otherMenu->id}/stock", ['amount' => 1])
+            ->assertForbidden();
+    });
+
+    test('production can create menu for assigned stand', function () {
+        $this->post('/seeo/staff/sales-distribution/menu', menuPayload($this->stand, [
+            'name' => 'Menu Buatan Produksi',
+        ]))->assertRedirect(route('staff.production.panel.index', ['stand_id' => $this->stand->id]));
+
+        $this->assertDatabaseHas('foods_menu', [
+            'stand_id' => $this->stand->id,
+            'name' => 'Menu Buatan Produksi',
+        ]);
+    });
+
+    test('role 11 can mark a menu ready for sales', function () {
         $response = $this->post("/seeo/staff/production/panel/menu/{$this->menu->id}/publish");
 
         $response->assertRedirect();
         $this->assertDatabaseHas('foods_menu', [
             'id'           => $this->menu->id,
-            'is_published' => 1,
+            'workflow_status' => 'ready',
+            'is_published' => 0,
         ]);
     });
 
-    test('role 11 can unpublish a published menu', function () {
-        $this->menu->update(['is_published' => true]);
+    test('role 11 can cancel ready status', function () {
+        $this->menu->update(['workflow_status' => 'ready', 'is_published' => false]);
 
         $this->post("/seeo/staff/production/panel/menu/{$this->menu->id}/publish");
 
         $this->assertDatabaseHas('foods_menu', [
             'id'           => $this->menu->id,
+            'workflow_status' => 'draft',
             'is_published' => 0,
         ]);
     });
@@ -641,15 +689,59 @@ describe('Super Admin Access', function () {
         $this->assertDatabaseHas('foods_menu', ['id' => $this->menu->id, 'stock' => 15]);
     });
 
-    test('super admin can publish via production panel', function () {
+    test('super admin can mark ready via production panel', function () {
         $this->post("/seeo/staff/production/panel/menu/{$this->menu->id}/publish")
             ->assertRedirect();
-        $this->assertDatabaseHas('foods_menu', ['id' => $this->menu->id, 'is_published' => 1]);
+        $this->assertDatabaseHas('foods_menu', ['id' => $this->menu->id, 'workflow_status' => 'ready']);
     });
 
     test('super admin can publish via sales distribution panel', function () {
+        $expense = makeStandExpense($this->stand);
+        RecipeComponent::create(['menu_id' => $this->menu->id, 'stand_expense_id' => $expense->id, 'quantity_used' => 1]);
+        $this->menu->update(['workflow_status' => 'ready']);
         $this->post("/seeo/staff/sales-distribution/menu/{$this->menu->id}/publish")
             ->assertRedirect();
         $this->assertDatabaseHas('foods_menu', ['id' => $this->menu->id, 'is_published' => 1]);
+    });
+});
+
+describe('Permission, workflow, and auditing regression', function () {
+    test('capabilities are resolved centrally from role configuration', function () {
+        expect(makeUser(11)->canPerform('inventory.adjust'))->toBeTrue()
+            ->and(makeUser(11)->canPerform('payroll.manage'))->toBeFalse()
+            ->and(makeUser(99)->canPerform('anything'))->toBeTrue();
+    });
+
+    test('duplicate stock request is processed only once', function () {
+        $user = makeUser(11);
+        $stand = makeStand();
+        $stand->production()->attach($user->id);
+        $menu = makeMenu($stand, ['stock' => 10]);
+        $requestId = (string) \Illuminate\Support\Str::uuid();
+
+        $this->actingAs($user)->post("/seeo/staff/production/panel/menu/{$menu->id}/stock", ['amount' => 5, 'request_id' => $requestId]);
+        $this->actingAs($user)->post("/seeo/staff/production/panel/menu/{$menu->id}/stock", ['amount' => 5, 'request_id' => $requestId]);
+
+        expect($menu->fresh()->stock)->toBe(15);
+        $this->assertDatabaseCount('menu_stock_movements', 1);
+    });
+
+    test('sales cannot publish draft menu without recipe', function () {
+        $user = makeUser(10);
+        $menu = makeMenu(makeStand());
+
+        $this->actingAs($user)->post("/seeo/staff/sales-distribution/menu/{$menu->id}/publish")
+            ->assertSessionHasErrors('menu');
+    });
+
+    test('staff mutations are written to audit log', function () {
+        $user = makeUser(11);
+        $stand = makeStand();
+        $stand->production()->attach($user->id);
+        $menu = makeMenu($stand);
+
+        $this->actingAs($user)->post("/seeo/staff/production/panel/menu/{$menu->id}/stock", ['amount' => 1]);
+
+        $this->assertDatabaseHas('audit_logs', ['user_id' => $user->id, 'action' => 'staff.production.panel.stock.update']);
     });
 });

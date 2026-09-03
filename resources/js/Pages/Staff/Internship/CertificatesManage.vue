@@ -217,7 +217,6 @@
 import { ref, reactive, onMounted } from 'vue'
 import StaffLayout from '@/Layouts/StaffLayout.vue'
 import { useForm, Head, usePage } from '@inertiajs/vue3'
-import { route } from 'ziggy-js'
 
 const props = defineProps({
   interns: Array,

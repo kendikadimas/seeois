@@ -9,6 +9,7 @@ use App\Models\RecipeComponent;
 use App\Models\Stand;
 use App\Models\StandExpense;
 use App\Models\StandSales;
+use App\Models\GovernanceYear;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,12 +18,14 @@ class MenuBoardController extends Controller
 {
     public function index(Request $request): Response
     {
+        $yearId = GovernanceYear::where('year', session('selected_year', now()->year))->value('id');
         $stands = Stand::query()
             ->with([
                 'expenseItems' => fn ($query) => $query->latest('id'),
                 'menu.recipeComponents.expense',
                 'sale.order.menu',
             ])
+            ->when($yearId, fn ($query) => $query->where(fn ($q) => $q->where('year_id', $yearId)->orWhereNull('year_id')))
             ->orderBy('name')
             ->get();
 
@@ -39,6 +42,7 @@ class MenuBoardController extends Controller
                 'stock' => $menu->stock,
                 'sale' => $menu->sale,
                 'is_published' => (bool) ($menu->is_published ?? false),
+                'workflow_status' => $menu->workflow_status ?? 'draft',
                 'published_at' => $menu->published_at,
                 'cost' => $this->calculateMenuCost($menu),
                 'recipe_components' => $menu->recipeComponents->map(function (RecipeComponent $component) {
@@ -108,6 +112,11 @@ class MenuBoardController extends Controller
             'image' => ['nullable', 'file', 'image', 'max:5120'],
         ]);
 
+        $stand = Stand::findOrFail($validated['stand_id']);
+        if ((int) $request->user()->roles_id === 11) {
+            abort_unless($stand->production()->where('users.id', $request->user()->id)->exists(), 403, 'Anda tidak ditugaskan pada stand ini.');
+        }
+
         $data = [
             'stand_id' => $validated['stand_id'],
             'name' => $validated['name'],
@@ -120,6 +129,7 @@ class MenuBoardController extends Controller
             'mass_unit' => $validated['mass_unit'] ?? null,
             'sale' => 0,
             'is_published' => false,
+            'workflow_status' => 'draft',
         ];
 
         if ($request->hasFile('image')) {
@@ -132,22 +142,39 @@ class MenuBoardController extends Controller
         $menu = MenuItem::create($data);
         $menu->tags()->attach($validated['food_tag']);
 
+        $destination = (int) $request->user()->roles_id === 11
+            ? 'staff.production.panel.index'
+            : 'staff.sales-distribution.index';
+
         return redirect()
-            ->route('staff.sales-distribution.index', ['stand_id' => $menu->stand_id])
+            ->route($destination, ['stand_id' => $menu->stand_id])
             ->with('notif', ['type' => 'info', 'message' => 'Menu baru berhasil dibuat.']);
     }
 
     public function attachRecipe(Request $request, MenuItem $menu)
     {
         $validated = $request->validate([
-            'components' => ['required', 'array', 'min:1'],
-            'components.*.stand_expense_id' => ['required', 'integer', 'exists:stand_expense_item,id'],
+            'components' => ['present', 'array'],
+            'components.*.stand_expense_id' => ['required', 'integer', 'distinct', 'exists:stand_expense_item,id'],
             'components.*.quantity_used' => ['required', 'numeric', 'min:0.01'],
         ]);
 
-        foreach ($validated['components'] as $component) {
-            $expense = StandExpense::find($component['stand_expense_id']);
-            RecipeComponent::updateOrCreate(
+        $expenseIds = StandExpense::whereIn('id', collect($validated['components'])->pluck('stand_expense_id'))
+            ->where('stand_id', $menu->stand_id)
+            ->pluck('id');
+        if ($expenseIds->count() !== count($validated['components'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'components' => 'Semua bahan resep harus berasal dari stand yang sama dengan menu.',
+            ]);
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $menu) {
+            $submittedIds = collect($validated['components'])->pluck('stand_expense_id')->all();
+            $menu->recipeComponents()->whereNotIn('stand_expense_id', $submittedIds)->delete();
+
+            foreach ($validated['components'] as $component) {
+                $expense = StandExpense::find($component['stand_expense_id']);
+                RecipeComponent::withTrashed()->updateOrCreate(
                 [
                     'menu_id' => $menu->id,
                     'stand_expense_id' => $component['stand_expense_id'],
@@ -155,9 +182,11 @@ class MenuBoardController extends Controller
                 [
                     'quantity_used' => $component['quantity_used'],
                     'unit_used' => $expense?->unit,
+                    'deleted_at' => null,
                 ]
             );
-        }
+            }
+        });
 
         return redirect()
             ->route('staff.sales-distribution.index', ['stand_id' => $menu->stand_id])
@@ -166,8 +195,15 @@ class MenuBoardController extends Controller
 
     public function togglePublish(MenuItem $menu)
     {
+        if (! $menu->is_published && ($menu->workflow_status !== 'ready' || ! $menu->recipeComponents()->exists())) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'menu' => 'Menu harus berstatus siap dijual dan memiliki resep sebelum dipublikasikan.',
+            ]);
+        }
+
         $menu->is_published = ! (bool) $menu->is_published;
         $menu->published_at = $menu->is_published ? now() : null;
+        $menu->workflow_status = $menu->is_published ? 'published' : 'ready';
         $menu->save();
 
         return back()->with('notif', [

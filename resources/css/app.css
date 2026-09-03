@@ -18,7 +18,7 @@
 @layer base, theme, utilities;
 
 /* Bootstrap masuk ke layer `base` (prioritas paling rendah) */
-@import "bootstrap/dist/css/bootstrap.min.css" layer(base);
+@import "./generated/bootstrap.min.css" layer(base);
 
 /* Tailwind theme tokens dan utilities (prioritas lebih tinggi dari Bootstrap) */
 @import "tailwindcss/theme.css" layer(theme);

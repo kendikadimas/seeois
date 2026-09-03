@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\Billboard;
 use App\Models\Post;
+use App\Models\MenuItem;
+use App\Models\StandSales;
+use App\Models\Logbook;
+use App\Models\InternshipApplication;
+use App\Models\GovernanceYear;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +24,7 @@ use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $diskName = config('app.env') === 'production' ? 'google' : 'public';
         $disk = null;
@@ -62,12 +67,34 @@ class DashboardController extends Controller
             return $post;
         });
 
+        $user = $request->user();
+        $activeYear = GovernanceYear::current();
+        $yearId = $activeYear?->id;
+        $year = $activeYear?->year ?? (int) session('selected_year', now()->year);
+        $monitoring = [];
+        if ($user->canPerform('inventory.view')) {
+            $menuScope = fn ($query) => $query->when($yearId, fn ($q) => $q->whereHas('stand', fn ($stand) => $stand->where('year_id', $yearId)));
+            $monitoring['Stok menipis'] = $menuScope(MenuItem::query())->where('stock', '<=', 5)->count();
+            $monitoring['Menu tanpa resep'] = $menuScope(MenuItem::query())->whereDoesntHave('recipeComponents')->count();
+        }
+        if ($user->canPerform('sales.manage')) {
+            $monitoring['Pengantaran tertunda'] = StandSales::whereNull('delivered_at')->where('send_option', 'delivery')
+                ->when($yearId, fn ($query) => $query->whereHas('stand', fn ($stand) => $stand->where('year_id', $yearId)))->count();
+        }
+        if ($user->canPerform('stands.manage')) {
+            $monitoring['Logbook belum valid'] = Logbook::where('validated', 0)->whereYear('created_at', $year)->count();
+        }
+        if ($user->canPerform('internship.manage')) {
+            $monitoring['Internship menunggu review'] = InternshipApplication::where('status', 'pending')->where('internship_year', $year)->count();
+        }
+
         return Inertia::render('Staff/SEEO/Dashboard', [
             'billboard_list' => $billboard_list,
             'attachment_list' => Attachment::all(),
             'post_list' => $post_list,
             'notif' => session('notif'),
             'errors' => session('errors') ? session('errors')->getBag('default')->getMessages() : [],
+            'monitoring' => $monitoring,
         ]);
     }
 

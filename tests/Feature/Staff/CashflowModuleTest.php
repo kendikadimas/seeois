@@ -20,7 +20,7 @@ describe('Cashflow module access', function () {
 
     test('role 10 cannot access finance pending-docs panel', function () {
         $user = staffUser(10);
-        $this->actingAs($user)->get(STAFF_PREFIX . '/finance/pending-docs')->assertRedirect();
+        $this->actingAs($user)->get(STAFF_PREFIX . '/finance/pending-docs')->assertForbidden();
     });
 
     test('staff can filter cashflow in', function () {

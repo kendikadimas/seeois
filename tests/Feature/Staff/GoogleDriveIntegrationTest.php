@@ -51,20 +51,20 @@ describe('Super Admin Google Drive config panel', function () {
             ->assertRedirect();
     });
 
-    test('super admin save config validates required fields', function () {
+    test('google drive credentials cannot be changed through a web request', function () {
         $this->actingAs(staffUser(99))
             ->post(STAFF_PREFIX . '/super-admin/google-drive', [])
-            ->assertSessionHasErrors(['google_client_id', 'google_client_secret', 'app_url']);
+            ->assertNotFound();
     });
 
-    test('role 1 cannot save google drive config', function () {
-        $this->actingAs(staffUser(1))
-            ->post(STAFF_PREFIX . '/super-admin/google-drive', [
-                'google_client_id'     => 'id',
-                'google_client_secret' => 'secret',
-                'app_url'              => 'http://localhost',
-            ])
-            ->assertRedirect();
+    test('super admin panel does not expose google credentials', function () {
+        $this->actingAs(staffUser(99))
+            ->get(STAFF_PREFIX . '/super-admin')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->missing('env.google_client_id')
+                ->missing('env.google_client_secret')
+                ->missing('env.google_drive_folder'));
     });
 });
 

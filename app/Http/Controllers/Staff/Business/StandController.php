@@ -27,6 +27,7 @@ use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use App\Services\ProfitCalculator;
+use App\Services\MenuInventoryService;
 
 
 class StandController extends Controller
@@ -692,27 +693,36 @@ class StandController extends Controller
      */
     function updateStock(Request $request)
     {
-        $id = $request->input('id');
-        $stock = $request->input('amount');
+        $validated = $request->validate([
+            'id' => ['required', 'integer', Rule::exists('foods_menu', 'id')->whereNull('deleted_at')],
+            'amount' => ['required', 'integer', 'not_in:0'],
+            'request_id' => ['nullable', 'uuid'],
+            'reason' => ['nullable', Rule::in(['production', 'correction', 'damaged', 'return'])],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
 
-        if (!$id) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Menu ID is missing.']);
-        }
-
-        $menu = MenuItem::find($id);
+        $menu = MenuItem::find($validated['id']);
 
         if (!$menu) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Menu item not found.']);
         }
 
-        $menu->stock += $stock;
-        $stand = $menu->stand;
-
-        if ($menu->save() > 0) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update stock ' . $menu->name . ' from Stand ' . ($stand->name ?? 'Unknown') . ' Menu.']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Failed to update stock ' . $menu->name . ' from Stand ' . ($stand->name ?? 'Unknown') . ' Menu. Please try again or contact admin.']);
+        $user = $request->user();
+        if ($user->roles_id === 11 && !$menu->stand?->production()->whereKey($user->id)->exists()) {
+            abort(403, 'Anda tidak ditugaskan pada stand menu ini.');
         }
+
+        $stand = $menu->stand;
+        app(MenuInventoryService::class)->adjust(
+            $menu,
+            $validated['amount'],
+            $user->id,
+            $validated['reason'] ?? 'correction',
+            $validated['notes'] ?? 'Penyesuaian dari detail stand',
+            $validated['request_id'] ?? null,
+        );
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update stock ' . $menu->name . ' from Stand ' . ($stand->name ?? 'Unknown') . ' Menu.']);
     }
 
     /**

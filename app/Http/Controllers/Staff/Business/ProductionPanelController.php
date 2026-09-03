@@ -4,8 +4,13 @@ namespace App\Http\Controllers\Staff\Business;
 
 use App\Http\Controllers\Controller;
 use App\Models\MenuItem;
+use App\Models\MenuStockMovement;
 use App\Models\Stand;
+use App\Models\GovernanceYear;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use App\Services\MenuInventoryService;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -13,8 +18,13 @@ class ProductionPanelController extends Controller
 {
     public function index(Request $request): Response
     {
+        $user = $request->user();
+        $yearId = GovernanceYear::where('year', session('selected_year', now()->year))->value('id');
+
         $stands = Stand::query()
-            ->with(['menu.recipeComponents.expense'])
+            ->with(['menu.recipeComponents.expense', 'menu.stockMovements' => fn ($query) => $query->with('user:id,name')->latest()->limit(50)])
+            ->when($yearId, fn ($query) => $query->where(fn ($q) => $q->where('year_id', $yearId)->orWhereNull('year_id')))
+            ->when((int) $user->roles_id !== 99, fn ($query) => $query->whereHas('production', fn ($q) => $q->where('users.id', $user->id)))
             ->orderBy('name')
             ->get();
 
@@ -39,7 +49,14 @@ class ProductionPanelController extends Controller
                 'stock' => $menu->stock,
                 'sale' => $menu->sale,
                 'is_published' => (bool) ($menu->is_published ?? false),
+                'workflow_status' => $menu->workflow_status ?? 'draft',
                 'cost' => $menu->recipeComponents->isNotEmpty() ? round($cost, 2) : null,
+                'latest_stock_movement' => $menu->stockMovements->first() ? [
+                    'change' => $menu->stockMovements->first()->change,
+                    'reason' => $menu->stockMovements->first()->reason,
+                    'staff' => $menu->stockMovements->first()->user?->name,
+                    'created_at' => $menu->stockMovements->first()->created_at?->toISOString(),
+                ] : null,
             ];
         })->values() ?? collect();
 
@@ -47,6 +64,7 @@ class ProductionPanelController extends Controller
             'stands' => $stands,
             'selectedStand' => $selectedStand,
             'menus' => $menus,
+            'foodTags' => \App\Models\FoodsTag::orderBy('name')->get(['id', 'name']),
             'notif' => session('notif'),
             'errors' => session('errors')?->getBag('default')?->getMessages() ?? (object) [],
         ]);
@@ -54,12 +72,27 @@ class ProductionPanelController extends Controller
 
     public function updateStock(Request $request, MenuItem $menu)
     {
+        $this->ensureAssignedToMenu($request, $menu);
+
         $validated = $request->validate([
-            'amount' => ['required', 'integer'],
+            'amount' => ['required', 'integer', 'not_in:0'],
+            'reason' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:500'],
+            'request_id' => ['nullable', 'uuid'],
         ]);
 
-        $menu->stock += $validated['amount'];
-        $menu->save();
+        if (! empty($validated['request_id']) && MenuStockMovement::where('request_id', $validated['request_id'])->exists()) {
+            return back()->with('notif', ['type' => 'info', 'message' => 'Perubahan stok ini sudah pernah diproses.']);
+        }
+
+        app(MenuInventoryService::class)->adjust(
+            $menu,
+            (int) $validated['amount'],
+            $request->user()->id,
+            $validated['reason'] ?? 'production_adjustment',
+            $validated['notes'] ?? null,
+            $validated['request_id'] ?? null,
+        );
 
         return back()->with('notif', [
             'type' => 'info',
@@ -67,15 +100,35 @@ class ProductionPanelController extends Controller
         ]);
     }
 
-    public function togglePublish(MenuItem $menu)
+    public function togglePublish(Request $request, MenuItem $menu)
     {
-        $menu->is_published = ! (bool) $menu->is_published;
-        $menu->published_at = $menu->is_published ? now() : null;
+        $this->ensureAssignedToMenu($request, $menu);
+        $isReady = $menu->workflow_status !== 'ready';
+        $menu->workflow_status = $isReady ? 'ready' : 'draft';
+        $menu->production_ready_by = $isReady ? $request->user()->id : null;
+        $menu->production_ready_at = $isReady ? now() : null;
+        if (! $isReady) {
+            $menu->is_published = false;
+            $menu->published_at = null;
+        }
         $menu->save();
 
         return back()->with('notif', [
             'type' => 'info',
-            'message' => $menu->is_published ? 'Menu dipublikasikan ke shop.' : 'Menu ditarik dari shop.',
+            'message' => $isReady ? 'Menu ditandai siap dijual.' : 'Status siap jual dibatalkan.',
         ]);
+    }
+
+    private function ensureAssignedToMenu(Request $request, MenuItem $menu): void
+    {
+        if ((int) $request->user()->roles_id === 99) {
+            return;
+        }
+
+        abort_unless(
+            $menu->stand && $menu->stand->production()->where('users.id', $request->user()->id)->exists(),
+            403,
+            'Anda tidak ditugaskan pada stand ini.'
+        );
     }
 }

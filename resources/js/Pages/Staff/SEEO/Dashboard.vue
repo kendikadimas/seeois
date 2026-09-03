@@ -5,7 +5,6 @@ import Notif from "@/Components/Notif.vue";
 import ModalConfirmation from "@/Components/ModalConfirmation.vue";
 import { useForm, usePage, Link } from "@inertiajs/vue3";
 import { ref, computed, watch, onMounted, nextTick } from "vue";
-import { route } from 'ziggy-js'; // Ziggy helper, use named import
 
 const props = defineProps({
     post_list: Array,
@@ -13,6 +12,7 @@ const props = defineProps({
     attachment_list: Array,
     notif: Object,
     errors: Object, // Error dari session flash
+    monitoring: { type: Object, default: () => ({}) },
 });
 
 const auth_user = usePage().props.auth.user;
@@ -178,6 +178,14 @@ onMounted(async () => {
             <div class="col-12 d-flex flex-column bg-light overflow-hidden">
 
                 <main class="dashboard-content grow overflow-auto p-2 p-lg-3">
+                    <div v-if="Object.keys(monitoring).length" class="row g-2 mb-3">
+                        <div v-for="(count, label) in monitoring" :key="label" class="col-6 col-lg-3">
+                            <div class="card border-0 shadow-sm h-100"><div class="card-body py-3">
+                                <div class="text-muted small">{{ label }}</div>
+                                <div class="fs-3 fw-semibold">{{ count }}</div>
+                            </div></div>
+                        </div>
+                    </div>
                     <div class="row gx-2 gy-3 gy-lg-3 gx-lg-3">
                         <div class="col-12 col-lg-9 d-flex flex-column">
                             <div class="card shadow-sm mb-2 mb-lg-3 shrink-0 rounded-3 border-0">

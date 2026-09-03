@@ -150,7 +150,7 @@ watch(
 <template>
     <!-- Page Layout -->
     <StaffLayout>
-        <Head :title="title" :icon="'/storage/local/images/apps/logo.png'" />
+        <Head :title="title" icon="/favicon.ico" />
         <!-- Modal Box -->
         <ModalConfirmation ref="modalConfirmationRef" />
         <template #header>

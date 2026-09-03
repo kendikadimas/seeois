@@ -104,7 +104,7 @@ const method = computed(() => props.income?.method || props.income?.payment_meth
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url('/storage/local/images/apps/logo.png');
+  background-image: none;
   background-repeat: repeat;
   background-size: 80px 80px;
   opacity: 0.05;

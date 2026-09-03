@@ -38,12 +38,12 @@ describe('Role Access: Finance Panel (role 2)', function () {
 
     test('role 3 cannot access finance pending-docs', function () {
         $user = makeRoleUser(3);
-        $this->actingAs($user)->get('/seeo/staff/finance/pending-docs')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/finance/pending-docs')->assertForbidden();
     });
 
     test('role 10 cannot access finance pending-docs', function () {
         $user = makeRoleUser(10);
-        $this->actingAs($user)->get('/seeo/staff/finance/pending-docs')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/finance/pending-docs')->assertForbidden();
     });
 });
 
@@ -64,12 +64,12 @@ describe('Role Access: HR Birthday Panel (role 6)', function () {
 
     test('role 2 cannot access HR birthday panel', function () {
         $user = makeRoleUser(2);
-        $this->actingAs($user)->get('/seeo/staff/hr/birthdays')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/hr/birthdays')->assertForbidden();
     });
 
     test('role 10 cannot access HR birthday panel', function () {
         $user = makeRoleUser(10);
-        $this->actingAs($user)->get('/seeo/staff/hr/birthdays')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/hr/birthdays')->assertForbidden();
     });
 });
 
@@ -90,12 +90,12 @@ describe('Role Access: IWP Panel (role 13)', function () {
 
     test('role 2 cannot access IWP receipts panel', function () {
         $user = makeRoleUser(2);
-        $this->actingAs($user)->get('/seeo/staff/iwp/receipts')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/iwp/receipts')->assertForbidden();
     });
 
     test('role 6 cannot access IWP receipts panel', function () {
         $user = makeRoleUser(6);
-        $this->actingAs($user)->get('/seeo/staff/iwp/receipts')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/iwp/receipts')->assertForbidden();
     });
 });
 
@@ -128,12 +128,12 @@ describe('Role Access: Marketing Medinfo (role 9)', function () {
 
     test('role 2 cannot access marketing panels', function () {
         $user = makeRoleUser(2);
-        $this->actingAs($user)->get('/seeo/staff/marketing/structures')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/marketing/structures')->assertForbidden();
     });
 
     test('role 6 cannot access marketing panels', function () {
         $user = makeRoleUser(6);
-        $this->actingAs($user)->get('/seeo/staff/marketing/activities')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/marketing/activities')->assertForbidden();
     });
 });
 
@@ -158,7 +158,7 @@ describe('Finance — Budget & Expense Validation (role 2)', function () {
         $this->actingAs($ceo);
         $response = $this->post('/seeo/staff/program/budget/validate/1/1');
         // Should redirect back (role denied), not 404
-        $response->assertRedirect();
+        $response->assertForbidden();
     });
 
     test('role 2 can add a cash-in item', function () {
@@ -187,7 +187,7 @@ describe('Finance — Budget & Expense Validation (role 2)', function () {
         $this->post('/seeo/staff/cash_in_item/item/add', [
             'name'  => 'Hacked Cash In',
             'price' => 999,
-        ])->assertRedirect();
+        ])->assertForbidden();
         // Make sure session has role error (not auth error)
         // It won't have 'info' notif
     });
@@ -249,7 +249,7 @@ describe('IWP — Receipt Validation (role 13)', function () {
     test('role 9 cannot validate IWP receipts', function () {
         $marketing = makeRoleUser(9);
         $this->actingAs($marketing);
-        $this->post('/seeo/staff/iwp/receipts/1/validate')->assertRedirect();
+        $this->post('/seeo/staff/iwp/receipts/1/validate')->assertForbidden();
     });
 });
 
@@ -329,7 +329,7 @@ describe('Marketing — Structures CRUD (role 9)', function () {
         $this->post('/seeo/staff/marketing/structures', [
             'name'       => 'Unauthorized',
             'role_title' => 'Hacked',
-        ])->assertRedirect();
+        ])->assertForbidden();
         $this->assertDatabaseMissing('structures', ['name' => 'Unauthorized']);
     });
 });
@@ -404,7 +404,7 @@ describe('Marketing — Activities CRUD (role 9)', function () {
         $this->post('/seeo/staff/marketing/activities', [
             'title'       => 'Unauthorized Activity',
             'description' => 'Should not be created',
-        ])->assertRedirect();
+        ])->assertForbidden();
         $this->assertDatabaseMissing('activities', ['title' => 'Unauthorized Activity']);
     });
 });
@@ -488,7 +488,7 @@ describe('Marketing — Compro CMS (role 9)', function () {
 
         $hr = makeRoleUser(6);
         $this->actingAs($hr);
-        $this->delete("/seeo/staff/marketing/compro/{$content->id}")->assertRedirect();
+        $this->delete("/seeo/staff/marketing/compro/{$content->id}")->assertForbidden();
         $this->assertDatabaseHas('company_contents', ['id' => $content->id]);
     });
 });
@@ -500,31 +500,31 @@ describe('Marketing — Compro CMS (role 9)', function () {
 describe('Cross-Role Isolation', function () {
     test('role 9 (marketing) cannot access finance pending-docs', function () {
         $user = makeRoleUser(9);
-        $this->actingAs($user)->get('/seeo/staff/finance/pending-docs')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/finance/pending-docs')->assertForbidden();
     });
 
     test('role 6 (HR) cannot access IWP receipts', function () {
         $user = makeRoleUser(6);
-        $this->actingAs($user)->get('/seeo/staff/iwp/receipts')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/iwp/receipts')->assertForbidden();
     });
 
     test('role 13 (IWP) cannot access HR birthdays', function () {
         $user = makeRoleUser(13);
-        $this->actingAs($user)->get('/seeo/staff/hr/birthdays')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/hr/birthdays')->assertForbidden();
     });
 
     test('role 13 (IWP) cannot access marketing structures', function () {
         $user = makeRoleUser(13);
-        $this->actingAs($user)->get('/seeo/staff/marketing/structures')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/marketing/structures')->assertForbidden();
     });
 
     test('role 9 (marketing) cannot access operating panel (role:3)', function () {
         $user = makeRoleUser(9);
-        $this->actingAs($user)->get('/seeo/staff/operating/panel')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/operating/panel')->assertForbidden();
     });
 
     test('role 2 (finance) cannot access sales distribution (role:10)', function () {
         $user = makeRoleUser(2);
-        $this->actingAs($user)->get('/seeo/staff/sales-distribution')->assertRedirect();
+        $this->actingAs($user)->get('/seeo/staff/sales-distribution')->assertForbidden();
     });
 });

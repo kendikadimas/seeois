@@ -444,7 +444,7 @@ watch(
 
 <template>
     <StaffLayout>
-        <Head title="Program" :icon="'/storage/local/images/apps/logo.png'" />
+        <Head title="Program" icon="/favicon.ico" />
         <!-- Notif Toast -->
         <Notif ref="toastNotifRef" />
         <!-- Modal Box -->
@@ -1053,7 +1053,7 @@ watch(
                                                             :style="'width: 25%; height: auto;'"
                                                         >
                                                             <img
-                                                                :src="'/storage/local/images/apps/logo.png'"
+                                                                :src="'/favicon.ico'"
                                                                 alt="image"
                                                                 class="rounded border-secondary-subtle"
                                                             />

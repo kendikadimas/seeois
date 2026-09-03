@@ -18,6 +18,7 @@ class MenuItem extends Model
     protected $casts = [
         'is_published' => 'boolean',
         'published_at' => 'datetime',
+        'production_ready_at' => 'datetime',
     ];
 
     /**
@@ -40,6 +41,9 @@ class MenuItem extends Model
         'stand_id',
         'sale',
         'stock',
+        'workflow_status',
+        'production_ready_by',
+        'production_ready_at',
         'category',
         'image',
         'is_published',
@@ -101,5 +105,10 @@ class MenuItem extends Model
     public function recipeComponents(): HasMany
     {
         return $this->hasMany(RecipeComponent::class, 'menu_id');
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(MenuStockMovement::class, 'menu_id');
     }
 }

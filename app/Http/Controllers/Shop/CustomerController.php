@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CustomerController extends Controller
@@ -20,39 +21,54 @@ class CustomerController extends Controller
     }
     function insertFeedback(Request $request)
     {
-        $request->validate([
-            'rate' => 'numeric',
-            'feedback' => ['string', 'max:255'],
+        $validated = $request->validate([
+            'rate' => ['required', 'integer', 'between:1,5'],
+            'feedback' => ['required', 'string', 'max:255'],
         ]);
-        $auth_user = Auth::user();
-        $customer_feedback = CustomerFeedback::find($auth_user->id);
-        if ($customer_feedback) {
-            $customer_feedback->rate = $request->input('rate');
-            $customer_feedback->message = $request->input('feedback');
-            $customer_feedback->save();
+
+        $feedback = CustomerFeedback::where('customer_id', Auth::id())->first();
+        $wasUpdated = $feedback !== null;
+
+        CustomerFeedback::updateOrCreate(
+            ['customer_id' => Auth::id()],
+            ['rate' => $validated['rate'], 'message' => $validated['feedback']],
+        );
+
+        if ($wasUpdated) {
             return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Thank you! Your rating and feedback has been updated and saved.']);
-        } else {
-            CustomerFeedback::create([
-                'rate' => $request->input('rate'),
-                'message' => $request->input('feedback'),
-            ]);
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Thank you for your rating and feedback.']);
         }
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Thank you for your rating and feedback.']);
     }
+
     function redeemVoucher($voucher_id)
     {
-        $user = User::find(Auth::user()->id);
-        $available_voucher = $user->voucher()->where('voucher_id', $voucher_id)->first();
-        if ($available_voucher) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You have already redeemed this voucher.']);
-        }
-        $user->voucher()->attach($voucher_id);
-        $voucher = Voucher::find($voucher_id);
-        if ($user->point <= $voucher->point) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You do not have enough points to redeem this voucher.']);
-        }
-        $user->point -= $voucher->point;
-        $user->save();
-        return redirect()->back()->with('notif', ['type' => 'success', 'message' => 'Voucher redeemed successfully!']);
+        $result = DB::transaction(function () use ($voucher_id) {
+            $user = User::query()->lockForUpdate()->findOrFail(Auth::id());
+            $voucher = Voucher::query()->lockForUpdate()->find($voucher_id);
+
+            if (!$voucher || $voucher->start_date > today()->toDateString() || $voucher->end_date < today()->toDateString()) {
+                return ['type' => 'warning', 'message' => 'This voucher is not available.'];
+            }
+
+            if ($user->voucher()->where('voucher_id', $voucher->id)->exists()) {
+                return ['type' => 'warning', 'message' => 'You have already redeemed this voucher.'];
+            }
+
+            if ($voucher->user_quota <= $voucher->customer()->count()) {
+                return ['type' => 'warning', 'message' => 'This voucher quota has been reached.'];
+            }
+
+            if ($user->point < $voucher->point) {
+                return ['type' => 'warning', 'message' => 'You do not have enough points to redeem this voucher.'];
+            }
+
+            $user->decrement('point', $voucher->point);
+            $user->voucher()->attach($voucher->id);
+
+            return ['type' => 'success', 'message' => 'Voucher redeemed successfully!'];
+        });
+
+        return redirect()->back()->with('notif', $result);
     }
 }

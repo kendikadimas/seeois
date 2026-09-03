@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FoodOrder;
 use App\Models\FoodsIncome;
 use App\Models\MenuItem;
+use App\Services\MenuInventoryService;
 use App\Models\PaymentMethod;
 use App\Models\Stand;
 use App\Models\StandSales;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use App\Services\ProfitCalculator;
 
@@ -30,7 +33,7 @@ class SalesController extends Controller
         
         // Super Admin bypass
         if ($auth_user->roles_id != 99) {
-            $query->where('sale_validation', '==', 0)->where('menu_lock', '!=', 0);
+            $query->where('sale_validation', '=', 0)->where('menu_lock', '!=', 0);
         }
 
         $stand = $query->find($id);
@@ -78,51 +81,54 @@ class SalesController extends Controller
      */
     public function insertSale(Request $request, $id)
     {
-        // Validating data
-        $request->validate([
-            'discount' => ['required', 'integer'],
-            'transaction' => ['required', 'integer'],
-            'customer_id' => ['required', 'integer'],
-            'order' => 'required|array',
-            'payment_method_id' => ['required', 'integer'],
-            'payment_price' => ['required', 'integer'],
-        ]);
-        // Checking Cashier Token
         $stand = Stand::find($id);
+        if (!$stand) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Stand tidak ditemukan.']);
+        }
+
         $auth_user = Auth::user();
         // Allow Super Admin or authorized cashier
         if ($auth_user->roles_id != 99 && !$stand->cashier->contains('id', $auth_user->id)) {
             $standLabel = $stand->pic?->name ?? $stand->name ?? 'this stand';
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not cashier in Stand (' . $standLabel . '). Only cashier can add transaction.']);
         }
-        $sale = StandSales::create([
-            'cashier_id' => Auth::user()->id,
-            'stand_id' => $id,
-            'discount' => $request->input('discount'),
-            'transaction' => $request->input('transaction'),
-            'customer' => $request->input('customer'),
-            'customer_id' => $request->input('customer_id'),
-            'order_type' => 'now',
-            'send_option' => 'pick_up',
-            'payment_method_id' => $request->input('payment_method_id'),
-            'payment_price' => $request->input('payment_price'),
+        $validated = $request->validate([
+            'discount' => ['required', 'integer', 'min:0'],
+            'transaction' => ['required', 'integer', 'min:0'],
+            'customer_id' => ['required', 'integer', Rule::exists('users', 'id')],
+            'order' => ['required', 'array', 'min:1'],
+            'order.*.menu_id' => ['required', 'integer', Rule::exists('foods_menu', 'id')->where('stand_id', $stand->id)->whereNull('deleted_at')],
+            'order.*.amount' => ['required', 'integer', 'min:1'],
+            'payment_method_id' => ['required', 'integer', Rule::exists('payment_method', 'id')],
+            'payment_price' => ['required', 'integer', 'min:0'],
         ]);
-
-        $order_list = $request->input('order');
-        foreach ($order_list as $order) {
-            $menu = MenuItem::find($order['menu_id']);
-            $menu->sale += $order['amount'];
-            $menu->save();
-
-            FoodOrder::create([
-                'sales_id' => $sale->id,
-                'menu_id' => $order['menu_id'],
-                'amount' => $order['amount'],
-            ]);
+        $subtotal = collect($validated['order'])->sum(function ($order) use ($stand) {
+            return (int) MenuItem::where('stand_id', $stand->id)->findOrFail($order['menu_id'])->price * (int) $order['amount'];
+        });
+        $validated['discount'] = min($validated['discount'], $subtotal);
+        $validated['transaction'] = $subtotal - $validated['discount'];
+        if ($validated['payment_price'] < $validated['transaction']) {
+            throw ValidationException::withMessages(['payment_price' => 'Nominal pembayaran kurang dari total transaksi.']);
         }
-        $user = User::find($request->input('customer_id'));
-        $user->point += floor($request->input('transaction') / 10000) * 50; // 50 point for every 10k transaction    
-        $user->save();
+        DB::transaction(function () use ($validated, $stand, $auth_user, $request) {
+            $customer = User::query()->lockForUpdate()->findOrFail($validated['customer_id']);
+            $sale = StandSales::create([
+                'cashier_id' => $auth_user->id, 'stand_id' => $stand->id,
+                'discount' => $validated['discount'], 'transaction' => $validated['transaction'],
+                'customer' => $request->input('customer', $customer->name), 'customer_id' => $customer->id,
+                'order_type' => 'now', 'send_option' => 'pick_up',
+                'payment_method_id' => $validated['payment_method_id'], 'payment_price' => $validated['payment_price'],
+            ]);
+
+            foreach ($validated['order'] as $order) {
+                $menu = MenuItem::where('stand_id', $stand->id)->findOrFail($order['menu_id']);
+                app(MenuInventoryService::class)->adjust($menu, -$order['amount'], $auth_user->id, 'sale', 'Kasir stand #' . $stand->id);
+                $menu->increment('sale', $order['amount']);
+                FoodOrder::create(['sales_id' => $sale->id, 'menu_id' => $menu->id, 'amount' => $order['amount']]);
+            }
+
+            $customer->increment('point', (int) floor($validated['transaction'] / 10000) * 50);
+        });
         return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success add new transaction to Stand ' . $stand->name]);
     }
 
@@ -137,6 +143,9 @@ class SalesController extends Controller
         ]);
         $stand = Stand::find($id);
         $auth_user = Auth::user();
+        if (!$stand) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Stand tidak ditemukan.']);
+        }
         // Allow Super Admin or authorized cashier
         if ($auth_user->roles_id != 99 && !$stand->cashier->contains('id', $auth_user->id)) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not cashier in Stand (' . $stand->pic->name . '). Only cashier can add customer.']);
@@ -153,28 +162,21 @@ class SalesController extends Controller
      */
     public function deleteSale($id)
     {
-        $sale_item = StandSales::with(['stand', 'order', 'order.menu'])->find($id);
-        $stand = $sale_item->stand;
-        $name = $sale_item->customer;
-
-        $order_list = $sale_item->order;
-        foreach ($order_list as $order) {
-            // update menu sale
-            $menu = $order->menu;
-            $menu->sale = $menu->sale - $order->amount;
-            $menu->save();
-            // delete order
-            $order->delete();
+        $sale = StandSales::with('stand.cashier')->find($id);
+        if (!$sale) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Transaction is not found.']);
         }
-        $user = User::find($sale_item->customer_id);
-        $user->point -= floor($sale_item->transaction / 10000) * 50; // 50 point for every 10k transaction    
-        $user->save();
-        // delete sale item
-        if ($sale_item->delete()) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success delete ' . $name . ' transaction from Stand ' . $stand->name . ' Income.']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Failed to delete ' . $name . ' transaction from Stand ' . $stand->name . ' Income. Please try again or contact admin']);
+        $user = Auth::user();
+        if ($user->roles_id !== 99 && $user->roles_id !== 3 && !$sale->stand?->cashier->contains('id', $user->id)) {
+            abort(403);
         }
+        $receipt = $sale->receipt_income;
+        $response = $this->reverseSale($id, 'deleted');
+        if ($receipt) {
+            $disk = config('app.env') === 'production' ? 'google' : 'public';
+            Storage::disk($disk)->delete('images/receipt/stand/income/' . $receipt);
+        }
+        return $response;
     }
 
     /**
@@ -182,37 +184,57 @@ class SalesController extends Controller
      */
     public function  cancelTransaction($id)
     {
-        $transaction = StandSales::with('customer')->find($id);
+        $transaction = StandSales::find($id);
+        if (!$transaction) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Transaction is not found. Please try again or contact IT Support.']);
+        }
         $auth_user = Auth::user();
         $stand = Stand::find($transaction->stand_id);
+        if (!$stand) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Stand transaksi tidak ditemukan.']);
+        }
         // Allow Super Admin or authorized cashier
         if ($auth_user->roles_id != 99 && !$stand->cashier->contains('id', $auth_user->id)) {
             return redirect()->back()->with('notif', ['type' => 'danger', 'message' => ['You are not listed as cashier.', 'This feature only available for cashier.']]);
         }
-        if (!$transaction) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Transaction is not found. Please try again or contact IT Suppport.']);
-        }
-        if ($transaction->payment_method_id == 2) {
-            // Checkk for env
+        $receipt = $transaction->payment_method_id == 2 ? $transaction->receipt_income : null;
+        $response = $this->reverseSale($transaction->id, 'cancelled');
+        if ($receipt) {
             $disk = config('app.env') === 'production' ? 'google' : 'public';
-            // delete stand expense receipt
-            Storage::disk($disk)->delete('images/receipt/stand/income/' . $transaction->reciept_income);
+            Storage::disk($disk)->delete('images/receipt/stand/income/' . $receipt);
         }
-        if ($transaction->voucher_id > 0) {
-            User::find($transaction->customer_id)->voucher()->updateExistingPivot($transaction->voucher_id, ['use_date' => null]);
-        }
-        $order_list = $transaction->order;
-        foreach ($order_list as $order) {
-            // update menu sale
-            $menu = $order->menu;
-            $menu->sale = $menu->sale - $order->amount;
-            $menu->save();
-            // delete order
-            $order->delete();
-        }
-        $name = $transaction->customer;
-        $transaction->delete();
-        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success cancel transaction order from ' . $name . '.']);
+        return $response;
+    }
+
+    private function reverseSale(int $id, string $action)
+    {
+        $name = '';
+        $standName = '';
+        DB::transaction(function () use ($id, &$name, &$standName) {
+            $sale = StandSales::query()->lockForUpdate()->with(['order.menu', 'stand'])->findOrFail($id);
+            $name = $sale->customer;
+            $standName = $sale->stand?->name ?? 'Unknown';
+
+            foreach ($sale->order as $order) {
+                if ($order->menu) {
+                    app(MenuInventoryService::class)->adjust($order->menu, (int) $order->amount, Auth::id(), 'return', 'Pembatalan transaksi #' . $sale->id);
+                    $order->menu->decrement('sale', min((int) $order->menu->sale, (int) $order->amount));
+                }
+                $order->delete();
+            }
+
+            $customer = User::query()->lockForUpdate()->find($sale->customer_id);
+            if ($customer) {
+                if ($sale->voucher_id > 0) {
+                    $customer->voucher()->updateExistingPivot($sale->voucher_id, ['use_date' => null]);
+                }
+                $points = (int) floor($sale->transaction / 10000) * 50;
+                $customer->update(['point' => max(0, (int) $customer->point - $points)]);
+            }
+            $sale->delete();
+        });
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => "Transaction {$name} was {$action} from Stand {$standName}."]);
     }
 
     /**
@@ -224,6 +246,9 @@ class SalesController extends Controller
             'transaction_id' => ['required', 'numeric'],
         ]);
         $transaction = StandSales::find($request->input(('transaction_id')));
+        if (!$transaction) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Transaction is not found.']);
+        }
         if ($transaction->cashier_id > 0) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'This transaction has been done by ' . $transaction->cashier->name . '.']);
         }
@@ -249,6 +274,9 @@ class SalesController extends Controller
     {
         $auth_user = Auth::user();
         $stand = Stand::find($id);
+        if (!$stand) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Stand tidak ditemukan.']);
+        }
         $sale_validation = $stand->sale_validation > 0  ? 0 :  $auth_user->id;
         $stand->sale_validation = $sale_validation;
         if ($sale_validation > 0) {

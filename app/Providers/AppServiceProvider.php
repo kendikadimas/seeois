@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
             Vite::prefetch(concurrency: 3);
         }
 
-        // Override Google Drive Storage Setup to Disable SSL Verify for Local (Laragon issue)
+        // Register the Google Drive filesystem with production-safe TLS defaults.
         \Illuminate\Support\Facades\Storage::extend('google', function ($app, $config) {
             $options = [];
             if (! empty($config['teamDriveId'] ?? null)) {
@@ -37,8 +37,9 @@ class AppServiceProvider extends ServiceProvider
             $client = new \Google\Client;
             $client->setClientId($config['clientId']);
             $client->setClientSecret($config['clientSecret']);
-            // bypass ssl check for windows laragon environments
-            $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+            $client->setHttpClient(new \GuzzleHttp\Client([
+                'verify' => filter_var($config['verifySsl'] ?? true, FILTER_VALIDATE_BOOL),
+            ]));
             
             try {
                 $client->refreshToken($config['refreshToken']);
@@ -67,7 +68,12 @@ class AppServiceProvider extends ServiceProvider
                 return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter);
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error('Google Drive Adapter Initialization Failed: ' . $e->getMessage());
-                // Fallback to local public disk to keep the app running
+
+                if ($app->environment('production')) {
+                    throw $e;
+                }
+
+                // Keep local development usable when Google credentials are absent.
                 return \Illuminate\Support\Facades\Storage::disk('public');
             }
         });

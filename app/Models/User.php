@@ -122,6 +122,18 @@ class User extends Authenticatable
         return false;
     }
 
+    public function capabilities(): array
+    {
+        return config('permissions.roles.' . (int) $this->roles_id, []);
+    }
+
+    public function canPerform(string $capability): bool
+    {
+        $capabilities = $this->capabilities();
+
+        return in_array('*', $capabilities, true) || in_array($capability, $capabilities, true);
+    }
+
     /**
      * 
      * The program that belong to the user.

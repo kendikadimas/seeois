@@ -231,6 +231,8 @@ const form_edit_menu = useForm({
 const form_add_stock = useForm({
     id: null,
     amount: null,
+    request_id: null,
+    reason: "correction",
 });
 
 const form_add_expense = useForm({
@@ -726,7 +728,8 @@ function handleEditMenu() {
 function handleAddStock() {
     if (!props.stand?.id) return;
     form_add_stock.id = selected_stock.value?.id;
-    form_add_stock.post(`/seeo/staff/food/stand/menu/stock/update`, {
+    form_add_stock.request_id = crypto.randomUUID();
+    form_add_stock.post(window.route("stand.menu.stock.update"), {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
@@ -1036,7 +1039,7 @@ watch(
 <template>
     <!-- Page Layout -->
     <StaffLayout>
-        <Head :title="title" :icon="'/storage/local/images/apps/logo.png'" />
+        <Head :title="title" icon="/favicon.ico" />
         <!-- Modal Box -->
         <ModalConfirmation ref="modalConfirmationRef" />
         <ModalAlertNotification ref="modalAlertNotificationRef" />
@@ -1322,7 +1325,7 @@ watch(
                                         </button>
                                         <a
                                             v-if="auth_user.roles_id == 10 || auth_user.roles_id == 99"
-                                            href="/seeo/staff/sales-distribution"
+                                            :href="window.route('staff.sales-distribution.index')"
                                             class="btn btn-sm border-0 py-0 btn-outline-primary ms-1"
                                             title="Go to Sales Distribution Panel"
                                         >

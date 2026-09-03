@@ -111,13 +111,12 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     // Access: CEO, Co-CEO, HR Manager, dan PIC Internship
     Route::middleware(['internship.access'])->group(function () {
         Route::get('/internship', [InternshipApplicationController::class, 'index'])->name('internship.applications.index');
-        Route::post('/internship/review/{internshipApplication}', [InternshipApplicationController::class, 'updateDecision'])->middleware('role:1,5,6,15,99')->name('internship.applications.decision');
+        Route::post('/internship/review/{internshipApplication}', [InternshipApplicationController::class, 'updateDecision'])->middleware('capability:internship.review')->name('internship.applications.decision');
     });
 
     // Super Admin Panel
     Route::middleware(['role:99'])->group(function () {
         Route::get('/super-admin', [SuperAdminController::class, 'index'])->name('super.admin.panel');
-        Route::post('/super-admin/google-drive', [SuperAdminController::class, 'saveConfig'])->name('super.admin.save_config');
         Route::get('/super-admin/debug-logs', function () {
             $diagnostics = [];
             
@@ -216,17 +215,17 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logbook/add/{id?}', [LogbookController::class, 'insertLog'])->name('logbook.add');
     Route::post('/logbook/delete/{id?}', [LogbookController::class, 'deleteLog'])->name('logbook.delete');
-    Route::post('/logbook/validate/{id?}', [LogbookController::class, 'validateLog'])->middleware('role:3,99')->name('logbook.validate');
+    Route::post('/logbook/validate/{id?}', [LogbookController::class, 'validateLog'])->middleware('capability:operations.manage')->name('logbook.validate');
     Route::get('/dashboard/{advance?}', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/post/add', [DashboardController::class, 'addPost'])->name('post.add');
-    Route::get('/user', [UserController::class, 'index'])->name('role');
+    Route::get('/user', [UserController::class, 'index'])->middleware('capability:employee.manage')->name('role');
     Route::post('/user', [UserController::class, 'filterEmployee'])->name('role.filter');
-    Route::post('/user/role/update', [UserController::class, 'update'])->name('role.update');
-    Route::post('/user/role/remove/{id}', [UserController::class, 'delete'])->name('role.remove');
+    Route::post('/user/role/update', [UserController::class, 'update'])->middleware('capability:employee.manage')->name('role.update');
+    Route::post('/user/role/remove/{id}', [UserController::class, 'delete'])->middleware('capability:employee.manage')->name('role.remove');
     
-    Route::post('/user/recruit/{id}', [UserController::class, 'addEmployee'])->name('employee.add');
-    Route::post('/user/level/add', [UserController::class, 'addOrEditLevel'])->name('level.add.edit');
-    Route::post('/payroll/balance/add', [UserController::class, 'setPayrollBalance'])->name('payroll.balance.add');
+    Route::post('/user/recruit/{id}', [UserController::class, 'addEmployee'])->middleware('capability:employee.manage')->name('employee.add');
+    Route::post('/user/level/add', [UserController::class, 'addOrEditLevel'])->middleware('capability:payroll.manage')->name('level.add.edit');
+    Route::post('/payroll/balance/add', [UserController::class, 'setPayrollBalance'])->middleware('capability:payroll.manage')->name('payroll.balance.add');
     Route::get('/structural/{id?}', [DepartmentController::class, 'structural'])->name('structural');
     Route::post('/structural', [DepartmentController::class, 'filterDepartment'])->name('structural.filter');
     Route::get('/department/{id}', [DepartmentController::class, 'department'])->name('department');
@@ -280,10 +279,10 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::get('/blaterian/goods/product/detail/{id}', [GoodDetailController::class, 'detail'])->name('good.product.detail');
     Route::get('/blaterian/goods/insight/detail', [GoodInsightController::class, 'insight'])->name('good.insight');
     
-    Route::post('/food/stand/production/{stand_id}', [StandController::class, 'setProductionStaff'])->name('update.stand.production_staff');
-    Route::post('/food/stand/cashier/{stand_id}', [StandController::class, 'setCashierStaff'])->name('update.stand.cashier_staff');
+    Route::post('/food/stand/production/{stand_id}', [StandController::class, 'setProductionStaff'])->middleware('capability:stand.assign')->name('update.stand.production_staff');
+    Route::post('/food/stand/cashier/{stand_id}', [StandController::class, 'setCashierStaff'])->middleware('capability:stand.assign')->name('update.stand.cashier_staff');
     Route::post('/food/stand/filter', [StandController::class, 'filterStand'])->name('food.stand.filter');
-    Route::post('/food/stand/update/{id}', [StandController::class, 'updateStand'])->middleware('role:3')->name('food.stand.update');
+    Route::post('/food/stand/update/{id}', [StandController::class, 'updateStand'])->middleware('capability:stands.manage')->name('food.stand.update');
     Route::post('/food/stand/expense/filter', [StandController::class, 'filterStandExpense'])->name('stand.expense.filter');
     Route::post('/food/stand/expense/add/{id}', [StandController::class, 'insertStandExpense'])->name('stand.expense.add');
     Route::post('/food/stand/expense/delete/{id}', [StandController::class, 'deleteStandExpenseItem'])->name('stand.expense.delete');
@@ -294,12 +293,12 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
         ->name('stand.expense.receipt');
         
     Route::post('/food/stand/menu/filter/{id}', [StandController::class, 'filterStandMenu'])->name('stand.menu.filter');
-    Route::post('/food/stand/menu/add/{id}', [StandController::class, 'insertMenu'])->name('stand.menu.add');
-    Route::post('/food/stand/menu/delete/{id}', [StandController::class, 'deleteMenu'])->name('stand.menu.delete');
-    Route::post('/food/stand/menu/stock/update', [StandController::class, 'updateStock'])->name('stand.menu.stock.update');
-    Route::post('/food/stand/menu/image/update/{id}', [StandController::class, 'updateImage'])->name('stand.menu.image.update');
-    Route::post('/food/stand/menu/recipe/store/{menu_id}', [\App\Http\Controllers\Staff\Business\RecipeComponentController::class, 'store'])->name('stand.menu.recipe.store');
-    Route::post('/food/stand/menu/update/{id}', [\App\Http\Controllers\Staff\Business\StandController::class, 'updateMenu'])->name('stand.menu.update');
+    Route::post('/food/stand/menu/add/{id}', [StandController::class, 'insertMenu'])->middleware('capability:menu.create,menu.manage')->name('stand.menu.add');
+    Route::post('/food/stand/menu/delete/{id}', [StandController::class, 'deleteMenu'])->middleware('capability:menu.manage')->name('stand.menu.delete');
+    Route::post('/food/stand/menu/stock/update', [StandController::class, 'updateStock'])->middleware('capability:stands.manage,inventory.adjust')->name('stand.menu.stock.update');
+    Route::post('/food/stand/menu/image/update/{id}', [StandController::class, 'updateImage'])->middleware('capability:menu.create,menu.manage')->name('stand.menu.image.update');
+    Route::post('/food/stand/menu/recipe/store/{menu_id}', [\App\Http\Controllers\Staff\Business\RecipeComponentController::class, 'store'])->middleware('capability:menu.manage')->name('stand.menu.recipe.store');
+    Route::post('/food/stand/menu/update/{id}', [\App\Http\Controllers\Staff\Business\StandController::class, 'updateMenu'])->middleware('capability:menu.create,menu.manage')->name('stand.menu.update');
     
     Route::post('/food/stand/sales/customer/add/{id}', [SalesController::class, 'insertCustomer'])->name('sale.customer.add');
     Route::post('/food/stand/sales/add/{id}', [SalesController::class, 'insertSale'])->name('stand.sale.add');
@@ -325,74 +324,74 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::post('/good/transaction/cancel/{id?}', [GoodSaleController::class, 'cancelTransaction'])->name('good.transaction.cancel');
 
     // Operational Only Feature
-    Route::post('/food/stand/add/new', [StandController::class, 'insertStand'])->middleware('role:3,99')->name('food.stand.insert');
-    Route::post('/food/stand/delete/{id}', [StandController::class, 'deleteStand'])->middleware('role:3')->name('food.stand.delete');
-    Route::post('/food/stand/expense/validate/{id}', [StandController::class, 'validateExpenseReceipt'])->middleware('role:3,99')->name('stand.expense.validate');
-    Route::post('/food/stand/menu/lock/{id}', [StandController::class, 'lockMenu'])->middleware('role:3,10,99')->name('stand.menu.validate');
-    Route::post('/food/stand/sales/validate/{id}', [SalesController::class, 'validateSales'])->middleware('role:3,99')->name('stand.income.validate');
-    Route::post('/food/balance/send', [BlaterianFoodBalanceController::class, 'withdrawBalance'])->middleware('role:3,99')->name('food.balance.withdraw');
-    Route::post('/good/product/add', [GoodController::class, 'insertProduct'])->middleware('role:3')->name('good.product.add');
-    Route::post('/good/product/delete/{id}', [GoodController::class, 'deleteProduct'])->middleware('role:3')->name('good.product.delete');
-    Route::post('/good/product/transaction/status/{id}', [GoodDetailController::class, 'productStatus'])->middleware('role:3')->name('good.product.transaction.status');
+    Route::post('/food/stand/add/new', [StandController::class, 'insertStand'])->middleware('capability:stands.manage')->name('food.stand.insert');
+    Route::post('/food/stand/delete/{id}', [StandController::class, 'deleteStand'])->middleware('capability:stands.manage')->name('food.stand.delete');
+    Route::post('/food/stand/expense/validate/{id}', [StandController::class, 'validateExpenseReceipt'])->middleware('capability:stand.validate')->name('stand.expense.validate');
+    Route::post('/food/stand/menu/lock/{id}', [StandController::class, 'lockMenu'])->middleware('capability:stand.validate,menu.manage')->name('stand.menu.validate');
+    Route::post('/food/stand/sales/validate/{id}', [SalesController::class, 'validateSales'])->middleware('capability:stand.validate')->name('stand.income.validate');
+    Route::post('/food/balance/send', [BlaterianFoodBalanceController::class, 'withdrawBalance'])->middleware('capability:operations.manage')->name('food.balance.withdraw');
+    Route::post('/good/product/add', [GoodController::class, 'insertProduct'])->middleware('capability:goods.manage')->name('good.product.add');
+    Route::post('/good/product/delete/{id}', [GoodController::class, 'deleteProduct'])->middleware('capability:goods.manage')->name('good.product.delete');
+    Route::post('/good/product/transaction/status/{id}', [GoodDetailController::class, 'productStatus'])->middleware('capability:goods.manage')->name('good.product.transaction.status');
     Route::post('/good/capital/validate', [GoodInsightController::class, 'validateCapital'])->name('good.capital.validate');
     Route::post('/good/sale/validate/{id}/{valid}', [GoodSaleController::class, 'validateSale'])->name('good.sale.validate');
     Route::post('/good/sale/delete/{id}', [GoodSaleController::class, 'deleteSale'])->name('good.sale.delete');
-    Route::post('/good/balance/send', [BlaterianGoodBalanceController::class, 'withdrawBalance'])->middleware('role:3')->name('good.balance.withdraw');
-    Route::post('/shop/voucher/add', [VoucherController::class, 'addVoucher'])->middleware('role:3')->name('shop.voucher.add');
-    Route::post('/shop/payment/dana/set', [ShopController::class, 'setDanaContact'])->middleware('role:3')->name('shop.payment.dana.set');
-    Route::post('/shop/voucher/delete/{voudher_id}', [VoucherController::class, 'deleteVoucher'])->middleware('role:3')->name('shop.voucher.delete');
+    Route::post('/good/balance/send', [BlaterianGoodBalanceController::class, 'withdrawBalance'])->middleware('capability:goods.manage')->name('good.balance.withdraw');
+    Route::post('/shop/voucher/add', [VoucherController::class, 'addVoucher'])->middleware('capability:operations.manage')->name('shop.voucher.add');
+    Route::post('/shop/payment/dana/set', [ShopController::class, 'setDanaContact'])->middleware('capability:operations.manage')->name('shop.payment.dana.set');
+    Route::post('/shop/voucher/delete/{voudher_id}', [VoucherController::class, 'deleteVoucher'])->middleware('capability:operations.manage')->name('shop.voucher.delete');
 
     // Sales Distribution & Production
-    Route::get('/sales-distribution', [MenuBoardController::class, 'index'])->middleware('role:10,99')->name('staff.sales-distribution.index');
-    Route::post('/sales-distribution/menu', [MenuBoardController::class, 'storeMenu'])->middleware('role:10,99')->name('staff.sales-distribution.menu.store');
-    Route::post('/sales-distribution/menu/{menu}/recipe', [MenuBoardController::class, 'attachRecipe'])->middleware('role:10,99')->name('staff.sales-distribution.menu.recipe.store');
-    Route::post('/sales-distribution/menu/{menu}/publish', [MenuBoardController::class, 'togglePublish'])->middleware('role:10,99')->name('staff.sales-distribution.menu.publish');
-    Route::post('/sales-distribution/order/{sale}/deliver', [MenuBoardController::class, 'toggleDelivery'])->middleware('role:10,99')->name('staff.sales-distribution.order.deliver');
+    Route::get('/sales-distribution', [MenuBoardController::class, 'index'])->middleware('capability:sales.manage')->name('staff.sales-distribution.index');
+    Route::post('/sales-distribution/menu', [MenuBoardController::class, 'storeMenu'])->middleware('capability:menu.manage,menu.create')->name('staff.sales-distribution.menu.store');
+    Route::post('/sales-distribution/menu/{menu}/recipe', [MenuBoardController::class, 'attachRecipe'])->middleware('capability:menu.manage')->name('staff.sales-distribution.menu.recipe.store');
+    Route::post('/sales-distribution/menu/{menu}/publish', [MenuBoardController::class, 'togglePublish'])->middleware('capability:menu.publish')->name('staff.sales-distribution.menu.publish');
+    Route::post('/sales-distribution/order/{sale}/deliver', [MenuBoardController::class, 'toggleDelivery'])->middleware('capability:sales.manage')->name('staff.sales-distribution.order.deliver');
 
-    Route::get('/production/panel', [ProductionPanelController::class, 'index'])->middleware('role:11,99')->name('staff.production.panel.index');
-    Route::post('/production/panel/menu/{menu}/stock', [ProductionPanelController::class, 'updateStock'])->middleware('role:11,99')->name('staff.production.panel.stock.update');
-    Route::post('/production/panel/menu/{menu}/publish', [ProductionPanelController::class, 'togglePublish'])->middleware('role:11,99')->name('staff.production.panel.publish');
+    Route::get('/production/panel', [ProductionPanelController::class, 'index'])->middleware('capability:production.manage')->name('staff.production.panel.index');
+    Route::post('/production/panel/menu/{menu}/stock', [ProductionPanelController::class, 'updateStock'])->middleware('capability:inventory.adjust')->name('staff.production.panel.stock.update');
+    Route::post('/production/panel/menu/{menu}/publish', [ProductionPanelController::class, 'togglePublish'])->middleware('capability:production.manage')->name('staff.production.panel.publish');
 
-    Route::get('/operating/panel', [OperatingPanelController::class, 'index'])->middleware('role:3,99')->name('operating.panel');
+    Route::get('/operating/panel', [OperatingPanelController::class, 'index'])->middleware('capability:operations.manage')->name('operating.panel');
 
     // Seminar Registration Management (Relations)
-    Route::get('/seminar/registrations', [SeminarRegistrationController::class, 'index'])->middleware('role:12,99')->name('staff.seminar.registrations.index');
-    Route::post('/seminar/registrations/events', [SeminarRegistrationController::class, 'storeEvent'])->middleware('role:12,99')->name('staff.seminar.registrations.store_event');
-    Route::post('/seminar/registrations/events/{event}/toggle', [SeminarRegistrationController::class, 'toggleEvent'])->middleware('role:12,99')->name('staff.seminar.registrations.toggle_event');
-    Route::delete('/seminar/registrations/events/{event}', [SeminarRegistrationController::class, 'destroyEvent'])->middleware('role:12,99')->name('staff.seminar.registrations.destroy_event');
+    Route::get('/seminar/registrations', [SeminarRegistrationController::class, 'index'])->middleware('capability:seminar.manage')->name('staff.seminar.registrations.index');
+    Route::post('/seminar/registrations/events', [SeminarRegistrationController::class, 'storeEvent'])->middleware('capability:seminar.manage')->name('staff.seminar.registrations.store_event');
+    Route::post('/seminar/registrations/events/{event}/toggle', [SeminarRegistrationController::class, 'toggleEvent'])->middleware('capability:seminar.manage')->name('staff.seminar.registrations.toggle_event');
+    Route::delete('/seminar/registrations/events/{event}', [SeminarRegistrationController::class, 'destroyEvent'])->middleware('capability:seminar.manage')->name('staff.seminar.registrations.destroy_event');
     
     // Per Event Registrations
-    Route::get('/seminar/registrations/event/{event}', [SeminarRegistrationController::class, 'viewRegistrations'])->middleware('role:12,99')->name('staff.seminar.registrations.view');
-    Route::get('/seminar/registrations/event/{event}/export', [SeminarRegistrationController::class, 'export'])->middleware('role:12,99')->name('staff.seminar.registrations.export');
-    Route::delete('/seminar/registrations/event/{event}/clear', [SeminarRegistrationController::class, 'clearAll'])->middleware('role:12,99')->name('staff.seminar.registrations.clear');
-    Route::delete('/seminar/registrations/registration/{registration}', [SeminarRegistrationController::class, 'destroy'])->middleware('role:12,99')->name('staff.seminar.registrations.destroy');
+    Route::get('/seminar/registrations/event/{event}', [SeminarRegistrationController::class, 'viewRegistrations'])->middleware('capability:seminar.manage')->name('staff.seminar.registrations.view');
+    Route::get('/seminar/registrations/event/{event}/export', [SeminarRegistrationController::class, 'export'])->middleware('capability:seminar.manage')->name('staff.seminar.registrations.export');
+    Route::delete('/seminar/registrations/event/{event}/clear', [SeminarRegistrationController::class, 'clearAll'])->middleware('capability:seminar.manage')->name('staff.seminar.registrations.clear');
+    Route::delete('/seminar/registrations/registration/{registration}', [SeminarRegistrationController::class, 'destroy'])->middleware('capability:seminar.manage')->name('staff.seminar.registrations.destroy');
 
     // Financial Only Feature
-    Route::post('/program/budget/validate/{id}/{valid}', [ProgramController::class, 'validateBudget'])->middleware('role:2')->name('program.budget.validate');
-    Route::post('/program/expense/validate/{id?}', [ExpenseItemController::class, 'validateReceipt'])->middleware('role:2')->name('program.expense.validate');
-    Route::post('/program/disbursement/add/{id}', [DisbursementItemController::class, 'insertDisbursementItem'])->middleware('role:2')->name('program.disbursement.add');
-    Route::post('/program/disbursement/delete/{id}', [DisbursementItemController::class, 'deleteDisbursementItem'])->middleware('role:2')->name('program.disbursement.delete');
-    Route::post('/cash_in_item/item/update', [CashFlowController::class, 'updateCashInItem'])->middleware('role:2')->name('cashIn.update');
-    Route::post('/cash_in_item/item/add', [CashFlowController::class, 'insertCashInItem'])->middleware('role:2')->name('cashIn.add');
-    Route::post('/cash_in_item/item/delete/{id}', [CashFlowController::class, 'deleteCashInItem'])->middleware('role:2')->name('cashIn.delete');
-    Route::post('/cash_in_item/item/validate/{id}', [CashFlowController::class, 'validateCashInItem'])->middleware('role:2')->name('cashIn.validate');
-    Route::post('/contribution/settings', [ContributionController::class, 'updateContributionConfiguration'])->middleware('role:2')->name('contribution.settings');
-    Route::post('/contribution/validation/{id}', [ContributionController::class, 'validation'])->middleware('role:2')->name('contribution.validation');
-    Route::post('/contribution/delete', [ContributionController::class, 'delete'])->middleware('role:2')->name('contribution.delete');
-    Route::post('/payroll/settings', [PayrollController::class, 'setPayrollSettings'])->middleware('role:2')->name('payroll.settings');
-    Route::post('/payroll/single', [PayrollController::class, 'updateSingle'])->name('payroll.update.single');
-    Route::post('/payroll/batch', [PayrollController::class, 'updateBatch'])->name('payroll.update.batch');
+    Route::post('/program/budget/validate/{id}/{valid}', [ProgramController::class, 'validateBudget'])->middleware('capability:finance.manage')->name('program.budget.validate');
+    Route::post('/program/expense/validate/{id?}', [ExpenseItemController::class, 'validateReceipt'])->middleware('capability:finance.manage')->name('program.expense.validate');
+    Route::post('/program/disbursement/add/{id}', [DisbursementItemController::class, 'insertDisbursementItem'])->middleware('capability:finance.manage')->name('program.disbursement.add');
+    Route::post('/program/disbursement/delete/{id}', [DisbursementItemController::class, 'deleteDisbursementItem'])->middleware('capability:finance.manage')->name('program.disbursement.delete');
+    Route::post('/cash_in_item/item/update', [CashFlowController::class, 'updateCashInItem'])->middleware('capability:finance.manage')->name('cashIn.update');
+    Route::post('/cash_in_item/item/add', [CashFlowController::class, 'insertCashInItem'])->middleware('capability:finance.manage')->name('cashIn.add');
+    Route::post('/cash_in_item/item/delete/{id}', [CashFlowController::class, 'deleteCashInItem'])->middleware('capability:finance.manage')->name('cashIn.delete');
+    Route::post('/cash_in_item/item/validate/{id}', [CashFlowController::class, 'validateCashInItem'])->middleware('capability:finance.manage')->name('cashIn.validate');
+    Route::post('/contribution/settings', [ContributionController::class, 'updateContributionConfiguration'])->middleware('capability:finance.manage')->name('contribution.settings');
+    Route::post('/contribution/validation/{id}', [ContributionController::class, 'validation'])->middleware('capability:finance.manage')->name('contribution.validation');
+    Route::post('/contribution/delete', [ContributionController::class, 'delete'])->middleware('capability:finance.manage')->name('contribution.delete');
+    Route::post('/payroll/settings', [PayrollController::class, 'setPayrollSettings'])->middleware('capability:payroll.manage')->name('payroll.settings');
+    Route::post('/payroll/single', [PayrollController::class, 'updateSingle'])->middleware('capability:payroll.manage')->name('payroll.update.single');
+    Route::post('/payroll/batch', [PayrollController::class, 'updateBatch'])->middleware('capability:payroll.manage')->name('payroll.update.batch');
 
     // CEO Only Feature
-    Route::post('/billboard/add', [DashboardController::class, 'addBillboard'])->middleware('role:1')->name('billboard.add');
+    Route::post('/billboard/add', [DashboardController::class, 'addBillboard'])->middleware('capability:dashboard.manage')->name('billboard.add');
     Route::post('/dashboard/post/remove/{id?}', [DashboardController::class, 'removePost'])->name('post.remove');
-    Route::post('/department/delete/{id}', [DepartmentController::class, 'deleteDepartment'])->middleware('role:1')->name('department.delete');
-    Route::post('/department/update/{id}', [DepartmentController::class, 'updateDepartment'])->middleware('role:1')->name('department.update');
-    Route::post('/department/add', [DepartmentController::class, 'insertDepartment'])->middleware('role:1')->name('department.add');
-    Route::post('/billboard/delete/{id?}', [DashboardController::class, 'removeBillboard'])->middleware('role:1')->name('billboard.remove');
+    Route::post('/department/delete/{id}', [DepartmentController::class, 'deleteDepartment'])->middleware('capability:organization.manage')->name('department.delete');
+    Route::post('/department/update/{id}', [DepartmentController::class, 'updateDepartment'])->middleware('capability:organization.manage')->name('department.update');
+    Route::post('/department/add', [DepartmentController::class, 'insertDepartment'])->middleware('capability:organization.manage')->name('department.add');
+    Route::post('/billboard/delete/{id?}', [DashboardController::class, 'removeBillboard'])->middleware('capability:dashboard.manage')->name('billboard.remove');
 
     // CEO Panel — Governance Year & Staff Management (role:1,99)
-    Route::middleware('role:1,99')->prefix('ceo')->group(function () {
+    Route::middleware('capability:organization.manage')->prefix('ceo')->group(function () {
         Route::get('/panel',                           [CeoPanelController::class, 'index'])->name('ceo.panel');
         Route::post('/year',                           [CeoPanelController::class, 'storeYear'])->name('ceo.year.store');
         Route::post('/year/{governanceYear}/toggle',   [CeoPanelController::class, 'toggleYear'])->name('ceo.year.toggle');
@@ -402,25 +401,25 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     });
 
     // CEO/Admin: pinned-doc (Attachment) management
-    Route::post('/attachment/add', [DashboardController::class, 'addAttachment'])->middleware('role:1,8,99')->name('attachment.add');
-    Route::post('/attachment/delete/{id?}', [DashboardController::class, 'removeAttachment'])->middleware('role:1,8,99')->name('attachment.remove');
+    Route::post('/attachment/add', [DashboardController::class, 'addAttachment'])->middleware('capability:documents.manage')->name('attachment.add');
+    Route::post('/attachment/delete/{id?}', [DashboardController::class, 'removeAttachment'])->middleware('capability:documents.manage')->name('attachment.remove');
 
     // CEO/Admin: year switch
-    Route::post('/year', [YearController::class, 'set'])->middleware('role:1,8')->name('staff.year.set');
+    Route::post('/year', [YearController::class, 'set'])->middleware('capability:documents.manage')->name('staff.year.set');
 
     // Finance monitoring panel (pending validation documents)
-    Route::get('/finance/pending-docs', [FinancePanelController::class, 'index'])->middleware('role:2,99')->name('finance.pending');
+    Route::get('/finance/pending-docs', [FinancePanelController::class, 'index'])->middleware('capability:finance.view')->name('finance.pending');
 
     // IWP receipt validation panel
-    Route::get('/iwp/receipts', [IwpPanelController::class, 'index'])->middleware('role:13')->name('iwp.receipts');
-    Route::post('/iwp/receipts/{id}/validate', [IwpPanelController::class, 'validateReceipt'])->middleware('role:13')->name('iwp.receipts.validate');
+    Route::get('/iwp/receipts', [IwpPanelController::class, 'index'])->middleware('capability:iwp.manage')->name('iwp.receipts');
+    Route::post('/iwp/receipts/{id}/validate', [IwpPanelController::class, 'validateReceipt'])->middleware('capability:iwp.manage')->name('iwp.receipts.validate');
 
     // HR birthday panel
-    Route::get('/hr/birthdays', [HrBirthdayController::class, 'index'])->middleware('role:6,99')->name('hr.birthdays');
-    Route::post('/hr/birthdays/{id}', [HrBirthdayController::class, 'update'])->middleware('role:6,99')->name('hr.birthdays.update');
+    Route::get('/hr/birthdays', [HrBirthdayController::class, 'index'])->middleware('capability:hr.manage')->name('hr.birthdays');
+    Route::post('/hr/birthdays/{id}', [HrBirthdayController::class, 'update'])->middleware('capability:hr.manage')->name('hr.birthdays.update');
 
     // CEO/Admin: pinned-doc management
-    Route::middleware('role:1,8')->group(function () {
+    Route::middleware('capability:documents.manage')->group(function () {
         Route::get('/pinned-docs', [PinnedDocController::class, 'index'])->name('pinneddoc.index');
         Route::post('/pinned-docs', [PinnedDocController::class, 'store'])->name('pinneddoc.store');
         Route::post('/pinned-docs/{pinnedDoc}', [PinnedDocController::class, 'update'])->name('pinneddoc.update');
@@ -428,7 +427,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     });
 
     // Internship Certificates Management - For Staff Only (HR Manager & PIC Internship)
-    Route::group([], function () {
+    Route::middleware('capability:internship.manage')->group(function () {
         Route::get('/internship/certificates/manage', [InternshipCertificateController::class, 'manageIndex'])->name('certificate.manage');
         Route::post('/internship/certificate/store', [InternshipCertificateController::class, 'store'])->name('certificate.store');
         Route::post('/internship/certificate/update/{id}', [InternshipCertificateController::class, 'update'])->name('certificate.update');
@@ -436,11 +435,11 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     });
 
     // Unified Marketing CMS Panel
-    Route::middleware('role:9,100,99')->get('/marketing/cms', [MarketingCmsController::class, 'index'])->name('marketing.cms');
-    Route::middleware('role:9,100,99')->post('/marketing/upload-image', [MarketingCmsController::class, 'uploadImage'])->name('marketing.upload.image');
+    Route::middleware('capability:marketing.manage')->get('/marketing/cms', [MarketingCmsController::class, 'index'])->name('marketing.cms');
+    Route::middleware('capability:marketing.manage')->post('/marketing/upload-image', [MarketingCmsController::class, 'uploadImage'])->name('marketing.upload.image');
 
     // Marketing Medinfo Dashboard (Legacy routes kept for persistence logic)
-    Route::middleware('role:9,100,99')->prefix('marketing')->group(function () {
+    Route::middleware('capability:marketing.manage')->prefix('marketing')->group(function () {
         Route::get('/structures', [\App\Http\Controllers\StructureController::class, 'index'])->name('marketing.structures.index');
         Route::post('/structures', [\App\Http\Controllers\StructureController::class, 'store'])->name('marketing.structures.store');
         Route::post('/structures/{structure}', [\App\Http\Controllers\StructureController::class, 'update'])->name('marketing.structures.update');

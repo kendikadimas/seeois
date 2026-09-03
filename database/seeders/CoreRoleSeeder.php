@@ -25,7 +25,9 @@ class CoreRoleSeeder extends Seeder
             11 => 'Production',
             12 => 'Public Relation',
             13 => 'IWP PIC',
+            15 => 'Intern PIC',
             99 => 'Super Admin',
+            100 => 'Marketing Administrator',
         ];
 
         foreach ($roles as $id => $name) {

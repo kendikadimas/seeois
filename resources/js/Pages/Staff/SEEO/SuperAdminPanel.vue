@@ -1,27 +1,11 @@
 <script setup>
 import StaffLayout from '@/Layouts/StaffLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 
 const props = defineProps({
     env: Object,
     notif: Object
 });
-
-const form = useForm({
-    google_client_id: props.env.google_client_id || '',
-    google_client_secret: props.env.google_client_secret || '',
-    google_drive_folder: props.env.google_drive_folder || '',
-    app_url: props.env.app_url || '',
-});
-
-const submitConfig = () => {
-    form.post('/seeo/staff/super-admin/google-drive', {
-        preserveScroll: true,
-        onSuccess: () => {
-            // Optional: Show success message or handle post-save logic
-        }
-    });
-};
 
 const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
@@ -65,54 +49,27 @@ const copyToClipboard = (text) => {
                             </div>
                             <div>
                                 <span class="uppercase tracking-widest text-[9px] block text-amber-600 font-black mb-1">Konfigurasi Dikunci Secara Aman</span>
-                                Semua kredensial Google Drive telah ditetapkan dan dikunci secara aman pada file konfigurasi sistem (<code class="bg-[#004182]/10 px-1.5 py-0.5 rounded font-black">filesystems.php</code>) untuk mencegah kesalahan data. Anda hanya perlu melakukan <strong>Refresh Google Token</strong> di bawah jika token kedaluwarsa.
+                                Kredensial tidak pernah dikirim ke browser dan hanya dapat diubah melalui environment server. Gunakan <strong>Refresh Google Token</strong> jika otorisasi perlu diperbarui.
                             </div>
                         </div>
 
-                        <form @submit.prevent class="space-y-6 mb-10 opacity-75">
-                            <div>
-                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ps-1">Application URL (APP_URL)</label>
-                                <input 
-                                    v-model="form.app_url"
-                                    type="text" 
-                                    disabled
-                                    class="w-full px-5 py-4 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-gray-500 cursor-not-allowed transition-all"
-                                    placeholder="Contoh: http://localhost:8000"
-                                />
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ps-1">Client ID</label>
-                                    <input 
-                                        v-model="form.google_client_id"
-                                        type="text" 
-                                        disabled
-                                        class="w-full px-5 py-4 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-gray-500 cursor-not-allowed transition-all"
-                                        placeholder="Google Client ID"
-                                    />
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ps-1">Client Secret</label>
-                                    <input 
-                                        v-model="form.google_client_secret"
-                                        type="password" 
-                                        disabled
-                                        class="w-full px-5 py-4 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-gray-500 cursor-not-allowed transition-all"
-                                        placeholder="Google Client Secret"
-                                    />
+                        <div class="space-y-6 mb-10">
+                            <div class="grid grid-cols-3 gap-3">
+                                <div v-for="item in [
+                                    ['Client ID', env.has_google_client],
+                                    ['Client Secret', env.has_google_secret],
+                                    ['Refresh Token', env.has_refresh_token]
+                                ]" :key="item[0]" class="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-center">
+                                    <div class="text-[9px] font-black uppercase text-gray-400 tracking-wider mb-2">{{ item[0] }}</div>
+                                    <span :class="item[1] ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'" class="px-2 py-1 rounded-full text-[8px] font-black uppercase">
+                                        {{ item[1] ? 'Configured' : 'Missing' }}
+                                    </span>
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ps-1">Google Drive Folder ID</label>
-                                <input 
-                                    v-model="form.google_drive_folder"
-                                    type="text" 
-                                    disabled
-                                    class="w-full px-5 py-4 bg-gray-100 border border-gray-200 rounded-2xl text-sm font-bold text-gray-500 cursor-not-allowed transition-all"
-                                    placeholder="Google Drive Folder ID"
-                                />
+                            <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Application URL</label>
+                                <code class="text-[10px] font-bold text-gray-600 break-all">{{ env.app_url }}</code>
                             </div>
 
                             <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
@@ -126,12 +83,7 @@ const copyToClipboard = (text) => {
                                 <p class="text-[9px] text-blue-400 mt-2 font-bold uppercase tracking-tighter italic">Copy & paste link ini ke Google Cloud Console</p>
                             </div>
                             
-                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Refresh Token Status</span>
-                                <span v-if="env.has_refresh_token" class="px-3 py-1 bg-green-100 text-green-600 rounded-full text-[9px] font-black uppercase tracking-widest">Active</span>
-                                <span v-else class="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-[9px] font-black uppercase tracking-widest">Not Set</span>
-                            </div>
-                        </form>
+                        </div>
 
                         <a href="/google-drive/auth" class="flex items-center justify-center gap-3 w-full py-5 bg-[#004182] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#003162] hover:shadow-xl transition-all">
                             <i class="bi bi-arrow-repeat text-lg"></i>

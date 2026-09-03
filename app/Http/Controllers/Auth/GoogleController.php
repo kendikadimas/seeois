@@ -45,12 +45,13 @@ class GoogleController extends Controller
     private function login_google(User $user)
     {
         Auth::login($user);
+        request()->session()->regenerate();
 
         if (Auth::user()->roles_id > 0) {
             session('notif', ['type' => 'info', 'message' => 'Hi ' . Auth::user()->name . ', welcome to SEEO Information System']);
             return redirect()->intended(route('dashboard', absolute: false))->with('notif', ['type' => 'info', 'message' => 'Hi ' . Auth::user()->name . ', welcome to SEEO Information System']);
         } else {
-            return redirect()->intended(route('login', absolute: false))->with('notif', ['type' => 'info', 'message' => 'Hi ' . Auth::user()->name . ', welcome to Blaterian']);
+            return redirect()->intended(route('shop', absolute: false))->with('notif', ['type' => 'info', 'message' => 'Hi ' . Auth::user()->name . ', welcome to Blaterian']);
         }
     }
 

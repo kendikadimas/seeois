@@ -3,7 +3,7 @@ import ModalConfirmation from "@/Components/ModalConfirmation.vue";
 import { Head, usePage, router } from "@inertiajs/vue3";
 import { ref, watch, computed, onMounted, defineProps, nextTick } from "vue";
 // Placeholder logo to prevent missing asset build failures
-const logoSrc = 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
+const logoSrc = '/images/assets/logo.png';
 
 // Prop total_amount (jika masih relevan)
 // const props = defineProps({
@@ -35,81 +35,10 @@ function submitYear() {
     router.post("/seeo/staff/year", { year: selected_year.value }, { preserveScroll: true, preserveState: true });
 }
 
-// [FUNGSI ROUTE MANUAL ANDA - TIDAK DIUBAH]
-const route = (name, params = {}) => {
-    const routes = {
-        'dashboard': '/seeo/staff/dashboard',
-        'role': '/seeo/staff/user',
-        'structural': '/seeo/staff/structural',
-        'department': '/seeo/staff/department',
-        'program': '/seeo/staff/program',
-        'finance': '/seeo/staff/finance',
-        'finance.feature': '/seeo/staff/finance_feature',
-        'blaterian.insight': '/seeo/staff/blaterian/insight',
-        'blaterian.insight.cashflow': '/seeo/staff/blaterian/insight/cashflow',
-        'blaterian.insight.customer': '/seeo/staff/blaterian/insight/customer',
-        'food.stand': '/seeo/staff/blaterian/foods/stand',
-        'food.stand.detail': '/seeo/staff/blaterian/foods/stand_detail',
-        'food.stand.cashier': '/seeo/staff/blaterian/foods/cashier',
-        'stand.expense.receipt': '/seeo/staff/food/stand/expense/receipt/{filename}',
-        'good.product': '/seeo/staff/blaterian/goods/product',
-        'profile.edit': '/seeo/staff/profile',
-        'logout': '/logout',
-        'intro': '/intro',
-        'billboard.remove': '/seeo/staff/billboard/delete',
-        'attachment.remove': '/seeo/staff/attachment/delete',
-        'post.remove': '/seeo/staff/dashboard/post/remove',
-        'billboard.add': '/seeo/staff/billboard/add',
-        'attachment.add': '/seeo/staff/attachment/add',
-        'post.add': '/seeo/staff/dashboard/post/add',
-        'marketing.cms': '/seeo/staff/marketing/cms',
-        'marketing.structures.index': '/seeo/staff/marketing/structures',
-        'marketing.activities.index': '/seeo/staff/marketing/activities',
-        'marketing.compro.index': '/seeo/staff/marketing/compro',
-        'pinneddoc.index': '/seeo/staff/pinned-docs',
-        'finance.pending': '/seeo/staff/finance/pending-docs',
-        'iwp.receipts': '/seeo/staff/iwp/receipts',
-        'hr.birthdays': '/seeo/staff/hr/birthdays',
-        'staff.year.set': '/seeo/staff/year',
-        'ceo.panel': '/seeo/staff/ceo/panel',
-        'operating.panel': '/seeo/staff/operating/panel',
-        'staff.sales-distribution.index': '/seeo/staff/sales-distribution',
-        'staff.production.panel.index': '/seeo/staff/production/panel',
-        'staff.seminar.registrations.index': '/seeo/staff/seminar/registrations',
-        'staff.seminar.registrations.update_name': '/seeo/staff/seminar/registrations/event-name',
-        'staff.seminar.registrations.export': '/seeo/staff/seminar/registrations/export',
-        'staff.seminar.registrations.clear': '/seeo/staff/seminar/registrations/clear',
-        'staff.seminar.registrations.destroy': '/seeo/staff/seminar/registrations/{registration}',
-        'super.admin.panel': '/seeo/staff/super-admin',
-        'internship.applications.index': '/seeo/staff/internship',
-        'certificate.manage': '/seeo/staff/internship/certificates/manage',
-        'certificate.index': '/seeo/internship/certificates',
-        'certificate.download': '/seeo/internship/certificate/download/{id}',
-    };
-    if (routes[name]) {
-        let url = routes[name];
-        if (params && Object.keys(params).length > 0) {
-            for (const key in params) {
-                let replaced = url.replace(`{${key}}`, params[key]);
-                if (replaced === url) {
-                    replaced = url.replace(`{${key}?}`, params[key]);
-                }
-                url = replaced;
-            }
-            url = url.replace(/\{\w+\?\}/g, '');
-             if (url.endsWith('/') && url.length > 1) {
-                url = url.slice(0, -1);
-            }
-        }
-         else if (params && params.id && !url.includes('{id}') && !url.includes('{id?}')) {
-            url = `${url}/${params.id}`;
-         }
-        return url;
-    }
-    console.warn(`Route "${name}" not found.`);
-    return '#';
-};
+// All URLs come from Laravel/Ziggy so route prefixes cannot drift between pages.
+const route = (name, params = {}) => window.route(name, params);
 route.current = (routeName) => {
+    if (window.route().current(routeName)) return true;
     const currentComponent = page.component;
     if (!routeName) return currentComponent;
     const componentToRouteBase = {
@@ -146,13 +75,14 @@ route.current = (routeName) => {
     if (!currentRouteBase) return false;
     return currentRouteBase === routeName || currentRouteBase.startsWith(routeName + '.');
 };
-// [AKHIR FUNGSI ROUTE MANUAL]
 
 const currentTime = ref('');
 const modalConfirmationRef = ref(null);
 
 const userRole = computed(() => Number(page.props.auth?.user?.roles_id || 0));
 const roleName = computed(() => page.props.auth?.user?.role_name || '');
+const capabilities = computed(() => page.props.auth?.user?.capabilities || []);
+const can = (capability) => capabilities.value.includes('*') || capabilities.value.includes(capability);
 
 // OPTIMIZED: Build nav_list ONCE saat initialization
 const nav_list = computed(() => {
@@ -165,7 +95,6 @@ const nav_list = computed(() => {
         Shortcuts: {},
         Organization: {
             Dashboard: { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard", icon: "bi-speedometer2" },
-            User: { route: route("role"), active: route.current("role"), title: "User", icon: "bi-person-badge" },
             Structural: { route: route("structural"), active: route.current("structural") || route.current("department") || route.current("program"), title: "Structural", icon: "bi-diagram-3" },
             Finance: [
                 { route: route("finance"), active: route.current("finance"), title: "Cashflow", icon: "bi-cash-coin" },
@@ -183,51 +112,55 @@ const nav_list = computed(() => {
         },
     };
 
+    if (can('employee.manage')) {
+        list.Organization.User = { route: route("role"), active: route.current("role"), title: "User", icon: "bi-person-badge" };
+    }
+
     // Add Operating Menus
-    if (isOperating || isAdmin) {
+    if (can('stands.manage')) {
         list.Shortcuts.Operating = { route: route("operating.panel"), active: route.current("operating.panel"), title: "Operating Panel", icon: "bi-clipboard-check" };
         list.Business.Foods.push({ route: route("operating.panel"), active: route.current("operating.panel"), title: "Operating Panel", icon: "bi-clipboard-check" });
     }
 
     // Add Sales Menus
-    if (role === 10 || isAdmin) {
+    if (can('sales.manage')) {
         list.Shortcuts.Sales = { route: route("staff.sales-distribution.index"), active: route.current("staff.sales-distribution.index"), title: "Sales Distribution", icon: "bi-cart-check" };
         list.Business.Foods.push({ route: route("staff.sales-distribution.index"), active: route.current("staff.sales-distribution.index"), title: "Sales Distribution", icon: "bi-cart-check" });
     }
 
     // Add Production Menus
-    if (role === 11 || isAdmin) {
+    if (can('production.manage')) {
         list.Shortcuts.Production = { route: route("staff.production.panel.index"), active: route.current("staff.production.panel.index"), title: "Production Panel", icon: "bi-tools" };
         list.Business.Foods.push({ route: route("staff.production.panel.index"), active: route.current("staff.production.panel.index"), title: "Production Panel", icon: "bi-tools" });
     }
 
     // Add Seminar Menus
-    if (role === 12 || isAdmin) {
+    if (can('seminar.manage')) {
         list.Shortcuts.Seminar = { route: route("staff.seminar.registrations.index"), active: route.current("staff.seminar.registrations.index"), title: "Seminar Registrations", icon: "bi-easel" };
     }
 
     // Add Finance Panel
-    if (role === 2 || isAdmin) {
+    if (can('finance.manage')) {
         list.Shortcuts.Finance = { route: route("finance.pending"), active: route.current("finance.pending"), title: "Pending Docs", icon: "bi-wallet2" };
     }
 
     // Add IWP Panel
-    if (role === 13 || isAdmin) {
+    if (can('iwp.manage')) {
         list.Shortcuts.Iwp = { route: route("iwp.receipts"), active: route.current("iwp.receipts"), title: "IWP Receipts", icon: "bi-receipt" };
     }
 
     // Add HR Panel
-    if (role === 6 || isAdmin) {
+    if (can('hr.manage')) {
         list.Shortcuts.Hr = { route: route("hr.birthdays"), active: route.current("hr.birthdays"), title: "Birthdays", icon: "bi-balloon" };
     }
 
     // Add Marketing CMS
-    if (role === 9 || role === 1 || isAdmin || role === 100) {
+    if (can('marketing.manage')) {
         list.Shortcuts.Marketing = { route: route("marketing.cms"), active: route.current("marketing.cms"), title: "Marketing CMS", icon: "bi-megaphone" };
     }
     
     // CEO Panel (Governance Year + Staff Management)
-    if (role === 1 || isAdmin) {
+    if (can('organization.manage')) {
         list.Shortcuts.CeoPanel = { route: route("ceo.panel"), active: route.current("ceo.panel"), title: "CEO Panel", icon: "bi-award-fill" };
     }
 
@@ -237,7 +170,7 @@ const nav_list = computed(() => {
     }
 
     // CEO/Admin: Pinned Docs
-    if (role === 1 || role === 8 || isAdmin) {
+    if (can('documents.manage')) {
         list.Shortcuts.PinnedDocs = { route: route("pinneddoc.index"), active: route.current("PinnedDocs"), title: "Dokumen Penting", icon: "bi-pin-angle" };
     }
     

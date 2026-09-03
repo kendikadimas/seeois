@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', base64_decode('aHR0cHM6Ly93d3cuc2Vlb2Z0dW5zb2VkLmNvbQ==')),
+    'url' => env('APP_URL', 'http://localhost'),
 
     /*
     |--------------------------------------------------------------------------

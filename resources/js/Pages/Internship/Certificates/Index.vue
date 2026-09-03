@@ -120,7 +120,6 @@
 <script setup>
 import { ref } from 'vue'
 import StaffLayout from '@/Layouts/StaffLayout.vue'
-import { route } from 'ziggy-js'
 
 const props = defineProps({
   certs: Array

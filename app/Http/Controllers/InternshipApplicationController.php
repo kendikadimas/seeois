@@ -150,7 +150,10 @@ class InternshipApplicationController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info('Store method called', $request->all());
+        Log::info('Internship application submission received', [
+            'nim' => $request->input('nim'),
+            'internship_year' => $request->input('internship_year'),
+        ]);
 
         // Validasi dengan batasan per pengunjung (NIM dan phone_number harus unique)
         $validatedData = $request->validate([

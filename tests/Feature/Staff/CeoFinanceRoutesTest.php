@@ -38,7 +38,7 @@ describe('CEO POST routes (role 1)', function () {
                 'name'       => 'Blocked Dept',
                 'manager_id' => $manager->id,
             ])
-            ->assertRedirect();
+            ->assertForbidden();
 
         $this->assertDatabaseMissing('department', ['name' => 'Blocked Dept']);
     });
@@ -162,7 +162,7 @@ describe('Finance POST routes (role 2)', function () {
                 'price'   => 1,
                 'receipt' => fakeImageUpload(),
             ])
-            ->assertRedirect();
+            ->assertForbidden();
     });
 
     test('finance can validate cash-in item', function () {
@@ -192,6 +192,6 @@ describe('Finance POST routes (role 2)', function () {
         $ceo = staffUser(1);
         $this->actingAs($ceo)
             ->post(STAFF_PREFIX . '/program/budget/validate/1/1')
-            ->assertRedirect();
+            ->assertForbidden();
     });
 });

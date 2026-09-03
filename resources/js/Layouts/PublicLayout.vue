@@ -34,9 +34,10 @@
             </div>
             
             <!-- Action Area (Right) -->
-            <div class="hidden lg:flex items-center gap-6 shrink-0">
-                <Link v-if="auth_user" href="/seeo/staff/dashboard" class="font-black text-[10px] uppercase tracking-widest hover:text-[#FFD700] transition-all" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]'">Dashboard</Link>
+            <div class="hidden lg:flex items-center gap-5 shrink-0">
+                <Link v-if="auth_user" :href="authenticatedHomeUrl" class="font-black text-[10px] uppercase tracking-widest hover:text-[#FFD700] transition-all" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]'">{{ authenticatedHomeLabel }}</Link>
                 <Link v-else href="/login" class="font-black text-[10px] uppercase tracking-widest hover:text-[#FFD700] transition-all" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]'">Login</Link>
+                <Link v-if="auth_user" :href="route('logout')" method="post" as="button" class="font-black text-[10px] uppercase tracking-widest text-red-500 hover:text-red-400 transition-all">Logout</Link>
                 <Link href="/contact" class="bg-[#FFD700] text-[#004182] px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-white hover:scale-105 transition-all">Hubungi Kami</Link>
             </div>
 
@@ -61,8 +62,9 @@
                     <Link href="/structure" class="block px-6 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all" :class="page.component === 'Public/Structure' ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#004182]'">Structure</Link>
                     <Link href="/contact" class="block px-6 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all" :class="page.component === 'Public/Contact' ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#004182]'">Contact</Link>
                     <div class="pt-3 border-t border-gray-100 flex flex-col gap-2">
-                        <Link v-if="auth_user" href="/seeo/staff/dashboard" class="text-center py-2.5 font-black text-[#004182] uppercase tracking-widest text-[10px]">Dashboard</Link>
+                        <Link v-if="auth_user" :href="authenticatedHomeUrl" class="text-center py-2.5 font-black text-[#004182] uppercase tracking-widest text-[10px]">{{ authenticatedHomeLabel }}</Link>
                         <Link v-else href="/login" class="text-center py-2.5 font-black text-[#004182] uppercase tracking-widest text-[10px]" :class="page.component === 'Auth/Login' ? 'text-[#FFD700]' : 'text-[#004182]'">Login</Link>
+                        <Link v-if="auth_user" :href="route('logout')" method="post" as="button" class="w-full text-center py-2.5 font-black text-red-500 uppercase tracking-widest text-[10px]">Logout</Link>
                         <Link href="/contact" class="bg-[#004182] text-white text-center py-3 rounded-2xl font-black shadow-lg uppercase tracking-widest text-[10px]">Hubungi Kami</Link>
                     </div>
                 </div>
@@ -188,6 +190,9 @@ const logoSrc = ref('/images/assets/logo.png');
 const open = ref(false);
 const page = usePage();
 const auth_user = computed(() => page.props.auth?.user);
+const isCustomer = computed(() => auth_user.value && auth_user.value.roles_id == null);
+const authenticatedHomeUrl = computed(() => isCustomer.value ? route('shop') : route('dashboard'));
+const authenticatedHomeLabel = computed(() => isCustomer.value ? 'Shop' : 'Dashboard');
 const showScrollTopButton = ref(false);
 const isNavbarHidden = ref(false);
 let lastScrollY = 0;

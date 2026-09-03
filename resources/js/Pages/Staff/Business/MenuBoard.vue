@@ -3,33 +3,12 @@ import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch, onMounted } from 'vue';
 import { formatIDR } from '@/utils';
 import InputError from '@/Components/InputError.vue';
+import StaffLayout from '@/Layouts/StaffLayout.vue';
+import Notif from '@/Components/Notif.vue';
 import vSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 
-// Manual route helper to avoid Ziggy resolution issues
-const route = (name, params = {}) => {
-    const routes = {
-        'staff.sales-distribution.index': '/staff/sales-distribution',
-        'staff.sales-distribution.menu.store': '/staff/sales-distribution/menu',
-        'staff.sales-distribution.menu.recipe.store': '/staff/sales-distribution/menu/{menu}/recipe',
-        'staff.sales-distribution.menu.publish': '/staff/sales-distribution/menu/{menu}/publish',
-        'staff.sales-distribution.order.deliver': '/staff/sales-distribution/order/{sale}/deliver',
-    };
-    if (routes[name]) {
-        let url = routes[name];
-        if (params && typeof params === 'object') {
-            for (const key in params) {
-                url = url.replace(`{${key}}`, params[key]);
-            }
-        } else if (params) {
-            // Handle single param as {menu} or {sale}
-            url = url.replace(/\{[a-z]+\}/, params);
-        }
-        return url;
-    }
-    console.warn(`Route "${name}" not found in MenuBoard helper.`);
-    return window.route ? window.route(name, params) : '#';
-};
+const route = (name, params = {}) => window.route(name, params);
 
 const props = defineProps({
     stands: {
@@ -193,11 +172,11 @@ watch(selectedStandId, (value) => {
 });
 
 function filterStand() {
-    router.get('/staff/sales-distribution', { stand_id: selectedStandId.value }, { preserveState: true, replace: true });
+    router.get(route('staff.sales-distribution.index'), { stand_id: selectedStandId.value }, { preserveState: true, replace: true });
 }
 
 function submitMenu() {
-    menuForm.post('/staff/sales-distribution/menu', {
+    menuForm.post(route('staff.sales-distribution.menu.store'), {
         preserveScroll: true,
         onSuccess: () => {
             showAddMenuModal(false);
@@ -212,17 +191,22 @@ function submitRecipe() {
         return;
     }
 
-    recipeForm.post(`/staff/sales-distribution/menu/${selectedMenuId.value}/recipe`, {
+    recipeForm.transform((data) => ({
+        ...data,
+        components: data.components
+            .filter((component) => Number(component.quantity_used) > 0)
+            .map(({ stand_expense_id, quantity_used }) => ({ stand_expense_id, quantity_used })),
+    })).post(route('staff.sales-distribution.menu.recipe.store', { menu: selectedMenuId.value }), {
         preserveScroll: true,
     });
 }
 
 function togglePublish(menu) {
-    router.post(`/staff/sales-distribution/menu/${menu.id}/publish`, {}, { preserveScroll: true });
+    router.post(route('staff.sales-distribution.menu.publish', { menu: menu.id }), {}, { preserveScroll: true });
 }
 
 function toggleDelivery(buyer) {
-    router.post(`/staff/sales-distribution/order/${buyer.id}/deliver`, {}, { preserveScroll: true });
+    router.post(route('staff.sales-distribution.order.deliver', { sale: buyer.id }), {}, { preserveScroll: true });
 }
 
 function suggestPrice(cost) {

@@ -200,14 +200,14 @@ describe('Role-restricted POST actions', function () {
         'name'  => 'Blocked',
         'price' => 1,
       ])
-      ->assertRedirect();
+      ->assertForbidden();
   });
 
   test('role 1 cannot POST budget validate (role 2 only)', function () {
     $user = staffUser(1);
     $this->actingAs($user)
       ->post(STAFF_PREFIX . '/program/budget/validate/1/1')
-      ->assertRedirect();
+      ->assertForbidden();
   });
 
   test('role 2 gets redirect when validating missing program budget', function () {
@@ -233,7 +233,7 @@ describe('Role-restricted POST actions', function () {
       ->post(STAFF_PREFIX . '/food/stand/add/new', [
         'name' => 'Unauthorized Stand',
       ])
-      ->assertRedirect();
+      ->assertForbidden();
   });
 });
 

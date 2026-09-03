@@ -21,8 +21,9 @@ class GoogleDriveAuthController extends Controller
         // Callback URL (Pastikan URL ini didaftarkan di Google Cloud Console)
         $this->client->setRedirectUri(url('/google-drive/callback'));
         
-        // Disable SSL verification for Laragon local
-        $this->client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+        $this->client->setHttpClient(new \GuzzleHttp\Client([
+            'verify' => filter_var(config('filesystems.disks.google.verifySsl', true), FILTER_VALIDATE_BOOL),
+        ]));
         
         // Scope untuk akses drive
         $this->client->addScope("https://www.googleapis.com/auth/drive");
@@ -54,7 +55,10 @@ class GoogleDriveAuthController extends Controller
                     return redirect('/')->with('success', 'Refresh Token Google Drive berhasil diperbarui!');
                 }
                 
-                \Log::warning('Google Drive Auth: Refresh token tidak didapatkan.', ['token_response' => $token]);
+                Log::warning('Google Drive Auth: Refresh token tidak didapatkan.', [
+                    'has_error' => isset($token['error']),
+                    'error' => $token['error'] ?? null,
+                ]);
                 return redirect('/')->with('error', 'Gagal update token. Pastikan Anda "Hapus Akses" aplikasi ini di Akun Google Anda terlebih dahulu jika sebelumnya sudah pernah menghubungkan akun.');
 
             } catch (\Exception $e) {

@@ -56,10 +56,11 @@ return [
         ],
         'google' => [
             'driver' => 'google',
-            'clientId' => env('GOOGLE_DRIVE_CLIENT_ID', base64_decode('NjI0ODE4Mjc3MTAtc2twdmxidGNmZGY4dG03ZzNnYjNzYThyMjFrZmgxNmYuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20=')),
-            'clientSecret' => env('GOOGLE_DRIVE_CLIENT_SECRET', base64_decode('R0NTUFgtaXpJNm9fVVV3TEFMeXQtTXR6blhvSDNUYzB3Sg==')),
+            'clientId' => env('GOOGLE_DRIVE_CLIENT_ID'),
+            'clientSecret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
             'refreshToken' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
-            'folder' => env('GOOGLE_DRIVE_FOLDER', base64_decode('MTR2cHpqMEEydlRraUtpRFcwUGpfU3gyTmJUWVhvZ0k=')),
+            'folder' => env('GOOGLE_DRIVE_FOLDER'),
+            'verifySsl' => env('GOOGLE_HTTP_VERIFY', true),
             'visibility' => 'public',
         ]
 

@@ -64,7 +64,7 @@ describe('Marketing CMS image upload', function () {
             ->post(STAFF_PREFIX . '/marketing/upload-image', [
                 'image' => UploadedFile::fake()->image('blocked.png'),
             ])
-            ->assertRedirect();
+            ->assertForbidden();
     });
 });
 
