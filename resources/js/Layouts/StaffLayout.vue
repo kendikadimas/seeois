@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import ModalConfirmation from "@/Components/ModalConfirmation.vue";
 import { Head, usePage, router } from "@inertiajs/vue3";
 import { ref, watch, computed, onMounted, defineProps, nextTick } from "vue";
@@ -100,6 +100,8 @@ const nav_list = computed(() => {
 
     // === DASHBOARD (Available for all staff) ===
     list.Dashboard.Home = { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard", icon: "bi-speedometer2" };
+    list.Dashboard.UploadLogbook = { route: route("profile.edit") + "#logbook-upload", active: false, title: "Upload Logbook", icon: "bi-journal-arrow-up" };
+    list.Dashboard.PembayaranIwp = { route: route("profile.edit") + "#iwp-payment", active: false, title: "Pembayaran IWP", icon: "bi-wallet2" };
 
     // === MANAGEMENT (Organization & Finance) ===
     // Structural & Departments
@@ -132,7 +134,7 @@ const nav_list = computed(() => {
 
     // IWP Panel
     if (can('iwp.manage')) {
-        list.Management.IwpPanel = { route: route("iwp.receipts"), active: route.current("iwp.receipts"), title: "IWP Receipts", icon: "bi-receipt" };
+        list.Management.IwpPanel = { route: route("iwp.receipts"), active: route.current("iwp.receipts"), title: "Validasi Pembayaran IWP", icon: "bi-receipt" };
     }
 
     // === BUSINESS (Blaterian Foods & Goods) ===
@@ -554,7 +556,7 @@ watch(() => page.component, () => {
                         <h4 class="mb-0 fs-5 fw-semibold"><slot name="header" /></h4>
                         <div class="page-meta small text-muted">
                             <span>{{ date_header }}</span>
-                            <span class="mx-1 d-none d-md-inline">•</span>
+                            <span class="mx-1 d-none d-md-inline">â€¢</span>
                             <span class="d-none d-md-inline">{{ currentTime }}</span>
                         </div>
                     </div>
@@ -778,3 +780,5 @@ watch(() => page.component, () => {
 a.text-primary:hover { color: #27187e !important; }
 .bg-white { background-color: #f7f7ff !important; }
 </style>
+
+

@@ -347,7 +347,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
 
     // Sales Distribution & Production
     Route::get('/sales-distribution', [MenuBoardController::class, 'index'])->middleware('capability:sales.manage')->name('staff.sales-distribution.index');
-    // REMOVED: storeMenu route - Sales Distribution should NOT create menu, only Production can
+    Route::post('/sales-distribution/menu', [MenuBoardController::class, 'storeMenu'])->middleware('capability:menu.manage')->name('staff.sales-distribution.menu.store');
     Route::post('/sales-distribution/menu/{menu}/recipe', [MenuBoardController::class, 'attachRecipe'])->middleware('capability:menu.manage')->name('staff.sales-distribution.menu.recipe.store');
     Route::post('/sales-distribution/menu/{menu}/publish', [MenuBoardController::class, 'togglePublish'])->middleware('capability:menu.publish')->name('staff.sales-distribution.menu.publish');
     Route::post('/sales-distribution/order/{sale}/deliver', [MenuBoardController::class, 'toggleDelivery'])->middleware('capability:sales.manage')->name('staff.sales-distribution.order.deliver');

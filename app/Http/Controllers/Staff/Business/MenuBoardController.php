@@ -11,6 +11,7 @@ use App\Models\StandExpense;
 use App\Models\StandSales;
 use App\Models\GovernanceYear;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -96,9 +97,50 @@ class MenuBoardController extends Controller
         ]);
     }
 
-    // REMOVED: storeMenu method - Sales Distribution should NOT create menu
-    // Menu creation is ONLY for Production Panel
-    // Sales Distribution only: attach recipe, publish menu, manage delivery
+    public function storeMenu(Request $request)
+    {
+        $validated = $request->validate([
+            'stand_id' => ['required', 'integer', 'exists:stand,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'category' => ['required', 'string', 'max:100'],
+            'food_tag' => ['required', 'array', 'min:1'],
+            'food_tag.*' => ['integer', 'distinct', 'exists:food_tag,id'],
+            'price' => ['required', 'integer', 'min:0'],
+            'stock' => ['required', 'integer', 'min:0'],
+            'volume' => ['nullable', 'numeric', 'min:0'],
+            'volume_unit' => ['nullable', 'string', 'max:50'],
+            'mass' => ['nullable', 'numeric', 'min:0'],
+            'mass_unit' => ['nullable', 'string', 'max:50'],
+            'image' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        $data = collect($validated)->only([
+            'stand_id', 'name', 'category', 'price', 'stock',
+            'volume', 'volume_unit', 'mass', 'mass_unit',
+        ])->all();
+        $data['sale'] = 0;
+        $data['is_published'] = false;
+        $data['workflow_status'] = 'draft';
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = 'M_'.now()->format('YmdHis').'_'.str()->random(8).'.'.$image->extension();
+            $disk = app()->environment('production') ? 'google' : 'public';
+            $image->storeAs('images/shop/foods/menu', $imageName, $disk);
+            $data['image'] = $imageName;
+        }
+
+        $menu = DB::transaction(function () use ($data, $validated) {
+            $menu = MenuItem::create($data);
+            $menu->tags()->attach($validated['food_tag']);
+
+            return $menu;
+        });
+
+        return redirect()
+            ->route('staff.sales-distribution.index', ['stand_id' => $menu->stand_id])
+            ->with('notif', ['type' => 'info', 'message' => 'Menu baru berhasil dibuat.']);
+    }
 
     public function attachRecipe(Request $request, MenuItem $menu)
     {

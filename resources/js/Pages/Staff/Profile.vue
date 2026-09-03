@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import StaffLayout from "@/Layouts/StaffLayout.vue";
 import InputError from "@/Components/InputError.vue";
 import Notif from "@/Components/Notif.vue";
@@ -10,6 +10,7 @@ import {
     watch,
     onMounted,
     onUnmounted,
+    nextTick,
     defineProps,
     defineExpose,
 } from "vue";
@@ -194,6 +195,13 @@ const handleResize = () => {
 
 onMounted(() => {
     window.addEventListener("resize", handleResize);
+    if (window.location.hash === "#logbook-upload") {
+        activeTab.value = 2;
+        nextTick(() => document.getElementById("logbook-upload")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    } else if (window.location.hash === "#iwp-payment") {
+        activeTab.value = 3;
+        nextTick(() => document.getElementById("iwp-payment")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
 });
 onUnmounted(() => {
     window.removeEventListener("resize", handleResize);
@@ -887,6 +895,7 @@ watch(
                             >
                                 <!-- Logbook -->
                                 <div
+                                    id="logbook-upload"
                                     class="card p-3"
                                     v-if="activeTab == 2 || isLargeScreen"
                                 >
@@ -1116,6 +1125,7 @@ watch(
                             >
                                 <!-- Contribution -->
                                 <div
+                                    id="iwp-payment"
                                     class="card p-3"
                                     v-if="activeTab == 3 || isLargeScreen"
                                 >
@@ -1356,3 +1366,6 @@ watch(
     <!-- Notif Toast -->
     <Notif ref="toastNotifRef" />
 </template>
+
+
+
