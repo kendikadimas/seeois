@@ -103,7 +103,7 @@ class MenuBoardController extends Controller
             'stand_id' => ['required', 'integer', 'exists:stand,id'],
             'name' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', 'max:100'],
-            'food_tag' => ['required', 'array', 'min:1'],
+            'food_tag' => ['nullable', 'array'],
             'food_tag.*' => ['integer', 'distinct', 'exists:food_tag,id'],
             'price' => ['required', 'integer', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
@@ -132,14 +132,15 @@ class MenuBoardController extends Controller
 
         $menu = DB::transaction(function () use ($data, $validated) {
             $menu = MenuItem::create($data);
-            $menu->tags()->attach($validated['food_tag']);
+            if (!empty($validated['food_tag'])) {
+                $menu->tags()->attach($validated['food_tag']);
+            }
 
             return $menu;
         });
 
-        return redirect()
-            ->route('staff.sales-distribution.index', ['stand_id' => $menu->stand_id])
-            ->with('notif', ['type' => 'info', 'message' => 'Menu baru berhasil dibuat.']);
+        return redirect()->back()
+            ->with('notif', ['type' => 'info', 'message' => "Menu '{$menu->name}' berhasil dibuat."]);
     }
 
     public function attachRecipe(Request $request, MenuItem $menu)

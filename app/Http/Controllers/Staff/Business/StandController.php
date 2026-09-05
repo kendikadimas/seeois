@@ -788,4 +788,41 @@ class StandController extends Controller
         $menu->save();
         return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Successfully update ' . $menu->name . ' image.']);
     }
+
+    /**
+     * Quick store food tag directly from menu creation form
+     */
+    public function quickStoreTag(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50'],
+            'color' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $colors = ['#2563eb', '#7c3aed', '#0284c7', '#ea580c', '#dc2626', '#d97706', '#059669', '#ca8a04', '#e11d48', '#16a34a'];
+        $randomColor = $colors[array_rand($colors)];
+
+        $tag = FoodsTag::withTrashed()->firstOrCreate(
+            ['name' => trim($validated['name'])],
+            ['color' => !empty($validated['color']) ? $validated['color'] : $randomColor]
+        );
+
+        if ($tag->trashed()) {
+            $tag->restore();
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'tag' => [
+                    'id' => $tag->id,
+                    'name' => $tag->name,
+                    'color' => $tag->color,
+                ],
+                'message' => 'Tag baru berhasil ditambahkan.',
+            ]);
+        }
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => "Tag '{$tag->name}' berhasil ditambahkan."]);
+    }
 }

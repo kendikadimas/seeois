@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
     {
         setlocale(LC_TIME, 'IND');
 
+        $this->call(FoodTagSeeder::class);
+
         // Seeds roles table
         // DB::table('roles')->insert(
         //     [

@@ -302,6 +302,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::post('/food/stand/menu/image/update/{id}', [StandController::class, 'updateImage'])->middleware('capability:menu.create,menu.manage')->name('stand.menu.image.update');
     Route::post('/food/stand/menu/recipe/store/{menu_id}', [\App\Http\Controllers\Staff\Business\RecipeComponentController::class, 'store'])->middleware('capability:menu.manage')->name('stand.menu.recipe.store');
     Route::post('/food/stand/menu/update/{id}', [\App\Http\Controllers\Staff\Business\StandController::class, 'updateMenu'])->middleware('capability:menu.create,menu.manage')->name('stand.menu.update');
+    Route::post('/food/tag/quick-store', [StandController::class, 'quickStoreTag'])->name('food.tag.quick_store');
     
     Route::post('/food/stand/sales/customer/add/{id}', [SalesController::class, 'insertCustomer'])->name('sale.customer.add');
     Route::post('/food/stand/sales/add/{id}', [SalesController::class, 'insertSale'])->name('stand.sale.add');

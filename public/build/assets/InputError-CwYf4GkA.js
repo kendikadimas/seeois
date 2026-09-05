@@ -1,0 +1,2 @@
+import{e as m,I as i,o as s,c as t,F as o,y as c,t as r,f as a}from"./app-DSHbcgN3.js";const l={class:"text-danger mb-1",style:{"font-size":"smaller"}},y={key:1,class:"text-danger mb-1",style:{"font-size":"smaller"}},f={__name:"InputError",props:{message:{type:[String,Array]}},setup(e){return(g,u)=>m((s(),t("div",null,[Array.isArray(e.message)?(s(!0),t(o,{key:0},c(e.message,n=>(s(),t("p",l,r(n),1))),256)):a("",!0),Array.isArray(e.message)?a("",!0):(s(),t("p",y,r(e.message),1))],512)),[[i,e.message]])}};export{f as _};
+//# sourceMappingURL=InputError-CwYf4GkA.js.map
