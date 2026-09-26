@@ -92,6 +92,7 @@ function safeNameLabel(option) {
     return '';
 }
 
+const route = (name, params = {}) => window.route(name, params);
 const auth_user = usePage().props.auth.user;
 const user_capabilities = computed(() => auth_user?.capabilities || []);
 const has_capability = (capability) =>
@@ -783,7 +784,7 @@ function handleAddStock() {
     if (!props.stand?.id) return;
     form_add_stock.id = selected_stock.value?.id;
     form_add_stock.request_id = crypto.randomUUID();
-    form_add_stock.post(window.route("stand.menu.stock.update"), {
+    form_add_stock.post(route("stand.menu.stock.update"), {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
@@ -1096,7 +1097,7 @@ watch(
         <ModalAlertNotification ref="modalAlertNotificationRef" />
         <template #header>
             <a
-                :href="window.route('food.stand')"
+                :href="route('food.stand')"
                 class="bg-opacity-0 text-decoration-none text-primary-emphasis"
             >
                 <span class="fw-light">Manajemen Stand</span>
@@ -1124,7 +1125,7 @@ watch(
                                 </button>
                                 <a
                                     v-if="can_open_operating_panel"
-                                    :href="window.route('operating.panel')"
+                                    :href="route('operating.panel')"
                                     class="btn btn-sm btn-outline-primary rounded-pill px-3 mb-auto"
                                     title="Buka panel operasional"
                                 >
@@ -1358,7 +1359,7 @@ watch(
                                         </button>
                                         <a
                                             v-if="has_capability('sales.manage')"
-                                            :href="window.route('staff.sales-distribution.index')"
+                                            :href="route('staff.sales-distribution.index')"
                                             class="btn btn-sm border-0 py-0 btn-outline-primary ms-1"
                                             title="Buka panel distribusi penjualan"
                                         >
@@ -1624,7 +1625,7 @@ watch(
                                     </button>
                                     <a
                                         v-if="can_open_operating_panel"
-                                        :href="window.route('operating.panel')"
+                                        :href="route('operating.panel')"
                                         class="btn btn-sm border-0 py-0 btn-outline-primary ms-1"
                                         title="Buka panel operasional"
                                     >
@@ -1787,7 +1788,7 @@ watch(
                                     <!-- Open Cashier Panel Button -->
                                     <a
                                         v-if="can_open_cashier"
-                                        :href="window.route('food.stand.cashier', { id: stand.id })"
+                                        :href="route('food.stand.cashier', { id: stand.id })"
                                         class="btn btn-sm btn-outline-info border-0 py-0"
                                         title="Buka panel kasir"
                                     >
