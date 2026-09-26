@@ -1,6 +1,6 @@
 <script setup>
 import { useForm, usePage } from '@inertiajs/vue3';
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
 import StaffLayout from '@/Layouts/StaffLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import Notif from '@/Components/Notif.vue';
@@ -8,10 +8,15 @@ import Notif from '@/Components/Notif.vue';
 const props = defineProps({
     activities: Array,
 });
+const route = (name, params = {}) => window.route(name, params);
 
 const notifRef = ref(null);
 const modalInstance = ref(null);
 const isEdit = ref(false);
+const currentImageUrl = ref(null);
+const imagePreviewUrl = ref(null);
+const fileError = ref('');
+const fileInputKey = ref(0);
 
 const form = useForm({
     id: null,
@@ -24,22 +29,61 @@ const form = useForm({
 });
 
 function handleFileChange(e) {
-    form.image_path = e.target.files[0];
+    const file = e.target.files?.[0] || null;
+    fileError.value = '';
+
+    if (file && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        fileError.value = 'Gunakan gambar JPG, PNG, atau WEBP.';
+        e.target.value = '';
+        form.image_path = null;
+        clearImagePreview();
+        return;
+    }
+
+    if (file && file.size > 2 * 1024 * 1024) {
+        fileError.value = 'Ukuran gambar maksimal 2 MB.';
+        e.target.value = '';
+        form.image_path = null;
+        clearImagePreview();
+        return;
+    }
+
+    clearImagePreview();
+    form.image_path = file;
+    imagePreviewUrl.value = file ? URL.createObjectURL(file) : null;
+}
+
+function clearImagePreview() {
+    if (imagePreviewUrl.value) URL.revokeObjectURL(imagePreviewUrl.value);
+    imagePreviewUrl.value = null;
+}
+
+function formatDate(value) {
+    if (!value) return '-';
+    const [year, month, day] = value.slice(0, 10).split('-');
+    return `${day}/${month}/${year}`;
 }
 
 function showModal(activity = null) {
+    form.reset();
+    form.clearErrors();
+    clearImagePreview();
+    fileError.value = '';
+    fileInputKey.value += 1;
+
     if (activity) {
         isEdit.value = true;
         form.id = activity.id;
         form.title = activity.title;
         form.description = activity.description;
         form.category = activity.category;
-        form.date = activity.date || '';
+        form.date = activity.date?.slice(0, 10) || '';
         form.is_published = activity.is_published == 1;
-        form.image_path = null; 
+        form.image_path = null;
+        currentImageUrl.value = activity.image_url;
     } else {
         isEdit.value = false;
-        form.reset();
+        currentImageUrl.value = null;
     }
     if (modalInstance.value) modalInstance.value.show();
 }
@@ -47,33 +91,39 @@ function showModal(activity = null) {
 function hideModal() {
     if (modalInstance.value) modalInstance.value.hide();
     form.reset();
+    form.clearErrors();
+    currentImageUrl.value = null;
+    fileError.value = '';
+    clearImagePreview();
+    fileInputKey.value += 1;
 }
 
 function submitForm() {
+    if (fileError.value) return;
+
+    const options = {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            const message = isEdit.value
+                ? 'Berita atau kegiatan berhasil diperbarui.'
+                : 'Berita atau kegiatan berhasil ditambahkan.';
+            hideModal();
+            notifRef.value?.showToast('success', message);
+        },
+    };
+
     if (isEdit.value) {
-        // use generic inertia post with _method=PUT to handle multipart edit
-        form.transform((data) => ({
-            ...data,
-            _method: 'put'
-        })).post(`/seeo/marketing/activities/${form.id}`, {
-            onSuccess: () => {
-                hideModal();
-                notifRef.value?.showToast('success', 'Kegiatan/Berita berhasil diupdate.');
-            }
-        });
+        form.post(route('marketing.activities.update', form.id), options);
     } else {
-        form.post("/seeo/marketing/activities", {
-            onSuccess: () => {
-                hideModal();
-                notifRef.value?.showToast('success', 'Kegiatan/Berita berhasil ditambahkan.');
-            }
-        });
+        form.post(route('marketing.activities.store'), options);
     }
 }
 
 function deleteActivity(id) {
     if (confirm('Yakin ingin menghapus berita/kegiatan ini?')) {
-        form.delete(`/seeo/marketing/activities/${id}`, {
+        form.delete(route('marketing.activities.destroy', id), {
+            preserveScroll: true,
             onSuccess: () => {
                 notifRef.value?.showToast('success', 'Berita/Kegiatan berhasil dihapus.');
             }
@@ -93,6 +143,8 @@ onMounted(async () => {
         notifRef.value.showToast(pageProps.notif.type, pageProps.notif.message);
     }
 });
+
+onBeforeUnmount(clearImagePreview);
 </script>
 
 <template>
@@ -101,9 +153,12 @@ onMounted(async () => {
         
         <div class="container-fluid p-4">
             <div class="card shadow-sm border-0 rounded-4">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold">Data Berita / Sorotan Program</h5>
-                    <button class="btn btn-primary shadow-sm" @click="showModal(null)">
+                <div class="card-header bg-white border-bottom py-3 d-flex flex-wrap gap-3 justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1 fw-bold">Data Berita / Sorotan Program</h5>
+                        <small class="text-muted">Buat sebagai draft dulu atau langsung terbitkan ke halaman publik.</small>
+                    </div>
+                    <button type="button" class="btn btn-primary shadow-sm" @click="showModal(null)">
                         <i class="bi bi-plus-lg me-1"></i> Tambah Entri
                     </button>
                 </div>
@@ -122,10 +177,10 @@ onMounted(async () => {
                             </thead>
                             <tbody>
                                 <tr v-for="item in activities" :key="item.id">
-                                    <td>{{ item.date || '-' }}</td>
+                                    <td>{{ formatDate(item.date) }}</td>
                                     <td>
                                         <span class="badge" :class="item.is_published ? 'bg-success' : 'bg-warning text-dark'">
-                                            {{ item.is_published ? 'Published' : 'Draft' }}
+                                            {{ item.is_published ? 'Terbit' : 'Draft' }}
                                         </span>
                                     </td>
                                     <td>
@@ -135,14 +190,14 @@ onMounted(async () => {
                                     <td>{{ item.category || '-' }}</td>
                                     <td>
                                         <img v-if="item.image_url" :src="item.image_url" class="rounded border object-fit-cover" style="width: 60px; height: 40px;" />
-                                        <span v-else class="text-muted small fst-italic">No Image</span>
+                                        <span v-else class="text-muted small fst-italic">Tanpa gambar</span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-sm btn-light border me-2" @click="showModal(item)">
-                                            <i class="bi bi-pencil"></i>
+                                        <button type="button" class="btn btn-sm btn-light border me-2" title="Edit berita" @click="showModal(item)">
+                                            <i class="bi bi-pencil me-1"></i>Edit
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger" @click="deleteActivity(item.id)">
-                                            <i class="bi bi-trash"></i>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" title="Hapus berita" @click="deleteActivity(item.id)">
+                                            <i class="bi bi-trash me-1"></i>Hapus
                                         </button>
                                     </td>
                                 </tr>
@@ -167,14 +222,14 @@ onMounted(async () => {
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
-                                <label class="form-label">Judul / Sorotan Utama</label>
-                                <input type="text" class="form-control" v-model="form.title" required>
+                                <label class="form-label">Judul / Sorotan Utama <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" v-model.trim="form.title" placeholder="Judul yang mudah dipahami pembaca" required autofocus>
                                 <InputError :message="form.errors.title" class="mt-1" />
                             </div>
                             
                             <div class="mb-3">
-                                <label class="form-label">Deskripsi Lengkap</label>
-                                <textarea class="form-control" v-model="form.description" rows="4" required></textarea>
+                                <label class="form-label">Deskripsi Lengkap <span class="text-danger">*</span></label>
+                                <textarea class="form-control" v-model.trim="form.description" rows="4" placeholder="Jelaskan kegiatan, hasil, atau informasi pentingnya" required></textarea>
                                 <InputError :message="form.errors.description" class="mt-1" />
                             </div>
 
@@ -194,14 +249,16 @@ onMounted(async () => {
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Gambar Thumbnail / Banner</label>
-                                    <input type="file" class="form-control" @change="handleFileChange" accept="image/*">
+                                    <img v-if="imagePreviewUrl || currentImageUrl" :src="imagePreviewUrl || currentImageUrl" alt="Pratinjau gambar" class="d-block rounded border object-fit-cover mb-2 w-100" style="height: 130px;">
+                                    <input :key="fileInputKey" type="file" class="form-control" @change="handleFileChange" accept="image/jpeg,image/png,image/webp">
                                     <InputError :message="form.errors.image_path" class="mt-1" />
-                                    <div v-if="isEdit" class="form-text text-muted">Biarkan kosong jika tidak mengubah gambar lama.</div>
+                                    <div v-if="fileError" class="text-danger small mt-1">{{ fileError }}</div>
+                                    <div class="form-text">JPG, PNG, atau WEBP; maksimal 2 MB. {{ isEdit ? 'Biarkan kosong untuk mempertahankan gambar.' : '' }}</div>
                                 </div>
                                 <div class="col-md-6 d-flex align-items-center">
                                     <div class="form-check form-switch mt-4">
                                         <input class="form-check-input" type="checkbox" id="isPub" v-model="form.is_published">
-                                        <label class="form-check-label" for="isPub">Terbitkan (Published)?</label>
+                                        <label class="form-check-label" for="isPub">Langsung tampilkan di halaman publik</label>
                                     </div>
                                     <InputError :message="form.errors.is_published" class="mt-1" />
                                 </div>
@@ -209,7 +266,10 @@ onMounted(async () => {
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" @click="hideModal">Batal</button>
-                            <button type="submit" class="btn btn-primary" :disabled="form.processing">Simpan</button>
+                            <button type="submit" class="btn btn-primary" :disabled="form.processing || !!fileError">
+                                <span v-if="form.processing" class="spinner-border spinner-border-sm me-2"></span>
+                                {{ form.processing ? 'Menyimpan...' : (isEdit ? 'Simpan Perubahan' : 'Tambah Berita') }}
+                            </button>
                         </div>
                     </form>
                 </div>

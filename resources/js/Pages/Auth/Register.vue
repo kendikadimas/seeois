@@ -31,7 +31,7 @@ const togglePasswordVisibility = (field) => {
 <template>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
     <Head title="Register - SEEO" />
-    <div class="container-fluid g-0">
+    <div class="container-fluid g-0 auth-shell">
         <div class="row g-0 vh-100">
             <div class="col-lg-6 d-flex flex-column justify-content-center align-items-center bg-light p-4 p-lg-5">
                 <div class="card shadow-lg border-0 rounded-4" style="width: 100%; max-width: 450px;">
@@ -191,7 +191,7 @@ const togglePasswordVisibility = (field) => {
                             <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" class="rounded-circle" style="width: 90px; height: 90px;">
                         </div>
                     </div>
-                    <h1 class="display-4 fw-bolder mb-3">SIS v5.0</h1>
+                    <h1 class="display-4 fw-bolder mb-3">SIS v{{ $page.props.app?.version || '6.0' }}</h1>
                     <h2 class="h3 fw-light mb-4">SEEO INFORMATION SYSTEM</h2>
                 </div>
             </div>

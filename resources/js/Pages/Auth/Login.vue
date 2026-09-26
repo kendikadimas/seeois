@@ -2,7 +2,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
     <Head title="Login - SEEO" />
 
-    <div class="container-fluid g-0">
+    <div class="container-fluid g-0 auth-shell">
         <div class="row g-0 vh-100">
             <div class="col-lg-6 d-none d-lg-flex flex-column justify-content-center align-items-center bg-primary bg-gradient text-white p-5">
                 <div class="text-center" style="max-width: 450px;">
@@ -12,7 +12,7 @@
                         </div>
                     </div>
                     
-                    <h1 class="display-4 fw-bolder mb-3">SIS v5.0</h1>
+                    <h1 class="display-4 fw-bolder mb-3">SIS v{{ $page.props.app?.version || '6.0' }}</h1>
                     <h2 class="h3 fw-light mb-4">SEEO INFORMATION SYSTEM</h2>
                 </div>
             </div>

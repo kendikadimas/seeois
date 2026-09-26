@@ -56,6 +56,7 @@ const auth_user = auth.user;
 
 const selectedStandId = ref(props.selectedStand?.id ?? props.stands?.[0]?.id ?? null);
 const selectedMenuId = ref(props.menus?.[0]?.id ?? null);
+const selectedExpenseId = ref(null);
 
 // Primary Tabs: 'delivery' (Pengantaran) | 'catalog' (Katalog Toko) | 'recipe' (Resep & HPP)
 const activeTab = ref('delivery');
@@ -74,6 +75,15 @@ const recipeForm = useForm({
 });
 
 const activeMenu = computed(() => props.menus.find((menu) => menu.id === selectedMenuId.value) ?? null);
+const availableRecipeItems = computed(() => {
+    const selectedIds = new Set(recipeForm.components.map((component) => Number(component.stand_expense_id)));
+
+    return props.expenseItems.filter((expense) => !selectedIds.has(Number(expense.id)));
+});
+const recipeEstimatedCost = computed(() => recipeForm.components.reduce(
+    (total, component) => total + recipeComponentCost(component),
+    0
+));
 
 const filteredMenus = computed(() => {
     const keyword = menuSearch.value.trim().toLowerCase();
@@ -114,8 +124,13 @@ function filterStand() {
 }
 
 function buildRecipeComponents(menu) {
-    return props.expenseItems.map((expense) => {
-        const currentComponent = menu?.recipe_components?.find((component) => component.stand_expense_id === expense.id);
+    return (menu?.recipe_components ?? []).map((currentComponent) => {
+        const expense = props.expenseItems.find(
+            (item) => Number(item.id) === Number(currentComponent.stand_expense_id)
+        ) ?? currentComponent.expense;
+
+        if (!expense) return null;
+
         return {
             stand_expense_id: expense.id,
             name: expense.name,
@@ -124,13 +139,43 @@ function buildRecipeComponents(menu) {
             expense: expense,
             quantity_used: currentComponent?.quantity_used ?? 0,
         };
+    }).filter(Boolean);
+}
+
+function addRecipeComponent() {
+    const expenseId = Number(selectedExpenseId.value || availableRecipeItems.value[0]?.id);
+    const expense = props.expenseItems.find((item) => Number(item.id) === expenseId);
+
+    if (!expense) return;
+
+    recipeForm.components.push({
+        stand_expense_id: expense.id,
+        name: expense.name,
+        unit: expense.unit,
+        total_price: expense.total_price,
+        expense,
+        quantity_used: 0,
     });
+    selectedExpenseId.value = null;
+}
+
+function removeRecipeComponent(index) {
+    recipeForm.components.splice(index, 1);
+}
+
+function recipeComponentCost(component) {
+    const purchaseQuantity = Number(component.expense?.qty) || 1;
+    const purchaseTotal = Number(component.total_price) || 0;
+    const quantityUsed = Number(component.quantity_used) || 0;
+
+    return (purchaseTotal / purchaseQuantity) * quantityUsed;
 }
 
 function syncRecipeMenu(menuId) {
     selectedMenuId.value = Number(menuId);
     const menu = props.menus.find((item) => item.id === selectedMenuId.value) ?? null;
     recipeForm.components = buildRecipeComponents(menu);
+    selectedExpenseId.value = null;
     activeTab.value = 'recipe'; // Switch to recipe tab for seamless UX
 }
 
@@ -139,7 +184,7 @@ watch(
     (menus) => {
         if (!menus.length) {
             selectedMenuId.value = null;
-            recipeForm.components = buildRecipeComponents(null);
+            recipeForm.components = [];
             return;
         }
 
@@ -154,10 +199,16 @@ watch(
 function submitRecipe() {
     if (!selectedMenuId.value) return;
 
+    if (recipeForm.components.some((component) => Number(component.quantity_used) <= 0)) {
+        recipeForm.setError('components', 'Isi takaran lebih dari 0 untuk setiap bahan, atau hapus bahan yang tidak digunakan.');
+        return;
+    }
+
+    recipeForm.clearErrors();
+
     recipeForm.transform((data) => ({
         ...data,
         components: data.components
-            .filter((component) => Number(component.quantity_used) > 0)
             .map(({ stand_expense_id, quantity_used }) => ({ stand_expense_id, quantity_used })),
     })).post(route('staff.sales-distribution.menu.recipe.store', { menu: selectedMenuId.value }), {
         preserveScroll: true,
@@ -531,6 +582,28 @@ function suggestPrice(cost) {
 
                     <!-- ================= TAB 3: RESEP & KALKULASI HPP (RECIPE) ================= -->
                     <div v-else-if="activeTab === 'recipe'" class="recipe-tab-pane">
+                        <div class="recipe-steps mb-4" aria-label="Tahapan pengisian HPP">
+                            <div class="recipe-step">
+                                <span>1</span>
+                                <div><strong>Pilih menu</strong><small>Tentukan produk yang akan dihitung</small></div>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted d-none d-md-block"></i>
+                            <div class="recipe-step">
+                                <span>2</span>
+                                <div><strong>Tambah bahan</strong><small>Pilih bahan belanja yang digunakan</small></div>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted d-none d-md-block"></i>
+                            <div class="recipe-step">
+                                <span>3</span>
+                                <div><strong>Isi takaran</strong><small>Masukkan pemakaian per satu porsi</small></div>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted d-none d-md-block"></i>
+                            <div class="recipe-step">
+                                <span>4</span>
+                                <div><strong>Simpan</strong><small>HPP dihitung otomatis</small></div>
+                            </div>
+                        </div>
+
                         <div class="row g-4">
                             <!-- Left: Select Menu & Cost Summary -->
                             <div class="col-12 col-lg-4">
@@ -554,14 +627,14 @@ function suggestPrice(cost) {
                                     <div v-if="activeMenu" class="cost-summary-card card border-0 shadow-2xs p-3 rounded-3 bg-white mb-3">
                                         <div class="fw-bold text-dark mb-2">{{ activeMenu.name }}</div>
                                         <div class="d-flex justify-content-between py-1 border-bottom small">
-                                            <span class="text-muted">Biaya Produksi (HPP):</span>
-                                            <span class="fw-bold" :class="activeMenu.cost ? 'text-primary' : 'text-danger'">
-                                                {{ activeMenu.cost ? formatIDR(activeMenu.cost) : 'Belum dihitung' }}
+                                            <span class="text-muted">Estimasi HPP saat ini:</span>
+                                            <span class="fw-bold" :class="recipeEstimatedCost > 0 ? 'text-primary' : 'text-danger'">
+                                                {{ recipeEstimatedCost > 0 ? formatIDR(recipeEstimatedCost) : 'Belum dihitung' }}
                                             </span>
                                         </div>
                                         <div class="d-flex justify-content-between py-1 border-bottom small">
                                             <span class="text-muted">Saran Harga (+30%):</span>
-                                            <span class="fw-semibold text-success">{{ suggestPrice(activeMenu.cost) }}</span>
+                                            <span class="fw-semibold text-success">{{ suggestPrice(recipeEstimatedCost) }}</span>
                                         </div>
                                         <div class="d-flex justify-content-between py-1 small">
                                             <span class="text-muted">Harga Jual Saat Ini:</span>
@@ -585,24 +658,62 @@ function suggestPrice(cost) {
 
                             <!-- Right: Ingredients Table -->
                             <div class="col-12 col-lg-8">
-                                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
                                     <div>
                                         <h6 class="fw-bold text-dark mb-1">
                                             <i class="bi bi-basket3-fill text-warning me-1"></i> Komposisi Bahan Baku Stand
                                         </h6>
                                         <small class="text-muted">Masukkan takaran bahan belanja yang digunakan per porsi menu ini.</small>
                                     </div>
-                                    <button
-                                        type="button"
-                                        class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm btn-sm"
-                                        :disabled="recipeForm.processing"
-                                        @click="submitRecipe"
-                                    >
-                                        <span v-if="recipeForm.processing" class="spinner-border spinner-border-sm me-1"></span>
-                                        <i v-else class="bi bi-save me-1"></i>
-                                        <span>Simpan Resep Menu</span>
-                                    </button>
                                 </div>
+
+                                <div v-if="expenseItems.length" class="ingredient-picker card border-primary-subtle bg-primary-subtle mb-3">
+                                    <div class="card-body p-3">
+                                        <label for="recipe-expense-picker" class="form-label fw-bold text-primary small mb-2">
+                                            <i class="bi bi-plus-circle-fill me-1"></i> Tambah bahan ke perhitungan HPP
+                                        </label>
+                                        <div class="d-flex flex-column flex-sm-row gap-2">
+                                            <select
+                                                id="recipe-expense-picker"
+                                                v-model="selectedExpenseId"
+                                                class="form-select"
+                                                :disabled="!availableRecipeItems.length"
+                                            >
+                                                <option :value="null" disabled>
+                                                    {{ availableRecipeItems.length ? 'Pilih bahan belanja...' : 'Semua bahan sudah ditambahkan' }}
+                                                </option>
+                                                <option v-for="expense in availableRecipeItems" :key="expense.id" :value="expense.id">
+                                                    {{ expense.name }} — {{ formatIDR(expense.total_price) }} / {{ expense.qty || 1 }} {{ expense.unit }}
+                                                </option>
+                                            </select>
+                                            <button
+                                                type="button"
+                                                class="btn btn-primary text-nowrap px-4"
+                                                :disabled="!selectedExpenseId || !activeMenu"
+                                                @click="addRecipeComponent"
+                                            >
+                                                <i class="bi bi-plus-lg me-1"></i> Tambah Bahan
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-else class="alert alert-warning border-warning-subtle d-flex gap-3 align-items-start" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                                    <div class="flex-grow-1">
+                                        <strong class="d-block">Belum ada bahan belanja yang dapat dipakai</strong>
+                                        <span class="small">Tambahkan pengeluaran bahan pada detail stand, lalu minta bagian operasional memvalidasinya terlebih dahulu.</span>
+                                    </div>
+                                    <a
+                                        v-if="selectedStand?.id"
+                                        :href="route('food.stand.detail', { id: selectedStand.id })"
+                                        class="btn btn-sm btn-outline-dark text-nowrap"
+                                    >
+                                        Buka Detail Stand
+                                    </a>
+                                </div>
+
+                                <InputError :message="recipeForm.errors.components" class="mb-3" />
 
                                 <div class="table-responsive rounded-3 border">
                                     <table class="table align-middle table-hover mb-0">
@@ -611,6 +722,7 @@ function suggestPrice(cost) {
                                                 <th class="ps-3 fw-semibold small text-secondary">Nama Bahan Belanja</th>
                                                 <th class="fw-semibold small text-secondary" style="width: 180px;">Takaran / Porsi</th>
                                                 <th class="text-end pe-3 fw-semibold small text-secondary">Estimasi Biaya Bahan</th>
+                                                <th class="text-center fw-semibold small text-secondary" style="width: 64px;">Hapus</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -636,19 +748,51 @@ function suggestPrice(cost) {
                                                 </td>
                                                 <td class="text-end pe-3">
                                                     <span v-if="component.quantity_used > 0" class="fw-bold text-dark">
-                                                        {{ formatIDR((component.total_price / (component.expense?.qty || 1)) * component.quantity_used) }}
+                                                        {{ formatIDR(recipeComponentCost(component)) }}
                                                     </span>
                                                     <span v-else class="text-muted small">-</span>
                                                 </td>
+                                                <td class="text-center">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-sm btn-outline-danger border-0"
+                                                        title="Hapus bahan dari resep"
+                                                        :aria-label="`Hapus ${component.name} dari resep`"
+                                                        @click="removeRecipeComponent(index)"
+                                                    >
+                                                        <i class="bi bi-trash3"></i>
+                                                    </button>
+                                                </td>
                                             </tr>
                                             <tr v-if="!recipeForm.components.length">
-                                                <td colspan="3" class="text-center text-muted py-5">
-                                                    <i class="bi bi-receipt display-6 d-block mb-2 text-muted opacity-50"></i>
-                                                    Belum ada item belanja pengeluaran yang divalidasi pada stand ini.
+                                                <td colspan="4" class="text-center text-muted py-5">
+                                                    <i class="bi bi-plus-circle display-6 d-block mb-2 text-primary opacity-50"></i>
+                                                    <strong class="d-block text-dark">Belum ada bahan dalam resep ini</strong>
+                                                    <span class="small">Pilih bahan di atas, lalu klik <strong>Tambah Bahan</strong>.</span>
                                                 </td>
                                             </tr>
                                         </tbody>
+                                        <tfoot v-if="recipeForm.components.length" class="table-light">
+                                            <tr>
+                                                <td colspan="2" class="text-end fw-bold">Total estimasi HPP / porsi</td>
+                                                <td class="text-end pe-3 fw-bold text-primary">{{ formatIDR(recipeEstimatedCost) }}</td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
                                     </table>
+                                </div>
+
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button
+                                        type="button"
+                                        class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm"
+                                        :disabled="recipeForm.processing || !activeMenu"
+                                        @click="submitRecipe"
+                                    >
+                                        <span v-if="recipeForm.processing" class="spinner-border spinner-border-sm me-1"></span>
+                                        <i v-else class="bi bi-save me-1"></i>
+                                        <span>Simpan Takaran & HPP</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -709,7 +853,7 @@ function suggestPrice(cost) {
                                     <div>
                                         <div class="fw-bold text-dark small mb-1">Hitung Resep & Biaya Pokok Produksi (HPP)</div>
                                         <p class="small text-secondary mb-0 lh-sm">
-                                            Buka tab <strong>Resep & Kalkulasi HPP</strong>. Pilih menu yang dibuat, lalu masukkan jumlah takaran bahan belanja yang dipakai per porsi. Sistem akan otomatis menghitung HPP dan memberikan saran harga jual (+30%).
+                                            Buka tab <strong>Resep & Kalkulasi HPP</strong>, pilih menu, pilih bahan belanja, lalu klik <strong>Tambah Bahan</strong>. Isi takaran yang dipakai per porsi dan klik <strong>Simpan Takaran & HPP</strong>. Sistem akan menghitung HPP dan saran harga jual (+30%) secara otomatis.
                                         </p>
                                     </div>
                                 </div>
@@ -818,6 +962,71 @@ function suggestPrice(cost) {
 .nav-pills .nav-link.active {
     color: #ffffff;
     background-color: #0284c7;
+}
+
+.recipe-steps {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #dbeafe;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #f8fbff 0%, #eff6ff 100%);
+}
+
+.recipe-step {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.recipe-step > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 2rem;
+    border-radius: 999px;
+    color: #ffffff;
+    background: #2563eb;
+    font-weight: 800;
+    box-shadow: 0 5px 12px rgba(37, 99, 235, 0.22);
+}
+
+.recipe-step strong,
+.recipe-step small {
+    display: block;
+}
+
+.recipe-step strong {
+    color: #0f172a;
+    font-size: 0.82rem;
+}
+
+.recipe-step small {
+    color: #64748b;
+    font-size: 0.7rem;
+    line-height: 1.25;
+}
+
+.ingredient-picker {
+    border-style: dashed !important;
+}
+
+@media (max-width: 767.98px) {
+    .recipe-steps {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 420px) {
+    .recipe-steps {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Guide Modal Styling */

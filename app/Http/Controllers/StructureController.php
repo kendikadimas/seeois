@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Structure;
+use App\Support\MediaStorage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Storage;
 
 class StructureController extends Controller
 {
@@ -17,8 +17,7 @@ class StructureController extends Controller
         $structures = Structure::orderBy('order_num')->get();
         return Inertia::render('Staff/Marketing/Structures', [
             'structures' => $structures->map(function ($q) {
-                // Add absolute URL for image
-                $q->image_url = $q->image_path ? Storage::disk('public')->url($q->image_path) : null;
+                $q->image_url = MediaStorage::url($q->image_path);
                 return $q;
             })
         ]);
@@ -34,14 +33,14 @@ class StructureController extends Controller
             'role_title' => 'required|string|max:255',
             'department_name' => 'nullable|string|max:255',
             'image_path' => 'nullable|image|max:2048',
-            'order_num' => 'integer',
+            'order_num' => 'nullable|integer|min:0',
             'is_executive' => 'boolean',
         ]);
 
         $data = $request->except('image_path');
 
         if ($request->hasFile('image_path')) {
-            $data['image_path'] = $request->file('image_path')->store('images/structures', 'public');
+            $data['image_path'] = $request->file('image_path')->store('images/structures', MediaStorage::diskName());
         }
 
         Structure::create($data);
@@ -58,21 +57,23 @@ class StructureController extends Controller
             'name' => 'required|string|max:255',
             'role_title' => 'required|string|max:255',
             'department_name' => 'nullable|string|max:255',
-            'image_path' => 'nullable', // can be file or string
-            'order_num' => 'integer',
+            'image_path' => 'nullable|image|max:2048',
+            'order_num' => 'nullable|integer|min:0',
             'is_executive' => 'boolean',
         ]);
 
         $data = $request->except('image_path');
 
         if ($request->hasFile('image_path')) {
-            if ($structure->image_path) {
-                Storage::disk('public')->delete($structure->image_path);
-            }
-            $data['image_path'] = $request->file('image_path')->store('images/structures', 'public');
+            $oldImagePath = $structure->image_path;
+            $data['image_path'] = $request->file('image_path')->store('images/structures', MediaStorage::diskName());
         }
 
         $structure->update($data);
+
+        if (isset($oldImagePath) && $oldImagePath !== $structure->image_path) {
+            MediaStorage::disk()->delete($oldImagePath);
+        }
 
         return redirect()->back()->with('notif', ['type' => 'success', 'message' => 'Struktur berhasil diperbarui.']);
     }
@@ -82,10 +83,12 @@ class StructureController extends Controller
      */
     public function destroy(Structure $structure)
     {
-        if ($structure->image_path) {
-            Storage::disk('public')->delete($structure->image_path);
-        }
+        $imagePath = $structure->image_path;
         $structure->delete();
+
+        if ($imagePath) {
+            MediaStorage::disk()->delete($imagePath);
+        }
 
         return redirect()->back()->with('notif', ['type' => 'success', 'message' => 'Struktur berhasil dihapus.']);
     }

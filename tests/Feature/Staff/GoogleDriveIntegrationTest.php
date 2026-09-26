@@ -35,8 +35,12 @@ describe('Google Drive storage integration (mocked)', function () {
             'reciept' => fakeImageUpload(),
         ])->assertRedirect();
 
-        $files = Storage::disk('google')->allFiles('images/receipt/stand/expense');
-        expect(count($files))->toBeGreaterThan(1);
+        $expense = \App\Models\StandExpense::where('stand_id', $stand->id)
+            ->where('name', 'GD Expense')
+            ->latest('id')
+            ->firstOrFail();
+
+        expect(Storage::disk('google')->exists('images/receipt/stand/expense/'.$expense->reciept))->toBeTrue();
     });
 });
 

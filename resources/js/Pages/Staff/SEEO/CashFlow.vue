@@ -30,6 +30,11 @@ const props = defineProps({
 });
 
 const auth_user = usePage().props.auth.user;
+const canManageFinance = computed(() =>
+    (auth_user?.capabilities ?? []).some(
+        (capability) => capability === "*" || capability === "finance.manage"
+    )
+);
 const title = ref("Cash Flow");
 const modalConfirmationRef = ref(null);
 const modalAddCashInRef = ref(null);
@@ -125,8 +130,7 @@ function formatDate(date) {
 watch(
     () => props.notif,
     (newValue) => {
-        const notification = newValue;
-        toastNotifRef.value.showToast(notification.type, notification.message);
+        if (newValue) toastNotifRef.value?.showToast(newValue.type, newValue.message);
     }
 );
 </script>
@@ -241,27 +245,20 @@ watch(
                                                         </span>
                                                         <!-- Button trigger Insert Cash In Modal -->
                                                         <button
-                                                            v-if="
-                                                                auth_user.roles_id ==
-                                                                2
-                                                            "
-                                                            class="btn btn-sm btn-outline-primary border-0 py-0"
+                                                            v-if="canManageFinance"
+                                                            class="btn btn-sm btn-primary rounded-pill px-3"
                                                             @click="
                                                                 showAddCashInModal(
                                                                     true
                                                                 )
                                                             "
                                                         >
-                                                            <i
-                                                                class="bi bi-plus-lg"
-                                                            ></i>
+                                                            <i class="bi bi-plus-lg me-1"></i>
+                                                            <span>Catat Pemasukan</span>
                                                         </button>
                                                         <!-- Insert Cash In Modal -->
                                                         <div
-                                                            v-if="
-                                                                auth_user.roles_id ==
-                                                                2
-                                                            "
+                                                            v-if="canManageFinance"
                                                             class="modal fade"
                                                             id="addCashInModal"
                                                             tabindex="-1"
@@ -508,7 +505,7 @@ watch(
                                                     <span
                                                         class="ms-3 text-secondary"
                                                         >{{
-                                                            "No cash in found."
+                                                            "Belum ada pemasukan tercatat."
                                                         }}</span
                                                     >
                                                 </div>
@@ -565,8 +562,7 @@ watch(
                                                                     </button>
                                                                     <div
                                                                         v-if="
-                                                                            auth_user.roles_id ==
-                                                                                2 &&
+                                                                            canManageFinance &&
                                                                             item.name !==
                                                                                 'Contribution Charge'
                                                                         "
@@ -574,8 +570,7 @@ watch(
                                                                     ></div>
                                                                     <button
                                                                         v-if="
-                                                                            auth_user.roles_id ==
-                                                                                2 &&
+                                                                            canManageFinance &&
                                                                             item.name !==
                                                                                 'Contribution Charge'
                                                                         "
@@ -622,8 +617,7 @@ watch(
                                                                     </span>
                                                                     <button
                                                                         v-if="
-                                                                            auth_user.roles_id ==
-                                                                                2 &&
+                                                                            canManageFinance &&
                                                                             item.name !==
                                                                                 'Contribution Charge' &&
                                                                             !item.financial
@@ -643,20 +637,19 @@ watch(
                                                                         "
                                                                     >
                                                                         {{
-                                                                            "Click here to validate"
+                                                                            "Validasi pemasukan"
                                                                         }}
                                                                     </button>
                                                                     <span
                                                                         v-if="
-                                                                            auth_user.roles_id !==
-                                                                                2 &&
+                                                                            !canManageFinance &&
                                                                             item.name !==
                                                                                 'Contribution Charge' &&
                                                                             !item.financial
                                                                         "
                                                                     >
                                                                         {{
-                                                                            "Required validation from Financial Officer."
+                                                                            "Menunggu validasi Financial Officer."
                                                                         }}
                                                                     </span>
                                                                 </p>
@@ -798,7 +791,7 @@ watch(
                                                     <span
                                                         class="ms-3 text-secondary"
                                                         >{{
-                                                            "No department found."
+                                                            "Belum ada pengeluaran departemen."
                                                         }}</span
                                                     >
                                                 </div>

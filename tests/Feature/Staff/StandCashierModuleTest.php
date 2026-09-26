@@ -55,6 +55,15 @@ describe('Stand & Cashier module', function () {
             ->assertOk();
     });
 
+    test('staff who is not assigned cannot access stand cashier page', function () {
+        $outsider = staffUser(4);
+
+        $this->actingAs($outsider)
+            ->get(STAFF_PREFIX . "/blaterian/foods/cashier/{$this->stand->id}")
+            ->assertRedirect(STAFF_PREFIX . "/blaterian/foods/stand_detail/{$this->stand->id}")
+            ->assertSessionHas('notif.type', 'warning');
+    });
+
     test('cashier can create sale', function () {
         $cashier = staffUser(4);
         $customer = User::factory()->create(['phone' => '08123' . random_int(10000, 99999)]);
@@ -146,6 +155,88 @@ describe('Stand expense receipt upload', function () {
 
         $files = \Illuminate\Support\Facades\Storage::disk('google')->allFiles('images/receipt/stand/expense');
         expect(count($files))->toBeGreaterThan(0);
+    });
+
+    test('first stand expense can be added without an existing expense record', function () {
+        StandExpense::query()->delete();
+
+        $this->post(STAFF_PREFIX . "/food/stand/expense/add/{$this->stand->id}", [
+            'name' => 'Pengeluaran Pertama',
+            'price' => 7500,
+            'qty' => 1,
+            'unit' => 'bungkus',
+            'reciept' => fakeImageUpload('first-expense.png'),
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $expense = StandExpense::where('stand_id', $this->stand->id)
+            ->where('name', 'Pengeluaran Pertama')
+            ->firstOrFail();
+
+        expect($expense->reciept)->toMatch('/^SE\d+_\d+_receipt\.webp$/')
+            ->and($expense->total_price)->toBe(7500);
+    });
+
+    test('production staff can reuse a receipt from the same stand', function () {
+        $production = staffUser(11);
+        $this->stand->production()->attach($production->id);
+        $source = StandExpense::where('stand_id', $this->stand->id)->firstOrFail();
+
+        $this->actingAs($production)->post(STAFF_PREFIX . "/food/stand/expense/add/{$this->stand->id}", [
+            'name' => 'Bahan Satu Struk',
+            'price' => 3000,
+            'qty' => 2,
+            'unit' => 'pcs',
+            'same_receipt_check' => true,
+            'receipt_same' => $source->id,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $expense = StandExpense::where('stand_id', $this->stand->id)
+            ->where('name', 'Bahan Satu Struk')
+            ->firstOrFail();
+
+        expect($expense->reciept)->toBe($source->reciept)
+            ->and($expense->total_price)->toBe(6000);
+    });
+
+    test('receipt from another stand cannot be reused', function () {
+        $otherStand = makeCashierStand();
+        $otherExpense = StandExpense::create([
+            'stand_id' => $otherStand->id,
+            'name' => 'Milik Stand Lain',
+            'qty' => 1,
+            'unit' => 'pcs',
+            'total_price' => 1000,
+            'price' => 1000,
+            'reciept' => 'SE' . $otherStand->id . '_1_receipt.webp',
+        ]);
+
+        $this->post(STAFF_PREFIX . "/food/stand/expense/add/{$this->stand->id}", [
+            'name' => 'Struk Tidak Valid',
+            'price' => 1000,
+            'qty' => 1,
+            'unit' => 'pcs',
+            'same_receipt_check' => true,
+            'receipt_same' => $otherExpense->id,
+        ])->assertSessionHasErrors('receipt_same');
+
+        $this->assertDatabaseMissing('stand_expense_item', [
+            'stand_id' => $this->stand->id,
+            'name' => 'Struk Tidak Valid',
+        ]);
+    });
+
+    test('staff outside operations and production cannot add an expense', function () {
+        $outsider = staffUser(10);
+
+        $this->actingAs($outsider)->post(STAFF_PREFIX . "/food/stand/expense/add/{$this->stand->id}", [
+            'name' => 'Tidak Diizinkan',
+            'price' => 1000,
+            'qty' => 1,
+            'unit' => 'pcs',
+            'reciept' => fakeImageUpload('forbidden.jpg'),
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('stand_expense_item', ['name' => 'Tidak Diizinkan']);
     });
 });
 

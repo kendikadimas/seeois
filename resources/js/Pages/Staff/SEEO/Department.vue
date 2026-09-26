@@ -25,7 +25,8 @@ const props = defineProps({
 });
 
 const auth_user = usePage().props.auth.user;
-const title = ref("Department");
+const canManageDepartment = computed(() => auth_user?.roles_id == 99 || auth_user?.id == props.department?.manager_id);
+const title = computed(() => `Departemen ${props.department?.name || ''}`.trim());
 const modalConfirmationRef = ref(null);
 const toastNotifRef = ref(null);
 const placeholder = ref("placeholder");
@@ -107,8 +108,7 @@ onMounted(() => {});
 watch(
     () => props.notif,
     (newValue) => {
-        const notification = newValue;
-        toastNotifRef.value.showToast(notification.type, notification.message);
+        if (newValue) toastNotifRef.value?.showToast(newValue.type, newValue.message);
     }
 );
 </script>
@@ -326,17 +326,12 @@ watch(
                                         {{ "Staff List" }}
                                     </span>
                                     <button
-                                        v-if="
-                                            auth_user.roles_id == 99 || auth_user.id ==
-                                            department.manager_id
-                                        "
+                                        v-if="canManageDepartment"
                                         @click="showAddStaffModal(true)"
-                                        class="btn btn-sm btn-outline-primary border-0 ms-auto py-0"
+                                        class="btn btn-sm btn-primary rounded-pill ms-auto px-3"
                                     >
-                                        <i class="bi bi-plus-lg d-lg-none"></i>
-                                        <span class="d-lg-block d-none">{{
-                                            "New Staff"
-                                        }}</span>
+                                        <i class="bi bi-person-plus me-1"></i>
+                                        <span>Tambah Staf</span>
                                     </button>
                                 </div>
                             </div>
@@ -348,9 +343,11 @@ watch(
                                     class="list-group-item list-group-item-action"
                                     v-if="department.staff.length == 0"
                                 >
-                                    <span class="fst-italic text-secondary">{{
-                                        "No staff found."
-                                    }}</span>
+                                    <div class="text-center py-3 w-100">
+                                        <i class="bi bi-people text-muted fs-4"></i>
+                                        <span class="d-block text-secondary mt-1">Belum ada staf di departemen ini.</span>
+                                        <button v-if="canManageDepartment" type="button" class="btn btn-sm btn-link" @click="showAddStaffModal(true)">Tambah staf pertama</button>
+                                    </div>
                                 </ul>
                                 <ul
                                     @click="
@@ -414,17 +411,12 @@ watch(
                                         {{ "Program List" }}
                                     </span>
                                     <button
-                                        v-if="
-                                            auth_user.roles_id == 99 || auth_user.id ==
-                                            department.manager_id
-                                        "
+                                        v-if="canManageDepartment"
                                         @click="showNewProgramModal(true)"
-                                        class="btn btn-sm btn-outline-primary border-0 ms-auto py-0"
+                                        class="btn btn-sm btn-primary rounded-pill ms-auto px-3"
                                     >
-                                        <i class="bi bi-plus-lg d-lg-none"></i>
-                                        <span class="d-lg-block d-none">{{
-                                            "New Program"
-                                        }}</span>
+                                        <i class="bi bi-plus-circle me-1"></i>
+                                        <span>Tambah Program</span>
                                     </button>
                                 </div>
                             </div>
@@ -436,9 +428,11 @@ watch(
                                     class="list-group-item list-group-item-action"
                                     v-if="department.program.length == 0"
                                 >
-                                    <span class="fst-italic text-secondary">{{
-                                        "No program found."
-                                    }}</span>
+                                    <div class="text-center py-3 w-100">
+                                        <i class="bi bi-grid text-muted fs-4"></i>
+                                        <span class="d-block text-secondary mt-1">Belum ada program kerja.</span>
+                                        <button v-if="canManageDepartment" type="button" class="btn btn-sm btn-link" @click="showNewProgramModal(true)">Buat program pertama</button>
+                                    </div>
                                 </ul>
                                 <ul
                                     @click.stop="$inertia.visit('/seeo/staff/program/' + program.id)"
@@ -487,7 +481,7 @@ watch(
 
     <!-- Add Staff Modal -->
     <div
-        v-if="auth_user.roles_id == 99 || auth_user.id == department.manager_id"
+        v-if="canManageDepartment"
         class="modal fade"
         id="addStaffModal"
         tabindex="-1"
@@ -559,7 +553,7 @@ watch(
     </div>
     <!-- New Program Modal -->
     <div
-        v-if="auth_user.roles_id == 99 || auth_user.id == department.manager_id"
+        v-if="canManageDepartment"
         class="modal fade"
         id="newProgramModal"
         tabindex="-1"

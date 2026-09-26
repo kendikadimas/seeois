@@ -267,7 +267,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::post('/blaterian/insight/filter/foods', [InsightController::class, 'filterFoods'])->name('insight.filter.foods');
     Route::post('/blaterian/insight/filter/goods', [InsightController::class, 'filterGoods'])->name('insight.filter.goods');
     Route::get('/blaterian/foods/cashier/{id}', [SalesController::class, 'sales'])->name('food.stand.cashier');
-    Route::get('/blaterian/foods/balance/{default_tab?}/{refresh?}', [BlaterianFoodBalanceController::class, 'balance'])->name('food.balance');
+    Route::get('/blaterian/foods/balance/{default_tab?}/{refresh?}', [BlaterianFoodBalanceController::class, 'balance'])->middleware('capability:operations.manage')->name('food.balance');
     Route::get('/blaterian/foods/stand', [StandController::class, 'index'])->name('food.stand');
     Route::get('/blaterian/foods/stand_detail/{id?}', [StandController::class, 'stand'])->name('food.stand.detail');
     
@@ -277,10 +277,10 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
         return redirect($path);
     });
 
-    Route::get('/blaterian/goods/balance/{default_tab?}/{refresh?}', [BlaterianGoodBalanceController::class, 'balance'])->name('good.balance');
-    Route::get('/blaterian/goods/product', [GoodController::class, 'product'])->name('good.product');
-    Route::get('/blaterian/goods/product/detail/{id}', [GoodDetailController::class, 'detail'])->name('good.product.detail');
-    Route::get('/blaterian/goods/insight/detail', [GoodInsightController::class, 'insight'])->name('good.insight');
+    Route::get('/blaterian/goods/balance/{default_tab?}/{refresh?}', [BlaterianGoodBalanceController::class, 'balance'])->middleware('capability:goods.manage')->name('good.balance');
+    Route::get('/blaterian/goods/product', [GoodController::class, 'product'])->middleware('capability:goods.manage,inventory.view')->name('good.product');
+    Route::get('/blaterian/goods/product/detail/{id}', [GoodDetailController::class, 'detail'])->middleware('capability:goods.manage,inventory.view')->whereNumber('id')->name('good.product.detail');
+    Route::get('/blaterian/goods/insight/detail', [GoodInsightController::class, 'insight'])->middleware('capability:goods.manage')->name('good.insight');
     
     Route::post('/food/stand/production/{stand_id}', [StandController::class, 'setProductionStaff'])->middleware('capability:stand.assign')->name('update.stand.production_staff');
     Route::post('/food/stand/cashier/{stand_id}', [StandController::class, 'setCashierStaff'])->middleware('capability:stand.assign')->name('update.stand.cashier_staff');
@@ -312,16 +312,19 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::post('/shop/transaction/finish', [SalesController::class, 'finishTransaction'])->name('shop.transaction.finish');
     Route::post('/shop/transaction/cancel/{id}', [SalesController::class, 'cancelTransaction'])->name('shop.transaction.cancel');
     
-    Route::post('/good/balance/cash_in', [BlaterianGoodBalanceController::class, 'filterCashIn'])->name('good.balance.filter.cash_in');
-    Route::post('/good/balance/cash_out', [BlaterianGoodBalanceController::class, 'filterCashOut'])->name('good.balance.filter.cash_out');
-    Route::post('/good/product/filter', [GoodController::class, 'filterProduct'])->name('good.product.filter');
-    Route::post('/good/product/image/add/{id}', [GoodDetailController::class, 'insertImage'])->name('good.product.image.add');
-    Route::post('/good/product/variant/add/{id}', [GoodDetailController::class, 'insertVariant'])->name('good.product.variant.add');
-    Route::post('/good/product/stock/update/{id?}', [GoodDetailController::class, 'updateStock'])->name('good.product.stock.update');
-    Route::post('/good/variant/description/update/{id?}', [GoodDetailController::class, 'updateDescription'])->name('good.product.description.update');
-    Route::post('/goods/insight/filter/{filter_name?}', [GoodInsightController::class, 'filterInsight'])->name('good.insight.filter');
-    Route::post('/good/capital/add', [GoodInsightController::class, 'insertCapital'])->name('good.capital.add');
-    Route::post('/good/capital/delete/{id}', [GoodInsightController::class, 'deleteCapital'])->name('good.capital.delete');
+    Route::post('/good/balance/cash_in', [BlaterianGoodBalanceController::class, 'filterCashIn'])->middleware('capability:goods.manage')->name('good.balance.filter.cash_in');
+    Route::post('/good/balance/cash_out', [BlaterianGoodBalanceController::class, 'filterCashOut'])->middleware('capability:goods.manage')->name('good.balance.filter.cash_out');
+    Route::post('/food/balance/cash_in', [BlaterianFoodBalanceController::class, 'filterIncome'])->middleware('capability:operations.manage')->name('food.balance.filter.cash_in');
+    Route::post('/food/balance/cash_out', [BlaterianFoodBalanceController::class, 'filterExpense'])->middleware('capability:operations.manage')->name('food.balance.filter.cash_out');
+    Route::post('/good/product/filter', [GoodController::class, 'filterProduct'])->middleware('capability:goods.manage,inventory.view')->name('good.product.filter');
+    Route::post('/good/product/image/add/{id}', [GoodDetailController::class, 'insertImage'])->middleware('capability:goods.manage')->whereNumber('id')->name('good.product.image.add');
+    Route::delete('/good/product/image/{id}', [GoodDetailController::class, 'deleteImage'])->middleware('capability:goods.manage')->whereNumber('id')->name('good.product.image.delete');
+    Route::post('/good/product/variant/add/{id}', [GoodDetailController::class, 'insertVariant'])->middleware('capability:goods.manage')->whereNumber('id')->name('good.product.variant.add');
+    Route::post('/good/product/stock/update/{id}', [GoodDetailController::class, 'updateStock'])->middleware('capability:goods.manage')->whereNumber('id')->name('good.product.stock.update');
+    Route::post('/good/variant/description/update/{id}', [GoodDetailController::class, 'updateDescription'])->middleware('capability:goods.manage')->whereNumber('id')->name('good.product.description.update');
+    Route::post('/goods/insight/filter/{filter_name?}', [GoodInsightController::class, 'filterInsight'])->middleware('capability:goods.manage')->name('good.insight.filter');
+    Route::post('/good/capital/add', [GoodInsightController::class, 'insertCapital'])->middleware('capability:goods.manage')->name('good.capital.add');
+    Route::post('/good/capital/delete/{id}', [GoodInsightController::class, 'deleteCapital'])->middleware('capability:goods.manage')->whereNumber('id')->name('good.capital.delete');
     Route::post('/good/cart/add', [GoodSaleController::class, 'addCart'])->name('good.cart.add');
     Route::post('/good/order/add/{id?}', [GoodOrderController::class, 'addOrder'])->name('good.order.add');
     Route::post('/good/transaction/add/{id?}', [GoodSaleController::class, 'addTransaction'])->name('good.transaction.add');
@@ -337,7 +340,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     Route::post('/good/product/add', [GoodController::class, 'insertProduct'])->middleware('capability:goods.manage')->name('good.product.add');
     Route::post('/good/product/delete/{id}', [GoodController::class, 'deleteProduct'])->middleware('capability:goods.manage')->name('good.product.delete');
     Route::post('/good/product/transaction/status/{id}', [GoodDetailController::class, 'productStatus'])->middleware('capability:goods.manage')->name('good.product.transaction.status');
-    Route::post('/good/capital/validate', [GoodInsightController::class, 'validateCapital'])->name('good.capital.validate');
+    Route::post('/good/capital/validate', [GoodInsightController::class, 'validateCapital'])->middleware('capability:goods.manage')->name('good.capital.validate');
     Route::post('/good/sale/validate/{id}/{valid}', [GoodSaleController::class, 'validateSale'])->name('good.sale.validate');
     Route::post('/good/sale/delete/{id}', [GoodSaleController::class, 'deleteSale'])->name('good.sale.delete');
     Route::post('/good/balance/send', [BlaterianGoodBalanceController::class, 'withdrawBalance'])->middleware('capability:goods.manage')->name('good.balance.withdraw');
@@ -348,7 +351,7 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
 
     // Sales Distribution & Production
     Route::get('/sales-distribution', [MenuBoardController::class, 'index'])->middleware('capability:sales.manage')->name('staff.sales-distribution.index');
-    Route::post('/sales-distribution/menu', [MenuBoardController::class, 'storeMenu'])->middleware('capability:menu.manage')->name('staff.sales-distribution.menu.store');
+    Route::post('/sales-distribution/menu', [MenuBoardController::class, 'storeMenu'])->middleware('capability:menu.manage,menu.create')->name('staff.sales-distribution.menu.store');
     Route::post('/sales-distribution/menu/{menu}/recipe', [MenuBoardController::class, 'attachRecipe'])->middleware('capability:menu.manage')->name('staff.sales-distribution.menu.recipe.store');
     Route::post('/sales-distribution/menu/{menu}/publish', [MenuBoardController::class, 'togglePublish'])->middleware('capability:menu.publish')->name('staff.sales-distribution.menu.publish');
     Route::post('/sales-distribution/order/{sale}/deliver', [MenuBoardController::class, 'toggleDelivery'])->middleware('capability:sales.manage')->name('staff.sales-distribution.order.deliver');

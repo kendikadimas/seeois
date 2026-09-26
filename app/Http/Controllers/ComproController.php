@@ -3,15 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\CompanyContent;
+use App\Support\MediaStorage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ComproController extends Controller
 {
     public function index()
     {
-        $items = CompanyContent::orderBy('order')->get();
+        $items = CompanyContent::orderBy('order')->get()->each(function (CompanyContent $item) {
+            $item->image_url = MediaStorage::url($item->image_path);
+        });
         return Inertia::render('Staff/Marketing/Compro', [
             'items' => $items,
             'notif' => session('notif'),
@@ -29,7 +31,7 @@ class ComproController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('images/compro', 'public');
+            $data['image_path'] = $request->file('image')->store('images/compro', MediaStorage::diskName());
         }
 
         CompanyContent::create([
@@ -51,24 +53,31 @@ class ComproController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            // delete old
-            if ($companyContent->image_path) Storage::disk('public')->delete($companyContent->image_path);
-            $data['image_path'] = $request->file('image')->store('images/compro', 'public');
+            $oldImagePath = $companyContent->image_path;
+            $data['image_path'] = $request->file('image')->store('images/compro', MediaStorage::diskName());
         }
 
         $companyContent->update([
-            'value' => $data['value'] ?? $companyContent->value,
+            'value' => $data['value'] ?? null,
             'image_path' => $data['image_path'] ?? $companyContent->image_path,
             'order' => $data['order'] ?? $companyContent->order,
         ]);
+
+        if (isset($oldImagePath) && $oldImagePath !== $companyContent->image_path) {
+            MediaStorage::disk()->delete($oldImagePath);
+        }
 
         return redirect()->back()->with('notif', ['type' => 'success', 'message' => 'Content updated']);
     }
 
     public function destroy(CompanyContent $companyContent)
     {
-        if ($companyContent->image_path) Storage::disk('public')->delete($companyContent->image_path);
+        $imagePath = $companyContent->image_path;
         $companyContent->delete();
+
+        if ($imagePath) {
+            MediaStorage::disk()->delete($imagePath);
+        }
         return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Content removed']);
     }
 }

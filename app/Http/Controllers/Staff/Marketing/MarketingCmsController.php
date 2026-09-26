@@ -7,8 +7,8 @@ use App\Models\Activity;
 use App\Models\CompanyContent;
 use App\Models\Department;
 use App\Models\Structure;
+use App\Support\MediaStorage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class MarketingCmsController extends Controller
@@ -17,12 +17,12 @@ class MarketingCmsController extends Controller
     {
         $stats = CompanyContent::orderBy('order')->get();
         $articles = Activity::latest()->get()->map(function ($q) {
-            $q->image_url = $q->image_path ? Storage::disk('public')->url($q->image_path) : null;
-            $q->gallery_urls = $q->gallery ? collect($q->gallery)->map(fn($p) => Storage::disk('public')->url($p))->all() : [];
+            $q->image_url = MediaStorage::url($q->image_path);
+            $q->gallery_urls = $q->gallery ? collect($q->gallery)->map(fn ($p) => MediaStorage::url($p))->all() : [];
             return $q;
         });
         $members = Structure::orderBy('order_num')->get()->map(function ($q) {
-            $q->image_url = $q->image_path ? Storage::disk('public')->url($q->image_path) : null;
+            $q->image_url = MediaStorage::url($q->image_path);
             return $q;
         });
         $departments = Department::select('id', 'name')->get();
@@ -43,9 +43,9 @@ class MarketingCmsController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('images/marketing/editor', 'public');
+            $path = $request->file('image')->store('images/marketing/editor', MediaStorage::diskName());
             return response()->json([
-                'url' => Storage::disk('public')->url($path),
+                'url' => MediaStorage::url($path),
                 'path' => $path
             ]);
         }

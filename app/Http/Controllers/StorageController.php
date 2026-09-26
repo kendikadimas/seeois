@@ -37,8 +37,8 @@ class StorageController extends Controller
             return $this->show_local($path);
         }
 
-        // If file does not exist, return a 404 response
-        abort(404);
+        // Files uploaded before cloud storage was enabled may still live locally.
+        return $this->show_local($path);
     }
 
     public function show_local($path = '/')

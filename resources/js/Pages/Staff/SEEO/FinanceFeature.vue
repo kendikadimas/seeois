@@ -237,8 +237,7 @@ onUnmounted(() => {
 watch(
     () => props.notif,
     (newValue) => {
-        const notification = newValue;
-        toastNotifRef.value.showToast(notification.type, notification.message);
+        if (newValue) toastNotifRef.value?.showToast(newValue.type, newValue.message);
     }
 );
 </script>

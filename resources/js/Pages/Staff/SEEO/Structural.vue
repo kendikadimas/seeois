@@ -25,7 +25,9 @@ const props = defineProps({
 });
 
 const auth_user = usePage().props.auth.user;
-const title = ref("Structural");
+const capabilities = computed(() => auth_user?.capabilities ?? []);
+const canManageOrganization = computed(() => capabilities.value.includes('*') || capabilities.value.includes('organization.manage'));
+const title = ref("Manajemen Departemen");
 const modalConfirmationRef = ref(null);
 const toastNotifRef = ref(null);
 const placeholder = ref("placeholder");
@@ -170,7 +172,6 @@ function showImage(event) {
 const isLargeScreen = ref(window.innerWidth >= 768);
 const handleResize = () => {
     isLargeScreen.value = window.innerWidth >= 768;
-    window.addEventListener("resize", handleResize);
 };
 
 onMounted(() => {
@@ -186,8 +187,7 @@ onUnmounted(() => {
 watch(
     () => props.notif,
     (newValue) => {
-        const notification = newValue;
-        toastNotifRef.value.showToast(notification.type, notification.message);
+        if (newValue) toastNotifRef.value?.showToast(newValue.type, newValue.message);
     }
 );
 </script>
@@ -282,14 +282,12 @@ watch(
                             </div>
                             <!-- New Department -->
                             <button
-                                v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
-                                class="ms-2 btn btn-sm btn-outline-primary border-0 py-0 text-nowrap"
+                                v-if="canManageOrganization"
+                                class="ms-2 btn btn-sm btn-primary rounded-pill px-3 text-nowrap"
                                 @click="showNewDepartmentModal(true)"
                             >
-                                <i class="bi bi-plus-lg d-lg-none"></i>
-                                <span class="d-none d-lg-block">{{
-                                    "New Department"
-                                }}</span>
+                                <i class="bi bi-plus-lg me-1"></i>
+                                <span>Tambah Departemen</span>
                             </button>
                         </div>
                     </div>
@@ -307,7 +305,7 @@ watch(
                             <div class="" style="font-size: 0.8rem">
                                 <span class="text-secondary d-block mb-1">
                                     <i class="bi bi-person-badge me-1"></i>
-                                    {{ item.manager.name }}
+                                    {{ item.manager?.name || 'Manajer belum ditentukan' }}
                                 </span>
                                 <span class="h5 text-primary-emphasis d-block card-title">
                                     <i class="bi bi-building me-2"></i>
@@ -317,7 +315,7 @@ watch(
                             <div class="ms-auto mb-auto d-flex" style="z-index: 10; position: relative;">
                                 <button
                                     class="border-0 btn btn-sm btn-outline-secondary"
-                                    v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
+                                    v-if="canManageOrganization"
                                     @click.stop="
                                         () => {
                                             active_department = item;
@@ -332,11 +330,11 @@ watch(
                                 </button>
                                 <div
                                     class="border-start border-secondary border-2 mx-1 my-1"
-                                    v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
+                                    v-if="canManageOrganization"
                                 ></div>
                                 <button
                                     class="border-0 btn btn-sm btn-outline-secondary"
-                                    v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
+                                    v-if="canManageOrganization"
                                     @click.stop="
                                         () => {
                                             active_department = item;
@@ -351,13 +349,25 @@ watch(
                         </div>
                     </div>
                 </div>
+                <div v-if="!department_list?.length" class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-building display-5 text-primary opacity-50"></i>
+                            <h5 class="fw-bold mt-3">Belum ada departemen</h5>
+                            <p class="text-muted">Tambahkan departemen agar staf dan program kerja dapat dikelompokkan dengan jelas.</p>
+                            <button v-if="canManageOrganization" type="button" class="btn btn-primary rounded-pill px-4" @click="showNewDepartmentModal(true)">
+                                <i class="bi bi-plus-circle me-2"></i>Tambah Departemen Pertama
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </StaffLayout>
 
     <!-- New Department Modal -->
     <div
-        v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
+        v-if="canManageOrganization"
         class="modal fade"
         id="newDepartmentModal"
         tabindex="-1"
@@ -448,11 +458,11 @@ watch(
     </div>
     <!-- Edit Department Modal -->
     <div
-        v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
+        v-if="canManageOrganization"
         class="modal fade"
         id="updateDepartmentModal"
         tabindex="-1"
-        aria-labelledby="exampleModalLabel"
+        aria-labelledby="updateDepartmentModalLabel"
         aria-hidden="true"
     >
         <div class="modal-dialog modal-dialog-centered">
@@ -460,7 +470,7 @@ watch(
                 <div class="modal-header py-1 ps-3 pe-2">
                     <span
                         class="modal-title fs-5 text-primary-emphasis"
-                        id="exampleModalLabel"
+                        id="updateDepartmentModalLabel"
                     >
                         <i class="bi bi-building-gear me-2"></i>
                         {{ "Update " + active_department?.name }}
@@ -543,11 +553,11 @@ watch(
     </div>
     <!-- Delete Department Modal -->
     <div
-        v-if="auth_user.roles_id == 1 || auth_user.roles_id == 99"
+        v-if="canManageOrganization"
         class="modal fade"
         id="deleteDepartmentModal"
         tabindex="-1"
-        aria-labelledby="exampleModalLabel"
+        aria-labelledby="deleteDepartmentModalLabel"
         aria-hidden="true"
     >
         <div class="modal-dialog modal-dialog-centered">
@@ -555,7 +565,7 @@ watch(
                 <div class="modal-header py-1 ps-3 pe-2">
                     <span
                         class="modal-title text-primary-emphasis fs-5"
-                        id="exampleModalLabel"
+                        id="deleteDepartmentModalLabel"
                     >
                         <i class="bi bi-building-exclamation me-2"></i>
                         {{ "Delete " + active_department?.name }}

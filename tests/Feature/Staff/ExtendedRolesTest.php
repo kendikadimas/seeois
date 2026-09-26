@@ -148,8 +148,6 @@ describe('Finance — Budget & Expense Validation (role 2)', function () {
     });
 
     test('role 2 can access finance panel (auth confirms role 2 is recognized)', function () {
-        // The budget validate controller crashes on missing model (existing bug).
-        // We verify role 2 auth by confirming the finance pending-docs page loads.
         $this->get('/seeo/staff/finance/pending-docs')->assertStatus(200);
     });
 

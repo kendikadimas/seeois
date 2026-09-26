@@ -14,6 +14,7 @@ const modalConfirmationRef = ref(null);
 const guideModalRef = ref(null);
 
 const auth_user = computed(() => page.props.auth?.user || {});
+const appVersion = computed(() => page.props.app?.version || '6.0');
 const userRole = computed(() => Number(auth_user.value?.roles_id || 0));
 const roleName = computed(() => auth_user.value?.role_name || 'Staff');
 const capabilities = computed(() => auth_user.value?.capabilities || []);
@@ -65,8 +66,11 @@ route.current = (routeName) => {
         'Staff/Business/Stand': 'food.stand',
         'Staff/Business/StandDetail': 'food.stand.detail',
         'Staff/Business/StandCashier': 'food.stand.cashier',
+        'Staff/Business/FoodBalance': 'food.balance',
         'Staff/Business/GoodBalance': 'good.balance',
         'Staff/Business/GoodProduct': 'good.product',
+        'Staff/Business/GoodDetail': 'good.product',
+        'Staff/Business/GoodInsight': 'good.insight',
         'Staff/Marketing/MarketingCms': 'marketing.cms',
         'Staff/Marketing/Structures': 'marketing.structures.index',
         'Staff/Marketing/Activities': 'marketing.activities',
@@ -341,6 +345,13 @@ const nav_sections = computed(() => {
     }
     if (can('goods.manage')) {
         goodsItems.push({
+            route: route('good.insight'),
+            active: route.current("good.insight"),
+            title: "Insight Merchandise",
+            sub: "Penjualan & Modal Produk",
+            icon: "bi-graph-up-arrow"
+        });
+        goodsItems.push({
             route: route('good.balance'),
             active: route.current("good.balance"),
             title: "Saldo Goods",
@@ -581,7 +592,7 @@ watch(() => page.component, () => {
                         <div class="lh-sm">
                             <div class="d-flex align-items-center gap-2">
                                 <h5 class="brand-title mb-0 fw-bold text-white tracking-wide">SEEOIS</h5>
-                                <span class="badge bg-warning text-dark fw-bold text-2xs px-1 py-0 rounded">v5.0</span>
+                                <span class="app-version-badge">v{{ appVersion }}</span>
                             </div>
                             <span class="brand-subtitle text-white text-opacity-75 d-block">Information System</span>
                         </div>
@@ -757,7 +768,10 @@ watch(() => page.component, () => {
                 <div class="d-flex align-items-center p-1">
                     <img :src="logoSrc" alt="SEEO Logo" class="brand-logo me-2 rounded-circle" @error="$event.target.src=logoSrc"/>
                     <div>
-                        <h5 class="brand-title mb-0 fw-bold text-white">SEEOIS</h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="brand-title mb-0 fw-bold text-white">SEEOIS</h5>
+                            <span class="app-version-badge">v{{ appVersion }}</span>
+                        </div>
                         <small class="text-white text-opacity-75">Information System</small>
                     </div>
                 </div>
@@ -778,8 +792,51 @@ watch(() => page.component, () => {
                     </div>
                 </div>
 
+                <div class="menu-search-wrapper mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white bg-opacity-10 border-0 text-white text-opacity-50">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input
+                            v-model="searchKeyword"
+                            type="search"
+                            class="form-control bg-white bg-opacity-10 border-0 text-white placeholder-white-50"
+                            placeholder="Cari menu atau fitur..."
+                            aria-label="Cari menu atau fitur"
+                        />
+                        <button v-if="searchKeyword" type="button" class="btn bg-white bg-opacity-10 text-white border-0" @click="searchKeyword = ''" aria-label="Hapus pencarian">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div v-if="searchKeyword.trim()" class="mb-3">
+                    <div class="text-2xs fw-bold text-uppercase tracking-wider text-white text-opacity-60 px-2 mb-2">
+                        Hasil pencarian
+                    </div>
+                    <div v-if="search_results.length" class="d-flex flex-column gap-1">
+                        <a
+                            v-for="(result, index) in search_results"
+                            :key="'mob-search-' + index"
+                            :href="result.route"
+                            class="search-item d-flex align-items-center gap-2 p-3 rounded-3 text-white text-decoration-none"
+                            :class="{ active: result.active }"
+                        >
+                            <i :class="['bi', result.icon || 'bi-arrow-right-circle', 'text-warning']"></i>
+                            <div class="min-width-0">
+                                <div class="small fw-semibold text-truncate">{{ result.title }}</div>
+                                <div class="text-3xs text-white text-opacity-50">{{ result.sectionName }}</div>
+                            </div>
+                        </a>
+                    </div>
+                    <div v-else class="text-center text-white text-opacity-50 small py-4">
+                        <i class="bi bi-search d-block fs-3 mb-2"></i>
+                        Menu tidak ditemukan.
+                    </div>
+                </div>
+
                 <!-- Primary Workspace for Mobile -->
-                <div class="primary-workspace-section mb-3 p-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
+                <div v-show="!searchKeyword.trim()" class="primary-workspace-section mb-3 p-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
                     <div class="px-2 py-1 text-2xs fw-bold text-uppercase tracking-wider text-warning mb-1">
                         Ruang Kerja Utama ({{ currentRoleWorkflow.alias }})
                     </div>
@@ -801,6 +858,7 @@ watch(() => page.component, () => {
                 <div
                     v-for="section in nav_sections"
                     :key="'mob-' + section.key"
+                    v-show="!searchKeyword.trim()"
                     class="mb-3"
                 >
                     <div class="text-2xs fw-bold text-uppercase tracking-wider text-white text-opacity-60 px-2 mb-1">
@@ -948,10 +1006,35 @@ watch(() => page.component, () => {
             </header>
 
             <!-- Main Dynamic Page Content Container -->
-            <main class="content-container grow overflow-auto p-2 p-md-3">
-                <slot />
+            <main id="main-content" class="content-container grow overflow-auto p-2 p-md-3" tabindex="-1">
+                <div class="content-stage">
+                    <slot />
+                </div>
             </main>
         </div>
+
+        <nav class="mobile-quick-nav d-lg-none" aria-label="Navigasi cepat">
+            <a
+                v-for="(item, index) in primary_workspace_items.slice(0, 3)"
+                :key="'quick-' + index"
+                :href="item.route"
+                class="mobile-quick-link"
+                :class="{ active: item.active }"
+            >
+                <i :class="['bi', item.icon]"></i>
+                <span>{{ item.title }}</span>
+            </a>
+            <button
+                type="button"
+                class="mobile-quick-link"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#sidebarOffcanvas"
+                aria-controls="sidebarOffcanvas"
+            >
+                <i class="bi bi-grid-fill"></i>
+                <span>Semua Menu</span>
+            </button>
+        </nav>
 
         <!-- Global Modals -->
         <ModalConfirmation ref="modalConfirmationRef" />
@@ -963,14 +1046,19 @@ watch(() => page.component, () => {
 /* App Font */
 .staff-app-root {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: #172033;
 }
 
 /* Backgrounds & Palette */
 .bg-sidebar {
-    background: linear-gradient(180deg, #1e1b4b 0%, #2e266d 100%);
+    background:
+        radial-gradient(circle at 15% 0%, rgba(99, 102, 241, 0.42), transparent 32%),
+        linear-gradient(180deg, #17153f 0%, #27205f 55%, #17153f 100%);
 }
 .bg-surface {
-    background-color: #f8fafc;
+    background:
+        radial-gradient(circle at 95% 0%, rgba(99, 102, 241, 0.08), transparent 28rem),
+        #f6f8fc;
 }
 
 /* Sidebar Desktop */
@@ -996,6 +1084,19 @@ watch(() => page.component, () => {
 }
 .brand-box:hover {
     background-color: rgba(255, 255, 255, 0.15) !important;
+}
+.app-version-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 0.1rem 0.45rem;
+    border: 1px solid rgba(253, 230, 138, 0.6);
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.94);
+    color: #3f2d06;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
 }
 
 /* Role Indicator Card */
@@ -1072,9 +1173,12 @@ watch(() => page.component, () => {
 
 /* Header */
 .top-header {
-    background-color: #ffffff;
-    height: 65px;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(14px);
+    height: 72px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 1030;
 }
 .profile-img {
     width: 38px;
@@ -1086,6 +1190,113 @@ watch(() => page.component, () => {
 }
 .header-guide-btn:hover {
     transform: translateY(-1px);
+}
+
+.content-stage {
+    min-height: 100%;
+    animation: content-enter 220ms ease-out;
+}
+
+.mobile-quick-nav {
+    position: fixed;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    left: 0.75rem;
+    z-index: 1025;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+    gap: 0.25rem;
+    padding: 0.45rem;
+    border: 1px solid rgba(226, 232, 240, 0.92);
+    border-radius: 1.1rem;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 18px 45px rgba(30, 41, 59, 0.18);
+    backdrop-filter: blur(16px);
+}
+
+.mobile-quick-link {
+    min-width: 0;
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.35rem 0.2rem;
+    border: 0;
+    border-radius: 0.8rem;
+    background: transparent;
+    color: #64748b;
+    text-decoration: none;
+}
+
+.mobile-quick-link i {
+    font-size: 1.05rem;
+}
+
+.mobile-quick-link span {
+    width: 100%;
+    overflow: hidden;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-quick-link.active {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.min-width-0 {
+    min-width: 0;
+}
+
+@keyframes content-enter {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 991.98px) {
+    .content-container {
+        padding-bottom: 5.75rem !important;
+    }
+
+    .top-header {
+        height: 64px;
+    }
+
+    .page-main-title {
+        max-width: 46vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .header-guide-btn {
+        width: 38px;
+        height: 38px;
+        justify-content: center;
+        padding: 0 !important;
+    }
+
+    .page-meta {
+        font-size: 0.68rem !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .content-stage,
+    .primary-nav-link,
+    .standard-nav-link,
+    .header-guide-btn {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
 }
 
 /* Utility font sizes */

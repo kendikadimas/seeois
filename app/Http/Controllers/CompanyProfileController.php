@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Structure;
 use App\Models\Activity;
-use Illuminate\Support\Facades\Storage;
+use App\Support\MediaStorage;
 
 class CompanyProfileController extends Controller
 {
@@ -13,12 +13,12 @@ class CompanyProfileController extends Controller
     public function homepage()
     {
         $structures = Structure::orderBy('order_num')->get()->map(function ($q) {
-            $q->image_url = $q->image_path ? Storage::disk('public')->url($q->image_path) : null;
+            $q->image_url = MediaStorage::url($q->image_path);
             return $q;
         });
 
         $activities = Activity::where('is_published', 1)->latest()->limit(3)->get()->map(function ($q) {
-            $q->image_url = $q->image_path ? Storage::disk('public')->url($q->image_path) : null;
+            $q->image_url = MediaStorage::url($q->image_path);
             return $q;
         });
 
@@ -26,7 +26,7 @@ class CompanyProfileController extends Controller
             return [
                 'key' => $c->key,
                 'value' => $c->value,
-                'image_url' => $c->image_path ? Storage::disk('public')->url($c->image_path) : null,
+                'image_url' => MediaStorage::url($c->image_path),
             ];
         });
 
@@ -56,7 +56,7 @@ class CompanyProfileController extends Controller
     public function activity()
     {
         $activities = Activity::where('is_published', 1)->latest()->get()->map(function ($q) {
-            $q->image_url = $q->image_path ? Storage::disk('public')->url($q->image_path) : null;
+            $q->image_url = MediaStorage::url($q->image_path);
             return $q;
         });
 
@@ -73,8 +73,8 @@ class CompanyProfileController extends Controller
 
     public function activityDetail(Activity $activity)
     {
-        $activity->image_url = $activity->image_path ? Storage::disk('public')->url($activity->image_path) : null;
-        $activity->gallery_urls = $activity->gallery ? collect($activity->gallery)->map(fn($p) => Storage::disk('public')->url($p))->all() : [];
+        $activity->image_url = MediaStorage::url($activity->image_path);
+        $activity->gallery_urls = $activity->gallery ? collect($activity->gallery)->map(fn ($p) => MediaStorage::url($p))->all() : [];
 
         return Inertia::render('Public/ActivityDetail', [
             'activity' => $activity
@@ -96,7 +96,7 @@ class CompanyProfileController extends Controller
     public function structure()
     {
         $structures = \App\Models\Structure::orderBy('order_num')->get()->map(function ($q) {
-            $q->image_url = $q->image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($q->image_path) : null;
+            $q->image_url = MediaStorage::url($q->image_path);
             return $q;
         });
 

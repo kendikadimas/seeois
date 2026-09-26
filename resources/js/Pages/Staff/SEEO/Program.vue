@@ -389,7 +389,6 @@ function scrollHorizontal(amount) {
 const isLargeScreen = ref(window.innerWidth >= 768);
 const handleResize = () => {
     isLargeScreen.value = window.innerWidth >= 768;
-    window.addEventListener("resize", handleResize);
 };
 
 const showInternshipButton = computed(() => {
@@ -433,9 +432,9 @@ onUnmounted(() => {
 watch(
     () => props.notif,
     (newValue) => {
-        const notification = newValue;
-        toastNotifRef.value.showToast(notification.type, notification.message);
-        if (notification.message == "Success delete Disbursement Letter.") {
+        if (!newValue) return;
+        toastNotifRef.value?.showToast(newValue.type, newValue.message);
+        if (newValue.message == "Success delete Disbursement Letter.") {
             showLetterModal(false);
         }
     }
@@ -1379,7 +1378,7 @@ watch(
                                                             program.financial_id <=
                                                                 0
                                                         "
-                                                        aria-labelledby="exampleModalLabel"
+                                                        aria-labelledby="addProgramBudgetLabel"
                                                         aria-hidden="true"
                                                     >
                                                         <div
@@ -1393,7 +1392,7 @@ watch(
                                                                 >
                                                                     <span
                                                                         class="modal-title fs-5 text-primary-emphasis"
-                                                                        id="exampleModalLabel"
+                                                                        id="addProgramBudgetLabel"
                                                                         ><i
                                                                             class="bi bi-journal-plus border-secondary border-end me-2 pe-2"
                                                                         ></i>
@@ -1921,7 +1920,7 @@ watch(
                                                         class="modal fade"
                                                         id="addProgramDisbursement"
                                                         tabindex="-1"
-                                                        aria-labelledby="exampleModalLabel"
+                                                        aria-labelledby="addProgramDisbursementLabel"
                                                         aria-hidden="true"
                                                     >
                                                         <div
@@ -1935,6 +1934,7 @@ watch(
                                                                 >
                                                                     <span
                                                                         class="modal-title fs-5 text-primary-emphasis"
+                                                                        id="addProgramDisbursementLabel"
                                                                         ><i
                                                                             class="bi bi-wallet2 border-secondary border-end me-2 pe-2"
                                                                         ></i>
@@ -2043,7 +2043,7 @@ watch(
                                                                                 class="col-4 col-lg-3"
                                                                             >
                                                                                 <label
-                                                                                    for="add_disbursement_letter"
+                                                                                    for="add_disbursement_source"
                                                                                     class="form-label d-inline-block"
                                                                                     >{{
                                                                                         "Letter"
@@ -2058,7 +2058,7 @@ watch(
                                                                                         formAddDisbursement.letter_id
                                                                                     "
                                                                                     class="form-select py-0 d-inline"
-                                                                                    id="add_disbursement_letter"
+                                                                                    id="add_disbursement_source"
                                                                                 >
                                                                                     <option
                                                                                         v-for="(
@@ -2463,7 +2463,7 @@ watch(
                                                         class="modal fade"
                                                         id="addProgramDisbursementLetter"
                                                         tabindex="-1"
-                                                        aria-labelledby="exampleModalLabel"
+                                                        aria-labelledby="addProgramDisbursementLetterLabel"
                                                         aria-hidden="true"
                                                     >
                                                         <div
@@ -2477,7 +2477,7 @@ watch(
                                                                 >
                                                                     <span
                                                                         class="modal-title fs-5 text-primary-emphasis"
-                                                                        id="exampleModalLabel"
+                                                                        id="addProgramDisbursementLetterLabel"
                                                                         ><i
                                                                             class="bi bi-wallet2 border-secondary border-end me-2 pe-2"
                                                                         ></i>
@@ -2519,7 +2519,7 @@ watch(
                                                                                 class="col-4 col-lg-3"
                                                                             >
                                                                                 <label
-                                                                                    for="add_disbursement_letter"
+                                                                                    for="add_disbursement_letter_file"
                                                                                     class="form-label d-inline-block"
                                                                                     >{{
                                                                                         "Letter"
@@ -2532,7 +2532,7 @@ watch(
                                                                                 <input
                                                                                     type="file"
                                                                                     class="form-control form-control-sm"
-                                                                                    id="add_disbursement_letter"
+                                                                                    id="add_disbursement_letter_file"
                                                                                     @change="
                                                                                         handleFileAddDisbursementLetter
                                                                                     "
@@ -3027,7 +3027,7 @@ watch(
                                                             program.financial_id >
                                                                 0
                                                         "
-                                                        aria-labelledby="exampleModalLabel"
+                                                        aria-labelledby="addProgramExpenseLabel"
                                                         aria-hidden="true"
                                                     >
                                                         <div
@@ -3041,7 +3041,7 @@ watch(
                                                                 >
                                                                     <span
                                                                         class="modal-title fs-5 text-primary-emphasis"
-                                                                        id="exampleModalLabel"
+                                                                        id="addProgramExpenseLabel"
                                                                         ><i
                                                                             class="bi bi-cart-plus border-secondary border-end me-2 pe-2"
                                                                         ></i>
@@ -3823,7 +3823,7 @@ watch(
                                                         class="modal fade"
                                                         id="addProgramStaff"
                                                         tabindex="-1"
-                                                        aria-labelledby="exampleModalLabel"
+                                                        aria-labelledby="addProgramStaffLabel"
                                                         aria-hidden="true"
                                                     >
                                                         <div
@@ -3837,7 +3837,7 @@ watch(
                                                                 >
                                                                     <span
                                                                         class="modal-title fs-5 text-primary-emphasis"
-                                                                        id="exampleModalLabel"
+                                                                        id="addProgramStaffLabel"
                                                                         ><i
                                                                             class="bi bi-person-fill-add border-secondary border-end me-2 pe-2"
                                                                         ></i>

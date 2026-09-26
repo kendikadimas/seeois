@@ -10,9 +10,10 @@ use App\Models\FoodsIncome;
 use App\Models\Stand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\File;
-use Spatie\Image\Image;
-use Spatie\Image\Manipulations;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class BlaterianFoodBalanceController extends Controller
 {
@@ -23,23 +24,18 @@ class BlaterianFoodBalanceController extends Controller
      * display foods balance.
      * 
      */
-    function balance(Request $request, $default_tab = 1, $refresh = false)
+    public function balance(Request $request, $default_tab = 1, $refresh = false): Response
     {
-        // Retrieve or create session
-        if ($refresh) {
-            $this->refreshBalance();
-        }
+        $this->refreshBalance();
         $income_session = session('balance_income', ['category' => 'price', 'order' => 'desc']);
         $expense_session = session('balance_expense', ['category' => 'price', 'order' => 'desc']);
-        // Save session to database
-        $request->session()->put('balance_income', $income_session);
-        $request->session()->put('balance_expense', $expense_session);
-        // Balance filter
-        $income_category = $income_session['category'];
-        $income_order = $income_session['order'];
+        $income_category = in_array($income_session['category'] ?? null, ['price', 'category', 'created_at'], true) ? $income_session['category'] : 'price';
+        $income_order = in_array($income_session['order'] ?? null, ['asc', 'desc'], true) ? $income_session['order'] : 'desc';
+        $request->session()->put('balance_income', ['category' => $income_category, 'order' => $income_order]);
         $income_list = FoodsIncome::orderBy($income_category, $income_order)->with(['program', 'stand'])->get();
-        $expense_category = $expense_session['category'];
-        $expense_order = $expense_session['order'];
+        $expense_category = in_array($expense_session['category'] ?? null, ['price', 'category', 'created_at'], true) ? $expense_session['category'] : 'price';
+        $expense_order = in_array($expense_session['order'] ?? null, ['asc', 'desc'], true) ? $expense_session['order'] : 'desc';
+        $request->session()->put('balance_expense', ['category' => $expense_category, 'order' => $expense_order]);
         $expense_list = FoodsExpense::orderBy($expense_category, $expense_order)->with(['withdraw', 'stand'])->get();
 
         // Chart Data
@@ -65,7 +61,7 @@ class BlaterianFoodBalanceController extends Controller
             'income' => $income_chart->values(),
         ];
         $stands = Stand::all();
-        $data = [
+        return Inertia::render('Staff/Business/FoodBalance', [
             'title' => 'Blaterian Foods Balance',
             'balance' => BlaterianBalance::find(1),
             'total_income' => $stands->sum('income'),
@@ -83,18 +79,23 @@ class BlaterianFoodBalanceController extends Controller
                     'category' => $expense_category,
                     'order' => $expense_order,
                 ],
-            ]
-        ];
-        return view('pages.staff.food.balance', $data);
+            ],
+            'notif' => session('notif'),
+            'errors' => session('errors')?->getBag('default')?->getMessages() ?? (object) [],
+        ]);
     }
 
     /**
      * filter cash Income.
      */
-    function filterIncome(Request $request)
+    public function filterIncome(Request $request)
     {
-        $category = $request->input('category');
-        $order = $request->input('order');
+        $validated = $request->validate([
+            'category' => ['required', 'in:price,category,created_at'],
+            'order' => ['required', 'in:asc,desc'],
+        ]);
+        $category = $validated['category'];
+        $order = $validated['order'];
         session()->put('balance_income', ['category' => $category, 'order' => $order]);
         return redirect()->route('food.balance', ['default_tab' => 1]);
     }
@@ -102,10 +103,14 @@ class BlaterianFoodBalanceController extends Controller
     /**
      * filter cash Expense.
      */
-    function filterExpense(Request $request)
+    public function filterExpense(Request $request)
     {
-        $category = $request->input('category');
-        $order = $request->input('order');
+        $validated = $request->validate([
+            'category' => ['required', 'in:price,category,created_at'],
+            'order' => ['required', 'in:asc,desc'],
+        ]);
+        $category = $validated['category'];
+        $order = $validated['order'];
         session()->put('balance_expense', ['category' => $category, 'order' => $order]);
         return redirect()->route('food.balance', ['default_tab' => 2]);
     }
@@ -138,45 +143,39 @@ class BlaterianFoodBalanceController extends Controller
         }
     }
 
-    function withdrawBalance(Request $request)
+    public function withdrawBalance(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string',
-            'price' => 'required|numeric',
-            'receipt' => File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024),
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'price' => ['required', 'integer', 'min:1'],
+            'receipt' => ['required', File::types(['jpg', 'jpeg', 'png', 'heic', 'webp'])->max(5 * 1024)],
         ]);
 
-        $receipt = $request->file('receipt');
-        $receipt_name =  'cash_in_' . time() . '.' . $receipt->extension();
-        // Convert to .webp without storing original
-        Image::load($receipt->getPathname())
-            ->format(Manipulations::FORMAT_WEBP)
-            ->quality(85)
-            ->save($receipt_name);
-        // store receipt file
-        $receipt->storePubliclyAs('images/receipt/cash_in', $receipt_name, 'public');
+        $receipt = $validated['receipt'];
+        $receipt_name = 'cash_in_foods_'.now()->format('YmdHis').'_'.str()->random(6).'.'.$receipt->extension();
+        $disk = app()->environment('production') ? 'google' : 'public';
+        $receipt->storePubliclyAs('images/receipt/cash_in', $receipt_name, $disk);
 
-        $seeo_cash_in = CashInItem::create([
-            'financial_id' => null,
-            'name' => $request->input('name'),
-            'price' => $request->input('price'),
-            'reciept' => $receipt_name,
-            'updated_at' => now(),
-            'created_at' => now()
-        ]);
+        DB::transaction(function () use ($validated, $receipt_name) {
+            $cashIn = CashInItem::create([
+                'financial_id' => null,
+                'name' => $validated['name'],
+                'price' => $validated['price'],
+                'reciept' => $receipt_name,
+            ]);
 
-        $food_cash_out = FoodsExpense::create([
-            'category_id' => $seeo_cash_in->id,
-            'category' => 'withdraw',
-            'price' => $request->input('price'),
-        ]);
+            FoodsExpense::create([
+                'category_id' => $cashIn->id,
+                'category' => 'withdraw',
+                'price' => $validated['price'],
+            ]);
+        });
 
         $this->refreshBalance();
 
-        if ($seeo_cash_in && $food_cash_out) {
-            return redirect()->route('food.balance', ['default_tab' => 2])->with('notif', ['type' => 'info', 'message' => 'Success send money to SEEO Cash Flow. Please ask Financial Officer to validate.']);
-        } else {
-            return redirect()->route('food.balance', ['default_tab' => 2])->with('notif', ['type' => 'warning', 'message' => 'Failed send money to SEEO Cash Flow. Please try again or ask admin.']);
-        }
+        return redirect()->route('food.balance', ['default_tab' => 2])->with('notif', [
+            'type' => 'info',
+            'message' => 'Dana berhasil dikirim ke kas SEEO dan menunggu validasi Financial Officer.',
+        ]);
     }
 }

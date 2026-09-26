@@ -35,6 +35,8 @@ function showMessage(type, message) {
         toast.warning(message, toast_option);
     } else if (type == "danger") {
         toast.error(message, toast_option);
+    } else if (type == "success") {
+        toast.success(message, toast_option);
     } else {
         toast.info(message, toast_option);
     }

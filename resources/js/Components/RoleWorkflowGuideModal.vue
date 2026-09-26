@@ -306,7 +306,7 @@ defineExpose({ open, close });
                     <div class="guide-modal-footer bg-light p-3 px-4 border-top d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2 small text-muted">
                             <i class="bi bi-lightbulb-fill text-warning"></i>
-                            <span>Panduan terpadu SEEOIS v5.0 — Bebas bingung tanpa guidebook terpisah!</span>
+                            <span>Panduan terpadu SEEOIS v{{ $page.props.app?.version || '6.0' }} — semua alur penting dalam satu tempat.</span>
                         </div>
                         <button
                             type="button"

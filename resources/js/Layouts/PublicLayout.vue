@@ -42,7 +42,7 @@
             </div>
 
             <!-- Mobile menu button -->
-            <button @click="open = !open" class="lg:hidden p-2 rounded-full transition-colors bg-transparent border-0 outline-none shadow-none" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white hover:bg-white/10' : 'text-[#004182] hover:bg-gray-100'">
+            <button @click="open = !open" class="lg:hidden p-2 rounded-full transition-colors bg-transparent border-0 outline-none shadow-none" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white hover:bg-white/10' : 'text-[#004182] hover:bg-gray-100'" :aria-expanded="open" aria-label="Buka menu navigasi">
                 <i class="bi" :class="open ? 'bi-x-lg' : 'bi-list'" style="font-size: 1.5rem;"></i>
             </button>
 
@@ -138,7 +138,7 @@
                 
                 <div class="pt-8 border-t border-white/5 text-center">
                     <p class="text-xs text-gray-500 uppercase tracking-widest">
-                        &copy; 2026 SEEO UNSOED. Set Up Your Mind To Be An Entrepreneur
+                        &copy; {{ currentYear }} SEEO UNSOED <span class="mx-2">•</span> SEEOIS v{{ appVersion }}
                     </p>
                 </div>
             </div>
@@ -190,6 +190,8 @@ const logoSrc = ref('/images/assets/logo.png');
 const open = ref(false);
 const page = usePage();
 const auth_user = computed(() => page.props.auth?.user);
+const appVersion = computed(() => page.props.app?.version || '6.0');
+const currentYear = new Date().getFullYear();
 const isCustomer = computed(() => auth_user.value && auth_user.value.roles_id == null);
 const authenticatedHomeUrl = computed(() => isCustomer.value ? route('shop') : route('dashboard'));
 const authenticatedHomeLabel = computed(() => isCustomer.value ? 'Shop' : 'Dashboard');
