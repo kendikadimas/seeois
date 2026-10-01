@@ -42,12 +42,22 @@ const _sfc_main = {
     const modalAddExpenseRef = ref(null);
     const modalAddStaffRef = ref(null);
     const modalReceiptDisbursementRef = ref(null);
+    const selected_user = ref({});
+    const selectedUser = computed(() => {
+      var _a, _b;
+      if ((_a = selected_user.value) == null ? void 0 : _a.id) {
+        return selected_user.value;
+      }
+      const requestedUserId = Number(props.default_logbook_id || auth_user.id);
+      return ((_b = props.staff_list.find(
+        (staff) => Number(staff.user_id) === requestedUserId
+      )) == null ? void 0 : _b.employee) ?? {};
+    });
     const active_logbook = computed(() => {
       return props.logbook_list.filter(
-        (logbook) => logbook.user_id == selected_user.value.id
+        (logbook) => Number(logbook.user_id) === Number(selectedUser.value.id)
       );
     });
-    const selected_user = ref(0);
     const active_tab = ref(1);
     const next_tab = ref(0);
     const prev_tab = ref(0);
@@ -375,11 +385,6 @@ const _sfc_main = {
     });
     onMounted(() => {
       placeholder.value = "";
-      if (props.default_logbook_id > 0) {
-        if (props.default_logbook_id == auth_user.id) {
-          setSelectedUser(auth_user);
-        }
-      }
       window.addEventListener("resize", handleResize);
     });
     onUnmounted(() => {
@@ -400,7 +405,7 @@ const _sfc_main = {
       _push(ssrRenderComponent(StaffLayout, _attrs, {
         header: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<a href="/seeo/staff/structural" class="bg-opacity-0 text-decoration-none text-primary-emphasis" data-v-36a53fe9${_scopeId}><span class="fw-light" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Structural")}</span></a><span class="ms-2" data-v-36a53fe9${_scopeId}>${ssrInterpolate("/")}</span><a${ssrRenderAttr("href", `/seeo/staff/department/${__props.program.department_id}`)} class="bg-opacity-0 text-decoration-none text-primary-emphasis ms-2" data-v-36a53fe9${_scopeId}><span class="fw-light" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Department")}</span></a><span class="ms-2" data-v-36a53fe9${_scopeId}>${ssrInterpolate("/")}</span> ${ssrInterpolate("Program")}`);
+            _push2(`<a href="/seeo/staff/structural" class="bg-opacity-0 text-decoration-none text-primary-emphasis" data-v-06acbe76${_scopeId}><span class="fw-light" data-v-06acbe76${_scopeId}>${ssrInterpolate("Structural")}</span></a><span class="ms-2" data-v-06acbe76${_scopeId}>${ssrInterpolate("/")}</span><a${ssrRenderAttr("href", `/seeo/staff/department/${__props.program.department_id}`)} class="bg-opacity-0 text-decoration-none text-primary-emphasis ms-2" data-v-06acbe76${_scopeId}><span class="fw-light" data-v-06acbe76${_scopeId}>${ssrInterpolate("Department")}</span></a><span class="ms-2" data-v-06acbe76${_scopeId}>${ssrInterpolate("/")}</span> ${ssrInterpolate("Program")}`);
           } else {
             return [
               createVNode("a", {
@@ -439,7 +444,7 @@ const _sfc_main = {
               ref_key: "modalAlertNotificationRef",
               ref: modalAlertNotificationRef
             }, null, _parent2, _scopeId));
-            _push2(`<div class="container me-lg-0 mx-auto mb-5" data-v-36a53fe9${_scopeId}><div class="row mt-4" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><div class="card shadow-sm p-3" data-v-36a53fe9${_scopeId}><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><div class="d-flex pb-0" data-v-36a53fe9${_scopeId}><span class="h5 text-primary-emphasis" data-v-36a53fe9${_scopeId}>${ssrInterpolate(__props.program.name + " Program")}</span>`);
+            _push2(`<div class="container me-lg-0 mx-auto mb-5" data-v-06acbe76${_scopeId}><div class="row mt-4" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><div class="card shadow-sm p-3" data-v-06acbe76${_scopeId}><div class="row" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><div class="d-flex pb-0" data-v-06acbe76${_scopeId}><span class="h5 text-primary-emphasis" data-v-06acbe76${_scopeId}>${ssrInterpolate(__props.program.name + " Program")}</span>`);
             if (showInternshipButton.value) {
               _push2(ssrRenderComponent(unref(Link), {
                 href: "/seeo/staff/internship",
@@ -448,7 +453,7 @@ const _sfc_main = {
               }, {
                 default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                   if (_push3) {
-                    _push3(`<i class="bi bi-people-fill" data-v-36a53fe9${_scopeId2}></i><span class="d-none d-md-inline" data-v-36a53fe9${_scopeId2}>Data Pendaftar</span><span class="d-md-none" data-v-36a53fe9${_scopeId2}>Pendaftar</span>`);
+                    _push3(`<i class="bi bi-people-fill" data-v-06acbe76${_scopeId2}></i><span class="d-none d-md-inline" data-v-06acbe76${_scopeId2}>Data Pendaftar</span><span class="d-md-none" data-v-06acbe76${_scopeId2}>Pendaftar</span>`);
                   } else {
                     return [
                       createVNode("i", { class: "bi bi-people-fill" }),
@@ -462,170 +467,170 @@ const _sfc_main = {
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<button class="btn btn-sm btn-outline-info ms-2 mb-2 d-flex align-items-center gap-2" style="${ssrRenderStyle({ "text-decoration": "none" })}" data-v-36a53fe9${_scopeId}><i class="bi bi-info-circle" data-v-36a53fe9${_scopeId}></i><span class="d-none d-md-inline" data-v-36a53fe9${_scopeId}>Help</span></button>`);
+            _push2(`<button class="btn btn-sm btn-outline-info ms-2 mb-2 d-flex align-items-center gap-2" style="${ssrRenderStyle({ "text-decoration": "none" })}" data-v-06acbe76${_scopeId}><i class="bi bi-info-circle" data-v-06acbe76${_scopeId}></i><span class="d-none d-md-inline" data-v-06acbe76${_scopeId}>Help</span></button>`);
             if (unref(auth_user).roles_id == 99 || unref(auth_user).id == __props.program.department.manager_id) {
-              _push2(`<button class="text-decoration-none ms-auto mb-2 py-0 btn btn-sm btn-outline-secondary border-0" data-v-36a53fe9${_scopeId}><i class="bi bi-trash3" data-v-36a53fe9${_scopeId}></i></button>`);
+              _push2(`<button class="text-decoration-none ms-auto mb-2 py-0 btn btn-sm btn-outline-secondary border-0" data-v-06acbe76${_scopeId}><i class="bi bi-trash3" data-v-06acbe76${_scopeId}></i></button>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</div></div></div><div class="d-flex mt-2 d-lg-none" data-v-36a53fe9${_scopeId}><span class="text-secondary" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Detail")}</span></div><div class="row g-2 mt-0 mt-lg-2" data-v-36a53fe9${_scopeId}><div class="col-lg-1 d-none d-lg-block" data-v-36a53fe9${_scopeId}><div class="d-flex w-100 h-100" data-v-36a53fe9${_scopeId}><span class="text-secondary my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Detail")}</span></div></div><div class="col-6 col-lg-3" data-v-36a53fe9${_scopeId}><div class="d-flex" data-v-36a53fe9${_scopeId}><i class="bi bi-person text-primary fs-5 my-auto me-2" data-v-36a53fe9${_scopeId}></i><div data-v-36a53fe9${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("In Charge")}</span><div class="scroll-x-hidden" data-v-36a53fe9${_scopeId}><span class="text-dark text-nowrap" data-v-36a53fe9${_scopeId}>${ssrInterpolate(__props.program.user.name)}</span></div></div></div></div><div class="col-6 col-lg-3" data-v-36a53fe9${_scopeId}><div class="d-flex" data-v-36a53fe9${_scopeId}><i class="bi bi-people text-primary fs-5 my-auto me-2" data-v-36a53fe9${_scopeId}></i><div data-v-36a53fe9${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Staff")}</span><div class="scroll-x-hidden" data-v-36a53fe9${_scopeId}><span class="text-dark text-nowrap" data-v-36a53fe9${_scopeId}>${ssrInterpolate(__props.staff_list.length + (__props.staff_list.length > 1 ? " persons" : " person"))}</span></div></div></div></div><div class="col-12 col-lg-3" data-v-36a53fe9${_scopeId}><div class="d-flex" data-v-36a53fe9${_scopeId}><i class="bi bi-calendar2 text-primary fs-5 my-auto me-2" data-v-36a53fe9${_scopeId}></i><div data-v-36a53fe9${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Progress")}</span><div class="scroll-x-hidden" data-v-36a53fe9${_scopeId}><span class="text-dark text-nowrap" data-v-36a53fe9${_scopeId}>${ssrInterpolate(__props.program.financial_id == 0 ? "Waiting for budget validation." : __props.program.disbursement == 0 ? "Waiting for disbursement." : "On progress")}</span></div></div></div></div></div><div class="d-flex mt-2 d-lg-none" data-v-36a53fe9${_scopeId}><span class="text-secondary" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Cashflow")}</span></div><div class="row g-2 mt-lg-2 mt-0" data-v-36a53fe9${_scopeId}><div class="col-lg-1 d-none d-lg-block" data-v-36a53fe9${_scopeId}><div class="d-flex w-100 h-100" data-v-36a53fe9${_scopeId}><span class="text-secondary my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Cashflow")}</span></div></div><div class="col-6 col-lg-3" data-v-36a53fe9${_scopeId}><div class="d-flex" data-v-36a53fe9${_scopeId}><i class="bi bi-list-columns-reverse text-primary fs-5 my-auto me-2" data-v-36a53fe9${_scopeId}></i><div data-v-36a53fe9${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Budget")}</span><div class="scroll-x-hidden" data-v-36a53fe9${_scopeId}><span class="text-dark text-nowrap" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(__props.program.budget))}</span></div></div></div></div><div class="col-6 col-lg-3" data-v-36a53fe9${_scopeId}><div class="d-flex" data-v-36a53fe9${_scopeId}><i class="bi bi-box-arrow-in-down text-primary fs-5 my-auto me-2" data-v-36a53fe9${_scopeId}></i><div data-v-36a53fe9${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Disbursement")}</span><div class="scroll-x-hidden" data-v-36a53fe9${_scopeId}><span class="text-dark text-nowrap" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+            _push2(`</div></div></div><div class="d-flex mt-2 d-lg-none" data-v-06acbe76${_scopeId}><span class="text-secondary" data-v-06acbe76${_scopeId}>${ssrInterpolate("Detail")}</span></div><div class="row g-2 mt-0 mt-lg-2" data-v-06acbe76${_scopeId}><div class="col-lg-1 d-none d-lg-block" data-v-06acbe76${_scopeId}><div class="d-flex w-100 h-100" data-v-06acbe76${_scopeId}><span class="text-secondary my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("Detail")}</span></div></div><div class="col-6 col-lg-3" data-v-06acbe76${_scopeId}><div class="d-flex" data-v-06acbe76${_scopeId}><i class="bi bi-person text-primary fs-5 my-auto me-2" data-v-06acbe76${_scopeId}></i><div data-v-06acbe76${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-06acbe76${_scopeId}>${ssrInterpolate("In Charge")}</span><div class="scroll-x-hidden" data-v-06acbe76${_scopeId}><span class="text-dark text-nowrap" data-v-06acbe76${_scopeId}>${ssrInterpolate(__props.program.user.name)}</span></div></div></div></div><div class="col-6 col-lg-3" data-v-06acbe76${_scopeId}><div class="d-flex" data-v-06acbe76${_scopeId}><i class="bi bi-people text-primary fs-5 my-auto me-2" data-v-06acbe76${_scopeId}></i><div data-v-06acbe76${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-06acbe76${_scopeId}>${ssrInterpolate("Staff")}</span><div class="scroll-x-hidden" data-v-06acbe76${_scopeId}><span class="text-dark text-nowrap" data-v-06acbe76${_scopeId}>${ssrInterpolate(__props.staff_list.length + (__props.staff_list.length > 1 ? " persons" : " person"))}</span></div></div></div></div><div class="col-12 col-lg-3" data-v-06acbe76${_scopeId}><div class="d-flex" data-v-06acbe76${_scopeId}><i class="bi bi-calendar2 text-primary fs-5 my-auto me-2" data-v-06acbe76${_scopeId}></i><div data-v-06acbe76${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-06acbe76${_scopeId}>${ssrInterpolate("Progress")}</span><div class="scroll-x-hidden" data-v-06acbe76${_scopeId}><span class="text-dark text-nowrap" data-v-06acbe76${_scopeId}>${ssrInterpolate(__props.program.financial_id == 0 ? "Waiting for budget validation." : __props.program.disbursement == 0 ? "Waiting for disbursement." : "On progress")}</span></div></div></div></div></div><div class="d-flex mt-2 d-lg-none" data-v-06acbe76${_scopeId}><span class="text-secondary" data-v-06acbe76${_scopeId}>${ssrInterpolate("Cashflow")}</span></div><div class="row g-2 mt-lg-2 mt-0" data-v-06acbe76${_scopeId}><div class="col-lg-1 d-none d-lg-block" data-v-06acbe76${_scopeId}><div class="d-flex w-100 h-100" data-v-06acbe76${_scopeId}><span class="text-secondary my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("Cashflow")}</span></div></div><div class="col-6 col-lg-3" data-v-06acbe76${_scopeId}><div class="d-flex" data-v-06acbe76${_scopeId}><i class="bi bi-list-columns-reverse text-primary fs-5 my-auto me-2" data-v-06acbe76${_scopeId}></i><div data-v-06acbe76${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-06acbe76${_scopeId}>${ssrInterpolate("Budget")}</span><div class="scroll-x-hidden" data-v-06acbe76${_scopeId}><span class="text-dark text-nowrap" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(__props.program.budget))}</span></div></div></div></div><div class="col-6 col-lg-3" data-v-06acbe76${_scopeId}><div class="d-flex" data-v-06acbe76${_scopeId}><i class="bi bi-box-arrow-in-down text-primary fs-5 my-auto me-2" data-v-06acbe76${_scopeId}></i><div data-v-06acbe76${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-06acbe76${_scopeId}>${ssrInterpolate("Disbursement")}</span><div class="scroll-x-hidden" data-v-06acbe76${_scopeId}><span class="text-dark text-nowrap" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
               __props.program.disbursement
-            ))}</span></div></div></div></div><div class="col-6 col-lg-3" data-v-36a53fe9${_scopeId}><div class="d-flex" data-v-36a53fe9${_scopeId}><i class="bi bi-box-arrow-up text-primary fs-5 my-auto me-2" data-v-36a53fe9${_scopeId}></i><div data-v-36a53fe9${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Expense")}</span><div class="scroll-x-hidden" data-v-36a53fe9${_scopeId}><span class="text-dark text-nowrap" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(__props.program.expense))}</span></div></div></div></div></div></div></div></div>`);
+            ))}</span></div></div></div></div><div class="col-6 col-lg-3" data-v-06acbe76${_scopeId}><div class="d-flex" data-v-06acbe76${_scopeId}><i class="bi bi-box-arrow-up text-primary fs-5 my-auto me-2" data-v-06acbe76${_scopeId}></i><div data-v-06acbe76${_scopeId}><span class="text-secondary d-block" style="${ssrRenderStyle({ "font-size": "0.8rem" })}" data-v-06acbe76${_scopeId}>${ssrInterpolate("Expense")}</span><div class="scroll-x-hidden" data-v-06acbe76${_scopeId}><span class="text-dark text-nowrap" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(__props.program.expense))}</span></div></div></div></div></div></div></div></div>`);
             if (showGuide.value) {
-              _push2(`<div class="row mt-3" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><div class="card border-info border-opacity-25 bg-info bg-opacity-10 p-3 shadow-sm rounded-4" data-v-36a53fe9${_scopeId}><div class="d-flex align-items-center mb-3" data-v-36a53fe9${_scopeId}><div class="bg-info bg-opacity-25 p-2 rounded-3 me-3" data-v-36a53fe9${_scopeId}><i class="bi bi-lightbulb-fill text-info fs-5" data-v-36a53fe9${_scopeId}></i></div><div data-v-36a53fe9${_scopeId}><h6 class="mb-0 text-info-emphasis fw-bold" data-v-36a53fe9${_scopeId}>Tips: Alur Penggunaan Fitur Disbursement</h6><small class="text-secondary" data-v-36a53fe9${_scopeId}>Ikuti langkah-langkah di bawah untuk menggunakan fitur pencairan dana.</small></div><button class="btn-close ms-auto btn-sm shadow-none" data-v-36a53fe9${_scopeId}></button></div><div class="row g-4" data-v-36a53fe9${_scopeId}><div class="col-md-4" data-v-36a53fe9${_scopeId}><div class="d-flex align-items-start" data-v-36a53fe9${_scopeId}><div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="${ssrRenderStyle({ "width": "28px", "height": "28px", "flex-shrink": "0", "font-size": "0.85rem", "font-weight": "600" })}" data-v-36a53fe9${_scopeId}>1</div><div data-v-36a53fe9${_scopeId}><p class="mb-1 fw-semibold text-dark" style="${ssrRenderStyle({ "font-size": "0.95rem" })}" data-v-36a53fe9${_scopeId}>Upload Surat</p><p class="mb-0 text-secondary" style="${ssrRenderStyle({ "font-size": "0.85rem", "line-height": "1.4" })}" data-v-36a53fe9${_scopeId}>Buka tab <strong data-v-36a53fe9${_scopeId}>Disbursement</strong>, lalu unggah surat disbursement pada bagian &quot;Disbursement Letter&quot;.</p></div></div></div><div class="col-md-4" data-v-36a53fe9${_scopeId}><div class="d-flex align-items-start" data-v-36a53fe9${_scopeId}><div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="${ssrRenderStyle({ "width": "28px", "height": "28px", "flex-shrink": "0", "font-size": "0.85rem", "font-weight": "600" })}" data-v-36a53fe9${_scopeId}>2</div><div data-v-36a53fe9${_scopeId}><p class="mb-1 fw-semibold text-dark" style="${ssrRenderStyle({ "font-size": "0.95rem" })}" data-v-36a53fe9${_scopeId}>Finance ACC</p><p class="mb-0 text-secondary" style="${ssrRenderStyle({ "font-size": "0.85rem", "line-height": "1.4" })}" data-v-36a53fe9${_scopeId}>Tunggu pihak Finance untuk memberikan persetujuan (ACC) pada surat yang telah Anda unggah.</p></div></div></div><div class="col-md-4" data-v-36a53fe9${_scopeId}><div class="d-flex align-items-start" data-v-36a53fe9${_scopeId}><div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="${ssrRenderStyle({ "width": "28px", "height": "28px", "flex-shrink": "0", "font-size": "0.85rem", "font-weight": "600" })}" data-v-36a53fe9${_scopeId}>3</div><div data-v-36a53fe9${_scopeId}><p class="mb-1 fw-semibold text-dark" style="${ssrRenderStyle({ "font-size": "0.95rem" })}" data-v-36a53fe9${_scopeId}>Tambah Item</p><p class="mb-0 text-secondary" style="${ssrRenderStyle({ "font-size": "0.85rem", "line-height": "1.4" })}" data-v-36a53fe9${_scopeId}>Setelah surat di-ACC, klik tombol <strong data-v-36a53fe9${_scopeId}>+</strong> pada tab Disbursement untuk menambah item pencairan.</p></div></div></div></div></div></div></div>`);
+              _push2(`<div class="row mt-3" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><div class="card border-info border-opacity-25 bg-info bg-opacity-10 p-3 shadow-sm rounded-4" data-v-06acbe76${_scopeId}><div class="d-flex align-items-center mb-3" data-v-06acbe76${_scopeId}><div class="bg-info bg-opacity-25 p-2 rounded-3 me-3" data-v-06acbe76${_scopeId}><i class="bi bi-lightbulb-fill text-info fs-5" data-v-06acbe76${_scopeId}></i></div><div data-v-06acbe76${_scopeId}><h6 class="mb-0 text-info-emphasis fw-bold" data-v-06acbe76${_scopeId}>Tips: Alur Penggunaan Fitur Disbursement</h6><small class="text-secondary" data-v-06acbe76${_scopeId}>Ikuti langkah-langkah di bawah untuk menggunakan fitur pencairan dana.</small></div><button class="btn-close ms-auto btn-sm shadow-none" data-v-06acbe76${_scopeId}></button></div><div class="row g-4" data-v-06acbe76${_scopeId}><div class="col-md-4" data-v-06acbe76${_scopeId}><div class="d-flex align-items-start" data-v-06acbe76${_scopeId}><div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="${ssrRenderStyle({ "width": "28px", "height": "28px", "flex-shrink": "0", "font-size": "0.85rem", "font-weight": "600" })}" data-v-06acbe76${_scopeId}>1</div><div data-v-06acbe76${_scopeId}><p class="mb-1 fw-semibold text-dark" style="${ssrRenderStyle({ "font-size": "0.95rem" })}" data-v-06acbe76${_scopeId}>Upload Surat</p><p class="mb-0 text-secondary" style="${ssrRenderStyle({ "font-size": "0.85rem", "line-height": "1.4" })}" data-v-06acbe76${_scopeId}>Buka tab <strong data-v-06acbe76${_scopeId}>Disbursement</strong>, lalu unggah surat disbursement pada bagian &quot;Disbursement Letter&quot;.</p></div></div></div><div class="col-md-4" data-v-06acbe76${_scopeId}><div class="d-flex align-items-start" data-v-06acbe76${_scopeId}><div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="${ssrRenderStyle({ "width": "28px", "height": "28px", "flex-shrink": "0", "font-size": "0.85rem", "font-weight": "600" })}" data-v-06acbe76${_scopeId}>2</div><div data-v-06acbe76${_scopeId}><p class="mb-1 fw-semibold text-dark" style="${ssrRenderStyle({ "font-size": "0.95rem" })}" data-v-06acbe76${_scopeId}>Finance ACC</p><p class="mb-0 text-secondary" style="${ssrRenderStyle({ "font-size": "0.85rem", "line-height": "1.4" })}" data-v-06acbe76${_scopeId}>Tunggu pihak Finance untuk memberikan persetujuan (ACC) pada surat yang telah Anda unggah.</p></div></div></div><div class="col-md-4" data-v-06acbe76${_scopeId}><div class="d-flex align-items-start" data-v-06acbe76${_scopeId}><div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="${ssrRenderStyle({ "width": "28px", "height": "28px", "flex-shrink": "0", "font-size": "0.85rem", "font-weight": "600" })}" data-v-06acbe76${_scopeId}>3</div><div data-v-06acbe76${_scopeId}><p class="mb-1 fw-semibold text-dark" style="${ssrRenderStyle({ "font-size": "0.95rem" })}" data-v-06acbe76${_scopeId}>Tambah Item</p><p class="mb-0 text-secondary" style="${ssrRenderStyle({ "font-size": "0.85rem", "line-height": "1.4" })}" data-v-06acbe76${_scopeId}>Setelah surat di-ACC, klik tombol <strong data-v-06acbe76${_scopeId}>+</strong> pada tab Disbursement untuk menambah item pencairan.</p></div></div></div></div></div></div></div>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`<div class="row gx-4" data-v-36a53fe9${_scopeId}><div class="col-lg-6 col-12" data-v-36a53fe9${_scopeId}><div class="row mt-4" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><div class="card program-logbook-card p-2" data-v-36a53fe9${_scopeId}><div class="d-flex border-bottom mx-2 border-primary py-1 align-items-center" data-v-36a53fe9${_scopeId}><span class="h5 text-primary-emphasis my-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Logbook")}</span></div><div class="row gx-2 mt-3 align-items-center" data-v-36a53fe9${_scopeId}><div class="col-12 col-lg-2 d-flex mb-2 mb-lg-0" data-v-36a53fe9${_scopeId}><span class="text-primary-emphasis text-nowrap my-auto ms-lg-auto fw-medium" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Staff ")} <span class="d-lg-inline d-none" data-v-36a53fe9${_scopeId}>${ssrInterpolate("List")}</span> ${ssrInterpolate(": ")}</span></div><div class="col-12 col-lg-10 d-flex align-items-center" data-v-36a53fe9${_scopeId}><button type="button" class="btn btn-sm btn-outline-primary border-0 my-auto d-lg-block d-none px-1 me-2 staff-carousel-nav" data-v-36a53fe9${_scopeId}><i class="bi bi-caret-left-fill" data-v-36a53fe9${_scopeId}></i></button><div class="scroll-container-horizontal-lg scroll-container-horizontal staff-carousel-track rounded-4 px-2 py-2 me-2 me-lg-0" data-v-36a53fe9${_scopeId}><!--[-->`);
+            _push2(`<div class="row gx-4" data-v-06acbe76${_scopeId}><div class="col-lg-6 col-12" data-v-06acbe76${_scopeId}><div class="row mt-4" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><div class="card program-logbook-card p-2" data-v-06acbe76${_scopeId}><div class="d-flex border-bottom mx-2 border-primary py-1 align-items-center" data-v-06acbe76${_scopeId}><span class="h5 text-primary-emphasis my-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Logbook")}</span></div><div class="row gx-2 mt-3 align-items-center" data-v-06acbe76${_scopeId}><div class="col-12 col-lg-2 d-flex mb-2 mb-lg-0" data-v-06acbe76${_scopeId}><span class="text-primary-emphasis text-nowrap my-auto ms-lg-auto fw-medium" data-v-06acbe76${_scopeId}>${ssrInterpolate("Staff ")} <span class="d-lg-inline d-none" data-v-06acbe76${_scopeId}>${ssrInterpolate("List")}</span> ${ssrInterpolate(": ")}</span></div><div class="col-12 col-lg-10 d-flex align-items-center" data-v-06acbe76${_scopeId}><button type="button" class="btn btn-sm btn-outline-primary border-0 my-auto d-lg-block d-none px-1 me-2 staff-carousel-nav" data-v-06acbe76${_scopeId}><i class="bi bi-caret-left-fill" data-v-06acbe76${_scopeId}></i></button><div class="scroll-container-horizontal-lg scroll-container-horizontal staff-carousel-track rounded-4 px-2 py-2 me-2 me-lg-0" data-v-06acbe76${_scopeId}><!--[-->`);
             ssrRenderList(__props.staff_list, (staff) => {
               _push2(`<button type="button" class="${ssrRenderClass(
-                "btn btn-sm staff-carousel-item shadow-sm my-1 me-2 d-inline-flex align-items-center " + (staff.employee.id == selected_user.value.id ? "is-selected" : "")
-              )}" data-v-36a53fe9${_scopeId}><span class="text-nowrap px-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate(staff.employee.name)}</span></button>`);
+                "btn btn-sm staff-carousel-item shadow-sm my-1 me-2 d-inline-flex align-items-center " + (staff.employee.id == selectedUser.value.id ? "is-selected" : "")
+              )}" data-v-06acbe76${_scopeId}><span class="text-nowrap px-1" data-v-06acbe76${_scopeId}>${ssrInterpolate(staff.employee.name)}</span></button>`);
             });
-            _push2(`<!--]--></div><button type="button" class="btn btn-sm btn-outline-primary border-0 my-auto d-lg-block d-none px-1 ms-2 me-2 staff-carousel-nav" data-v-36a53fe9${_scopeId}><i class="bi bi-caret-right-fill" data-v-36a53fe9${_scopeId}></i></button></div></div><div class="row mt-3" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><div class="logbook-selected-staff mx-2 px-2 py-2" data-v-36a53fe9${_scopeId}><span class="h6 text-primary-emphasis mb-0" data-v-36a53fe9${_scopeId}>${ssrInterpolate(selected_user.value.name ?? "Select Staff")}</span>`);
-            if (selected_user.value.id) {
+            _push2(`<!--]--></div><button type="button" class="btn btn-sm btn-outline-primary border-0 my-auto d-lg-block d-none px-1 ms-2 me-2 staff-carousel-nav" data-v-06acbe76${_scopeId}><i class="bi bi-caret-right-fill" data-v-06acbe76${_scopeId}></i></button></div></div><div class="row mt-3" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><div class="logbook-selected-staff mx-2 px-2 py-2" data-v-06acbe76${_scopeId}><span class="h6 text-primary-emphasis mb-0" data-v-06acbe76${_scopeId}>${ssrInterpolate(selectedUser.value.name ?? "Select Staff")}</span>`);
+            if (selectedUser.value.id) {
               _push2(`<a${ssrRenderAttr(
                 "href",
                 `/seeo/staff/program/disbursement/filter/${props.program.id}`
-              )} class="text-decoration-none ms-auto d-flex" target="_blank" rel="noopener noreferrer" data-v-36a53fe9${_scopeId}><span class="text-primary mb-auto" style="${ssrRenderStyle("font-size:0.7rem;")}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("visit profile")} <i class="bi bi-box-arrow-up-right" data-v-36a53fe9${_scopeId}></i></span></a>`);
+              )} class="text-decoration-none ms-auto d-flex" target="_blank" rel="noopener noreferrer" data-v-06acbe76${_scopeId}><span class="text-primary mb-auto" style="${ssrRenderStyle("font-size:0.7rem;")}" data-v-06acbe76${_scopeId}>${ssrInterpolate("visit profile")} <i class="bi bi-box-arrow-up-right" data-v-06acbe76${_scopeId}></i></span></a>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</div></div></div><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><div class="scroll-container-lg-2 scroll-container-2 mx-2 program-logbook-list" data-v-36a53fe9${_scopeId}><ul class="list-group list-group-flush" data-v-36a53fe9${_scopeId}><!--[-->`);
+            _push2(`</div></div></div><div class="row" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><div class="scroll-container-lg-2 scroll-container-2 mx-2 program-logbook-list" data-v-06acbe76${_scopeId}><ul class="list-group list-group-flush" data-v-06acbe76${_scopeId}><!--[-->`);
             ssrRenderList(active_logbook.value, (logbook) => {
-              _push2(`<li class="list-group-item px-0 program-logbook-item" data-v-36a53fe9${_scopeId}><div class="d-flex w-100" data-v-36a53fe9${_scopeId}><div class="card d-flex me-2" style="${ssrRenderStyle("width: 25%; height: auto;")}" data-v-36a53fe9${_scopeId}><img${ssrRenderAttr(
+              _push2(`<li class="list-group-item px-0 program-logbook-item" data-v-06acbe76${_scopeId}><div class="d-flex w-100" data-v-06acbe76${_scopeId}><div class="card d-flex me-2" style="${ssrRenderStyle("width: 25%; height: auto;")}" data-v-06acbe76${_scopeId}><img${ssrRenderAttr(
                 "src",
                 "/storage/images/log/" + __props.program.id + "/" + logbook.image
-              )} alt="image" class="rounded border-secondary-subtle" data-bs-target="#modalLogbookImage" data-bs-toggle="modal" data-v-36a53fe9${_scopeId}><div class="modal fade" id="modalLogbookImage" tabindex="-1" data-v-36a53fe9${_scopeId}><div class="modal-dialog modal-dialog-centered px-3 px-lg-0" data-v-36a53fe9${_scopeId}><div class="modal-content shadow mt-5" data-v-36a53fe9${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-36a53fe9${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" data-v-36a53fe9${_scopeId}><i class="bi bi-key border-secondary-subtle border-2 border-end pe-2" data-v-36a53fe9${_scopeId}></i> ${ssrInterpolate("Logbook Image")}</span><button type="button" class="btn btn-sm ms-auto" data-bs-dismiss="modal" data-v-36a53fe9${_scopeId}><i class="bi bi-x-lg" data-v-36a53fe9${_scopeId}></i></button></div><div class="modal-body bg-light" data-v-36a53fe9${_scopeId}><div class="d-flex w-100" data-v-36a53fe9${_scopeId}><img${ssrRenderAttr(
+              )} alt="image" class="rounded border-secondary-subtle" data-bs-target="#modalLogbookImage" data-bs-toggle="modal" data-v-06acbe76${_scopeId}><div class="modal fade" id="modalLogbookImage" tabindex="-1" data-v-06acbe76${_scopeId}><div class="modal-dialog modal-dialog-centered px-3 px-lg-0" data-v-06acbe76${_scopeId}><div class="modal-content shadow mt-5" data-v-06acbe76${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-06acbe76${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" data-v-06acbe76${_scopeId}><i class="bi bi-key border-secondary-subtle border-2 border-end pe-2" data-v-06acbe76${_scopeId}></i> ${ssrInterpolate("Logbook Image")}</span><button type="button" class="btn btn-sm ms-auto" data-bs-dismiss="modal" data-v-06acbe76${_scopeId}><i class="bi bi-x-lg" data-v-06acbe76${_scopeId}></i></button></div><div class="modal-body bg-light" data-v-06acbe76${_scopeId}><div class="d-flex w-100" data-v-06acbe76${_scopeId}><img${ssrRenderAttr(
                 "src",
                 "/storage/images/log/" + __props.program.id + "/" + selectedLogbookImage.value
-              )} alt="image" class="img-fluid object-fit-cover" data-v-36a53fe9${_scopeId}></div></div><div class="modal-footer p-1" data-v-36a53fe9${_scopeId}><a${ssrRenderAttr(
+              )} alt="image" class="img-fluid object-fit-cover" data-v-06acbe76${_scopeId}></div></div><div class="modal-footer p-1" data-v-06acbe76${_scopeId}><a${ssrRenderAttr(
                 "href",
                 "/storage/images/log/" + __props.program.id + "/" + selectedLogbookImage.value
-              )} download class="btn btn-sm text-center text-decoration-none text-secondary w-100" data-v-36a53fe9${_scopeId}>${ssrInterpolate(selectedLogbookImage.value)} <i class="bi bi-download text-primary" data-v-36a53fe9${_scopeId}></i></a></div></div></div></div></div><div class="w-100" data-v-36a53fe9${_scopeId}><div class="d-flex w-100" data-v-36a53fe9${_scopeId}><span class="fw-light me-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatDate)(
+              )} download class="btn btn-sm text-center text-decoration-none text-secondary w-100" data-v-06acbe76${_scopeId}>${ssrInterpolate(selectedLogbookImage.value)} <i class="bi bi-download text-primary" data-v-06acbe76${_scopeId}></i></a></div></div></div></div></div><div class="w-100" data-v-06acbe76${_scopeId}><div class="d-flex w-100" data-v-06acbe76${_scopeId}><span class="fw-light me-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatDate)(
                 logbook.created_at
               ))}</span>`);
               if (unref(auth_user).roles_id == 99 || unref(auth_user).roles_id == 3) {
                 _push2(`<button class="${ssrRenderClass(
                   "btn btn-sm border-0 py-0 btn-outline-" + (logbook.validated > 0 ? "success" : "secondary")
-                )}" data-v-36a53fe9${_scopeId}>${ssrInterpolate(logbook.validated > 0 ? "validated" : "unvalidated")}</button>`);
+                )}" data-v-06acbe76${_scopeId}>${ssrInterpolate(logbook.validated > 0 ? "validated" : "unvalidated")}</button>`);
               } else {
                 _push2(`<!---->`);
               }
               if (unref(auth_user).roles_id != 99 && unref(auth_user).roles_id != 3) {
                 _push2(`<span class="${ssrRenderClass(
                   "text-" + (logbook.validated > 0 ? "success" : "secondary")
-                )}" data-v-36a53fe9${_scopeId}>${ssrInterpolate(logbook.validated > 0 ? "valid" : "unvalid")}</span>`);
+                )}" data-v-06acbe76${_scopeId}>${ssrInterpolate(logbook.validated > 0 ? "valid" : "unvalid")}</span>`);
               } else {
                 _push2(`<!---->`);
               }
-              if (unref(auth_user).id == selected_user.value.id && logbook.validated == 0) {
-                _push2(`<div class="my-1 border-start mx-1" data-v-36a53fe9${_scopeId}></div>`);
+              if (unref(auth_user).id == selectedUser.value.id && logbook.validated == 0) {
+                _push2(`<div class="my-1 border-start mx-1" data-v-06acbe76${_scopeId}></div>`);
               } else {
                 _push2(`<!---->`);
               }
-              if (unref(auth_user).id == selected_user.value.id && logbook.validated == 0) {
-                _push2(`<button class="btn btn-sm btn-outline-secondary border-0 py-0" data-v-36a53fe9${_scopeId}><i class="bi bi-trash3" data-v-36a53fe9${_scopeId}></i></button>`);
+              if (unref(auth_user).id == selectedUser.value.id && logbook.validated == 0) {
+                _push2(`<button class="btn btn-sm btn-outline-secondary border-0 py-0" data-v-06acbe76${_scopeId}><i class="bi bi-trash3" data-v-06acbe76${_scopeId}></i></button>`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`</div><span data-v-36a53fe9${_scopeId}>${ssrInterpolate(logbook.title)}</span></div></div></li>`);
+              _push2(`</div><span data-v-06acbe76${_scopeId}>${ssrInterpolate(logbook.title)}</span></div></div></li>`);
             });
             _push2(`<!--]-->`);
             if (active_logbook.value.length == 0) {
-              _push2(`<li class="list-group-item px-0" data-v-36a53fe9${_scopeId}><div class="d-flex" data-v-36a53fe9${_scopeId}><div class="card d-flex me-2" style="${ssrRenderStyle("width: 25%; height: auto;")}" data-v-36a53fe9${_scopeId}><img${ssrRenderAttr("src", "/favicon.ico")} alt="image" class="rounded border-secondary-subtle" data-v-36a53fe9${_scopeId}></div><div class="w-100" data-v-36a53fe9${_scopeId}><div class="d-flex" data-v-36a53fe9${_scopeId}><div class="fw-light card me-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate(selected_user.value == 0 ? "Logbook date" : "-")}</div><div class="text-secondary d-block ms-auto me-2" data-v-36a53fe9${_scopeId}>${ssrInterpolate(selected_user.value == 0 ? "Logbook status" : "")}</div></div><div data-v-36a53fe9${_scopeId}>${ssrInterpolate(selected_user.value == 0 ? "Logbook detail" : selected_user.value.name + " have not create any logbook.")}</div></div></div></li>`);
+              _push2(`<li class="list-group-item px-0" data-v-06acbe76${_scopeId}><div class="d-flex" data-v-06acbe76${_scopeId}><div class="card d-flex me-2" style="${ssrRenderStyle("width: 25%; height: auto;")}" data-v-06acbe76${_scopeId}><img${ssrRenderAttr("src", "/favicon.ico")} alt="image" class="rounded border-secondary-subtle" data-v-06acbe76${_scopeId}></div><div class="w-100" data-v-06acbe76${_scopeId}><div class="d-flex" data-v-06acbe76${_scopeId}><div class="fw-light card me-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate(!selectedUser.value.id ? "Logbook date" : "-")}</div><div class="text-secondary d-block ms-auto me-2" data-v-06acbe76${_scopeId}>${ssrInterpolate(!selectedUser.value.id ? "Logbook status" : "")}</div></div><div data-v-06acbe76${_scopeId}>${ssrInterpolate(!selectedUser.value.id ? "Logbook detail" : selectedUser.value.name + " have not create any logbook.")}</div></div></div></li>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</ul></div></div></div></div></div></div></div><div class="col-lg-6 col-12" data-v-36a53fe9${_scopeId}><div class="row mt-4 mb-4" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><div class="d-flex bg-white rounded" data-v-36a53fe9${_scopeId}><button class="${ssrRenderClass(
+            _push2(`</ul></div></div></div></div></div></div></div><div class="col-lg-6 col-12" data-v-06acbe76${_scopeId}><div class="row mt-4 mb-4" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><div class="d-flex bg-white rounded" data-v-06acbe76${_scopeId}><button class="${ssrRenderClass(
               "btn btn-sm btn-outline-primary rounded w-25 border-3 border-light py-1 " + (active_tab.value == 1 ? "active" : "")
-            )}" data-v-36a53fe9${_scopeId}><i class="${ssrRenderClass(
+            )}" data-v-06acbe76${_scopeId}><i class="${ssrRenderClass(
               "bi bi-list-columns-reverse d-lg-none " + (active_tab.value == 1 ? "d-none" : "")
-            )}" data-v-36a53fe9${_scopeId}></i><span style="${ssrRenderStyle(
+            )}" data-v-06acbe76${_scopeId}></i><span style="${ssrRenderStyle(
               isLargeScreen.value ? "font-size:1rem;" : "font-size:0.7rem;"
             )}" class="${ssrRenderClass(
               "d-lg-inline " + (active_tab.value == 1 ? "" : "d-none")
-            )}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Budget")}</span></button><button class="${ssrRenderClass(
+            )}" data-v-06acbe76${_scopeId}>${ssrInterpolate("Budget")}</span></button><button class="${ssrRenderClass(
               "btn btn-sm btn-outline-primary rounded w-25 border-3 border-light py-1 " + (active_tab.value == 2 ? "active" : "")
-            )}" data-v-36a53fe9${_scopeId}><i class="${ssrRenderClass(
+            )}" data-v-06acbe76${_scopeId}><i class="${ssrRenderClass(
               "bi bi-box-arrow-in-down d-lg-none " + (active_tab.value == 2 ? "d-none" : "")
-            )}" data-v-36a53fe9${_scopeId}></i><span style="${ssrRenderStyle(
+            )}" data-v-06acbe76${_scopeId}></i><span style="${ssrRenderStyle(
               isLargeScreen.value ? "font-size:1rem;" : "font-size:0.7rem;"
             )}" class="${ssrRenderClass(
               "d-lg-inline " + (active_tab.value == 2 ? "" : "d-none")
-            )}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Disbursement")}</span></button><button class="${ssrRenderClass(
+            )}" data-v-06acbe76${_scopeId}>${ssrInterpolate("Disbursement")}</span></button><button class="${ssrRenderClass(
               "btn btn-sm btn-outline-primary rounded w-25 border-3 border-light py-1 " + (active_tab.value == 3 ? "active" : "")
-            )}" data-v-36a53fe9${_scopeId}><i class="${ssrRenderClass(
+            )}" data-v-06acbe76${_scopeId}><i class="${ssrRenderClass(
               "bi bi-box-arrow-up d-lg-none " + (active_tab.value == 3 ? "d-none" : "")
-            )}" data-v-36a53fe9${_scopeId}></i><span style="${ssrRenderStyle(
+            )}" data-v-06acbe76${_scopeId}></i><span style="${ssrRenderStyle(
               isLargeScreen.value ? "font-size:1rem;" : "font-size:0.7rem;"
             )}" class="${ssrRenderClass(
               "d-lg-inline " + (active_tab.value == 3 ? "" : "d-none")
-            )}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Expense")}</span></button><button class="${ssrRenderClass(
+            )}" data-v-06acbe76${_scopeId}>${ssrInterpolate("Expense")}</span></button><button class="${ssrRenderClass(
               "btn btn-sm btn-outline-primary rounded w-25 border-3 border-light py-1 " + (active_tab.value == 4 ? "active" : "")
-            )}" data-v-36a53fe9${_scopeId}><i class="${ssrRenderClass(
+            )}" data-v-06acbe76${_scopeId}><i class="${ssrRenderClass(
               "bi bi-people d-lg-none " + (active_tab.value == 4 ? "d-none" : "")
-            )}" data-v-36a53fe9${_scopeId}></i><span style="${ssrRenderStyle(
+            )}" data-v-06acbe76${_scopeId}></i><span style="${ssrRenderStyle(
               isLargeScreen.value ? "font-size:1rem;" : "font-size:0.7rem;"
             )}" class="${ssrRenderClass(
               "d-lg-inline " + (active_tab.value == 4 ? "" : "d-none")
-            )}" id="tab_span_4" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Staff")}</span></button></div></div></div>`);
+            )}" id="tab_span_4" data-v-06acbe76${_scopeId}>${ssrInterpolate("Staff")}</span></button></div></div></div>`);
             if (active_tab.value == 1) {
-              _push2(`<div id="content_1" data-v-36a53fe9${_scopeId}><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><nav class="navbar rounded bg-white shadow-sm p-2" data-v-36a53fe9${_scopeId}><form method="post" id="formBudgetFilter" data-v-36a53fe9${_scopeId}></form><div class="container d-block px-0" data-v-36a53fe9${_scopeId}><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><div class="input-group bg-body-tertiary rounded" data-v-36a53fe9${_scopeId}><button type="button" form="formBudgetFilter" class="btn btn-sm rounded-0 rounded-start text-light bg-secondary" data-v-36a53fe9${_scopeId}><i class="bi bi-funnel-fill" data-v-36a53fe9${_scopeId}></i><span class="ms-1 ps-2 border-start border-light d-none d-md-inline" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Filter")}</span></button><button type="submit" form="formBudgetFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-36a53fe9${_scopeId}><span class="me-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Name")}</span><i class="${ssrRenderClass(
+              _push2(`<div id="content_1" data-v-06acbe76${_scopeId}><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><nav class="navbar rounded bg-white shadow-sm p-2" data-v-06acbe76${_scopeId}><form method="post" id="formBudgetFilter" data-v-06acbe76${_scopeId}></form><div class="container d-block px-0" data-v-06acbe76${_scopeId}><div class="row" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><div class="input-group bg-body-tertiary rounded" data-v-06acbe76${_scopeId}><button type="button" form="formBudgetFilter" class="btn btn-sm rounded-0 rounded-start text-light bg-secondary" data-v-06acbe76${_scopeId}><i class="bi bi-funnel-fill" data-v-06acbe76${_scopeId}></i><span class="ms-1 ps-2 border-start border-light d-none d-md-inline" data-v-06acbe76${_scopeId}>${ssrInterpolate("Filter")}</span></button><button type="submit" form="formBudgetFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-06acbe76${_scopeId}><span class="me-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Name")}</span><i class="${ssrRenderClass(
                 "bi bi-sort-numeric-" + (__props.filter["budget"]["category"] == "name" && __props.filter["budget"]["order"] == "asc" ? "up" : "down") + "-alt"
-              )}" data-v-36a53fe9${_scopeId}></i></button><button type="submit" form="formBudgetFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-36a53fe9${_scopeId}><span class="me-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Price")}</span><i class="${ssrRenderClass(
+              )}" data-v-06acbe76${_scopeId}></i></button><button type="submit" form="formBudgetFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-06acbe76${_scopeId}><span class="me-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Price")}</span><i class="${ssrRenderClass(
                 "bi bi-sort-numeric-" + (__props.filter["budget"]["category"] == "price" && __props.filter["budget"]["order"] == "asc" ? "up" : "down") + "-alt"
-              )}" data-v-36a53fe9${_scopeId}></i></button></div>`);
+              )}" data-v-06acbe76${_scopeId}></i></button></div>`);
               if (unref(auth_user).roles_id == 99 || unref(auth_user).id == __props.program.pic_id) {
-                _push2(`<div data-v-36a53fe9${_scopeId}><button class="${ssrRenderClass(
+                _push2(`<div data-v-06acbe76${_scopeId}><button class="${ssrRenderClass(
                   "ms-2 btn btn-sm btn-outline-primary border-0 " + (__props.program.financial_id <= 0 ? "" : "disabled")
-                )}" data-bs-toggle="modal" data-bs-target="#addProgramBudget" data-v-36a53fe9${_scopeId}><i class="bi bi-plus-lg" data-v-36a53fe9${_scopeId}></i></button></div>`);
+                )}" data-bs-toggle="modal" data-bs-target="#addProgramBudget" data-v-06acbe76${_scopeId}><i class="bi bi-plus-lg" data-v-06acbe76${_scopeId}></i></button></div>`);
               } else {
                 _push2(`<!---->`);
               }
               if ((unref(auth_user).roles_id == 99 || unref(auth_user).id == __props.program.pic_id) && __props.program.financial_id <= 0) {
-                _push2(`<div class="modal fade" id="addProgramBudget" tabindex="-1" aria-labelledby="addProgramBudgetLabel" aria-hidden="true" data-v-36a53fe9${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-36a53fe9${_scopeId}><div class="modal-content shadow mx-3" data-v-36a53fe9${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-36a53fe9${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" id="addProgramBudgetLabel" data-v-36a53fe9${_scopeId}><i class="bi bi-journal-plus border-secondary border-end me-2 pe-2" data-v-36a53fe9${_scopeId}></i> ${ssrInterpolate("New Budget Item")}</span><button type="button" class="btn btn-sm ms-auto" data-bs-dismiss="modal" aria-label="Close" data-v-36a53fe9${_scopeId}><i class="bi bi-x-lg" data-v-36a53fe9${_scopeId}></i></button></div><form method="post" data-v-36a53fe9${_scopeId}><div class="modal-body bg-light" data-v-36a53fe9${_scopeId}><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_budget_name" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Name")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block"${ssrRenderAttr(
+                _push2(`<div class="modal fade" id="addProgramBudget" tabindex="-1" aria-labelledby="addProgramBudgetLabel" aria-hidden="true" data-v-06acbe76${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-06acbe76${_scopeId}><div class="modal-content shadow mx-3" data-v-06acbe76${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-06acbe76${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" id="addProgramBudgetLabel" data-v-06acbe76${_scopeId}><i class="bi bi-journal-plus border-secondary border-end me-2 pe-2" data-v-06acbe76${_scopeId}></i> ${ssrInterpolate("New Budget Item")}</span><button type="button" class="btn btn-sm ms-auto" data-bs-dismiss="modal" aria-label="Close" data-v-06acbe76${_scopeId}><i class="bi bi-x-lg" data-v-06acbe76${_scopeId}></i></button></div><form method="post" data-v-06acbe76${_scopeId}><div class="modal-body bg-light" data-v-06acbe76${_scopeId}><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_budget_name" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>${ssrInterpolate("Name")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block"${ssrRenderAttr(
                   "value",
                   unref(formAddBudget).name
-                )} id="add_budget_name" required data-v-36a53fe9${_scopeId}>`);
+                )} id="add_budget_name" required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddBudget).errors.item_name
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_budget_price" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Price")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="number" class="form-control form-control-sm d-inline-block" id="add_budget_price"${ssrRenderAttr(
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_budget_price" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>${ssrInterpolate("Price")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="number" class="form-control form-control-sm d-inline-block" id="add_budget_price"${ssrRenderAttr(
                   "value",
                   unref(formAddBudget).price
-                )} placeholder="Type numbers only" required data-v-36a53fe9${_scopeId}>`);
+                )} placeholder="Type numbers only" required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddBudget).errors.price
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_budget_unit" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Unit")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block" placeholder="gram, ml, pcs, etc.." id="add_budget_unit"${ssrRenderAttr(
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_budget_unit" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>${ssrInterpolate("Unit")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block" placeholder="gram, ml, pcs, etc.." id="add_budget_unit"${ssrRenderAttr(
                   "value",
                   unref(formAddBudget).unit
-                )} required data-v-36a53fe9${_scopeId}>`);
+                )} required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddBudget).errors.unit
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_budget_qty" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Quantity")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="number" class="form-control form-control-sm d-inline-block" id="add_budget_qty"${ssrRenderAttr(
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_budget_qty" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>${ssrInterpolate("Quantity")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="number" class="form-control form-control-sm d-inline-block" id="add_budget_qty"${ssrRenderAttr(
                   "value",
                   unref(formAddBudget).qty
-                )} placeholder="Type numbers only" required data-v-36a53fe9${_scopeId}>`);
+                )} placeholder="Type numbers only" required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddBudget).errors.qty
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><span data-v-36a53fe9${_scopeId}>${ssrInterpolate("Total Price")}</span></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><span id="add_budget_total" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><span data-v-06acbe76${_scopeId}>${ssrInterpolate("Total Price")}</span></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><span id="add_budget_total" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
                   unref(formAddBudget).price * unref(formAddBudget).qty
-                ))}</span></div></div></div><div class="modal-footer p-1" data-v-36a53fe9${_scopeId}><button type="submit" class="btn btn-sm btn-primary" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Add")}</button></div></form></div></div></div>`);
+                ))}</span></div></div></div><div class="modal-footer p-1" data-v-06acbe76${_scopeId}><button type="submit" class="btn btn-sm btn-primary" data-v-06acbe76${_scopeId}>${ssrInterpolate("Add")}</button></div></form></div></div></div>`);
               } else {
                 _push2(`<!---->`);
               }
               if (unref(auth_user).roles_id == 2) {
                 _push2(`<button class="${ssrRenderClass(
                   "position-relative ms-2 border-0 btn btn-sm btn-outline-" + (__props.program.financial_id > 0 ? "success" : "secondary")
-                )}" data-v-36a53fe9${_scopeId}><i class="${ssrRenderClass(
+                )}" data-v-06acbe76${_scopeId}><i class="${ssrRenderClass(
                   "bi bi-" + (__props.program.financial_id > 0 ? "lock-fill" : "unlock")
-                )}" data-v-36a53fe9${_scopeId}></i>`);
+                )}" data-v-06acbe76${_scopeId}></i>`);
                 if (__props.program.financial_id <= 0) {
-                  _push2(`<i style="${ssrRenderStyle("font-size:0.5rem;")}" class="bi bi-circle-fill position-absolute top-0 inset-e-0 text-danger" data-v-36a53fe9${_scopeId}></i>`);
+                  _push2(`<i style="${ssrRenderStyle("font-size:0.5rem;")}" class="bi bi-circle-fill position-absolute top-0 inset-e-0 text-danger" data-v-06acbe76${_scopeId}></i>`);
                 } else {
                   _push2(`<!---->`);
                 }
@@ -633,21 +638,21 @@ const _sfc_main = {
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`</div></div></div></nav></div></div><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><div class="scroll-container-3 scroll-container-lg-2 bg-secondary bg-opacity-25 px-2 pt-2 rounded mt-2" data-v-36a53fe9${_scopeId}><!--[-->`);
+              _push2(`</div></div></div></nav></div></div><div class="row" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><div class="scroll-container-3 scroll-container-lg-2 bg-secondary bg-opacity-25 px-2 pt-2 rounded mt-2" data-v-06acbe76${_scopeId}><!--[-->`);
               ssrRenderList(__props.budget_list, (budget) => {
-                _push2(`<div class="card card-bg-hover shadow mb-2 py-1" data-v-36a53fe9${_scopeId}><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><span class="text-primary-emphasis ms-2 my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate(budget.name)}</span><span class="fw-light ms-2 d-none d-lg-flex my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("- " + unref(formatIDR)(
+                _push2(`<div class="card card-bg-hover shadow mb-2 py-1" data-v-06acbe76${_scopeId}><div class="row" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><span class="text-primary-emphasis ms-2 my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate(budget.name)}</span><span class="fw-light ms-2 d-none d-lg-flex my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("- " + unref(formatIDR)(
                   budget.price
-                ) + " /" + budget.unit)}</span><span class="fw-light ms-auto d-none d-lg-flex my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("total (" + budget.qty + ") : ")}</span><span class="fw-normal mx-2 d-none d-lg-flex my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+                ) + " /" + budget.unit)}</span><span class="fw-light ms-auto d-none d-lg-flex my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("total (" + budget.qty + ") : ")}</span><span class="fw-normal mx-2 d-none d-lg-flex my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
                   budget.total_price
                 ))}</span>`);
                 if ((unref(auth_user).roles_id == 99 || unref(auth_user).id == __props.program.pic_id) && __props.program.financial_id <= 0) {
-                  _push2(`<button class="ms-auto ms-lg-1 me-2 btn btn-sm btn-danger" data-v-36a53fe9${_scopeId}><i class="bi bi-trash" data-v-36a53fe9${_scopeId}></i></button>`);
+                  _push2(`<button class="ms-auto ms-lg-1 me-2 btn btn-sm btn-danger" data-v-06acbe76${_scopeId}><i class="bi bi-trash" data-v-06acbe76${_scopeId}></i></button>`);
                 } else {
                   _push2(`<!---->`);
                 }
-                _push2(`</div></div><div class="row d-lg-none" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><span class="fw-light ms-2" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+                _push2(`</div></div><div class="row d-lg-none" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><span class="fw-light ms-2" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
                   budget.price
-                ) + " /" + budget.unit)}</span><span class="fw-light ms-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("total (" + budget.qty + ") : ")}</span><span class="fw-normal mx-2" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+                ) + " /" + budget.unit)}</span><span class="fw-light ms-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("total (" + budget.qty + ") : ")}</span><span class="fw-normal mx-2" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
                   budget.total_price
                 ))}</span></div></div></div>`);
               });
@@ -656,34 +661,34 @@ const _sfc_main = {
               _push2(`<!---->`);
             }
             if (active_tab.value == 2) {
-              _push2(`<div id="content_2" data-v-36a53fe9${_scopeId}><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><nav class="navbar rounded bg-white shadow-sm p-2" data-v-36a53fe9${_scopeId}><form method="post" id="formDisbursementFilter" data-v-36a53fe9${_scopeId}></form><div class="container d-block px-0" data-v-36a53fe9${_scopeId}><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><div class="input-group bg-body-tertiary rounded" data-v-36a53fe9${_scopeId}><button type="button" class="btn btn-sm rounded-0 rounded-start text-light bg-secondary" data-v-36a53fe9${_scopeId}><i class="bi bi-funnel-fill" data-v-36a53fe9${_scopeId}></i><span class="ms-1 ps-2 border-start border-light d-none d-md-inline" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Filter")}</span></button><button type="submit" form="formDisbursementFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-36a53fe9${_scopeId}><span class="me-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Price")}</span><i class="${ssrRenderClass(
+              _push2(`<div id="content_2" data-v-06acbe76${_scopeId}><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><nav class="navbar rounded bg-white shadow-sm p-2" data-v-06acbe76${_scopeId}><form method="post" id="formDisbursementFilter" data-v-06acbe76${_scopeId}></form><div class="container d-block px-0" data-v-06acbe76${_scopeId}><div class="row" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><div class="input-group bg-body-tertiary rounded" data-v-06acbe76${_scopeId}><button type="button" class="btn btn-sm rounded-0 rounded-start text-light bg-secondary" data-v-06acbe76${_scopeId}><i class="bi bi-funnel-fill" data-v-06acbe76${_scopeId}></i><span class="ms-1 ps-2 border-start border-light d-none d-md-inline" data-v-06acbe76${_scopeId}>${ssrInterpolate("Filter")}</span></button><button type="submit" form="formDisbursementFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-06acbe76${_scopeId}><span class="me-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Price")}</span><i class="${ssrRenderClass(
                 "bi bi-sort-numeric-" + (__props.filter["disbursement"]["category"] == "price" && __props.filter["disbursement"]["order"] == "asc" ? "up" : "down") + "-alt"
-              )}" data-v-36a53fe9${_scopeId}></i></button><button type="submit" form="formDisbursementFilter" class="${ssrRenderClass(
+              )}" data-v-06acbe76${_scopeId}></i></button><button type="submit" form="formDisbursementFilter" class="${ssrRenderClass(
                 "btn btn-sm btn-outline-secondary " + (__props.filter["disbursement"]["trashed"] == "trashed" ? "active" : "") + " border-0 rounded-0 my-0"
-              )}" data-v-36a53fe9${_scopeId}><span class="me-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Trashed")}</span><i class="bi bi-trash3" data-v-36a53fe9${_scopeId}></i></button></div>`);
+              )}" data-v-06acbe76${_scopeId}><span class="me-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Trashed")}</span><i class="bi bi-trash3" data-v-06acbe76${_scopeId}></i></button></div>`);
               if (unref(auth_user).roles_id == 2) {
-                _push2(`<div data-v-36a53fe9${_scopeId}><button class="${ssrRenderClass(
+                _push2(`<div data-v-06acbe76${_scopeId}><button class="${ssrRenderClass(
                   "ms-2 btn btn-sm btn-outline-primary border-0 " + (__props.program.financial_id > 0 ? "" : " disabled")
-                )}" data-v-36a53fe9${_scopeId}><i class="bi bi-plus-lg" data-v-36a53fe9${_scopeId}></i></button></div>`);
+                )}" data-v-06acbe76${_scopeId}><i class="bi bi-plus-lg" data-v-06acbe76${_scopeId}></i></button></div>`);
               } else {
                 _push2(`<!---->`);
               }
               if (__props.program.financial_id > 0) {
-                _push2(`<div class="modal fade" id="addProgramDisbursement" tabindex="-1" aria-labelledby="addProgramDisbursementLabel" aria-hidden="true" data-v-36a53fe9${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-36a53fe9${_scopeId}><div class="modal-content shadow mx-3" data-v-36a53fe9${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-36a53fe9${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" id="addProgramDisbursementLabel" data-v-36a53fe9${_scopeId}><i class="bi bi-wallet2 border-secondary border-end me-2 pe-2" data-v-36a53fe9${_scopeId}></i> ${ssrInterpolate("New Disbursement Item")}</span><button type="button" class="btn btn-sm ms-auto" data-v-36a53fe9${_scopeId}><i class="bi bi-x-lg" data-v-36a53fe9${_scopeId}></i></button></div><form method="post" enctype="multipart/form-data" data-v-36a53fe9${_scopeId}><div class="modal-body bg-light" data-v-36a53fe9${_scopeId}><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_disbursement_name" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>Name</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block" id="add_disbursement_name"${ssrRenderAttr(
+                _push2(`<div class="modal fade" id="addProgramDisbursement" tabindex="-1" aria-labelledby="addProgramDisbursementLabel" aria-hidden="true" data-v-06acbe76${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-06acbe76${_scopeId}><div class="modal-content shadow mx-3" data-v-06acbe76${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-06acbe76${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" id="addProgramDisbursementLabel" data-v-06acbe76${_scopeId}><i class="bi bi-wallet2 border-secondary border-end me-2 pe-2" data-v-06acbe76${_scopeId}></i> ${ssrInterpolate("New Disbursement Item")}</span><button type="button" class="btn btn-sm ms-auto" data-v-06acbe76${_scopeId}><i class="bi bi-x-lg" data-v-06acbe76${_scopeId}></i></button></div><form method="post" enctype="multipart/form-data" data-v-06acbe76${_scopeId}><div class="modal-body bg-light" data-v-06acbe76${_scopeId}><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_disbursement_name" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>Name</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block" id="add_disbursement_name"${ssrRenderAttr(
                   "value",
                   unref(formAddDisbursement).name
-                )} required data-v-36a53fe9${_scopeId}>`);
+                )} required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddDisbursement).errors.name
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_disbursement_price" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>Price</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="number" class="form-control form-control-sm d-inline-block" name="price"${ssrRenderAttr(
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_disbursement_price" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>Price</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="number" class="form-control form-control-sm d-inline-block" name="price"${ssrRenderAttr(
                   "value",
                   unref(formAddDisbursement).price
-                )} placeholder="Type numbers only" required data-v-36a53fe9${_scopeId}>`);
+                )} placeholder="Type numbers only" required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddDisbursement).errors.price
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_disbursement_source" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Letter")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><select class="form-select py-0 d-inline" id="add_disbursement_source" data-v-36a53fe9${_scopeId}><!--[-->`);
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_disbursement_source" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>${ssrInterpolate("Letter")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><select class="form-select py-0 d-inline" id="add_disbursement_source" data-v-06acbe76${_scopeId}><!--[-->`);
                 ssrRenderList(__props.disbursement_letter_list.filter(
                   (item) => !item.disbursement
                 ), (disbursement_letter2, index) => {
@@ -692,7 +697,7 @@ const _sfc_main = {
                     disbursement_letter2.id
                   )}${ssrIncludeBooleanAttr(
                     index == 1
-                  ) ? " selected" : ""} data-v-36a53fe9${ssrIncludeBooleanAttr(Array.isArray(
+                  ) ? " selected" : ""} data-v-06acbe76${ssrIncludeBooleanAttr(Array.isArray(
                     unref(formAddDisbursement).letter_id
                   ) ? ssrLooseContain(
                     unref(formAddDisbursement).letter_id,
@@ -702,20 +707,20 @@ const _sfc_main = {
                     disbursement_letter2.id
                   )) ? " selected" : ""}${_scopeId}>${ssrInterpolate("disbursement_letter... " + (index + 1))}</option>`);
                 });
-                _push2(`<!--]--></select></div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_disbursement_receipt" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Receipt")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="file" class="form-control form-control-sm" id="add_disbursement_receipt" data-v-36a53fe9${_scopeId}>`);
+                _push2(`<!--]--></select></div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_disbursement_receipt" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>${ssrInterpolate("Receipt")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="file" class="form-control form-control-sm" id="add_disbursement_receipt" data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddDisbursement).errors.receipt
                 }, null, _parent2, _scopeId));
-                _push2(`<label for="blaterian_balance" class="inline-flex items-center mt-1" data-v-36a53fe9${_scopeId}><input id="blaterian_balance" type="checkbox" name="blaterian_balance"${ssrIncludeBooleanAttr(
+                _push2(`<label for="blaterian_balance" class="inline-flex items-center mt-1" data-v-06acbe76${_scopeId}><input id="blaterian_balance" type="checkbox" name="blaterian_balance"${ssrIncludeBooleanAttr(
                   Array.isArray(
                     unref(formAddDisbursement).blaterian_balance
                   ) ? ssrLooseContain(
                     unref(formAddDisbursement).blaterian_balance,
                     null
                   ) : unref(formAddDisbursement).blaterian_balance
-                ) ? " checked" : ""} class="rounded" data-v-36a53fe9${_scopeId}><span class="ms-2 text-sm" data-v-36a53fe9${_scopeId}>${ssrInterpolate("For Blaterian Balance")}</span></label></div></div>`);
+                ) ? " checked" : ""} class="rounded" data-v-06acbe76${_scopeId}><span class="ms-2 text-sm" data-v-06acbe76${_scopeId}>${ssrInterpolate("For Blaterian Balance")}</span></label></div></div>`);
                 if (unref(formAddDisbursement).blaterian_balance) {
-                  _push2(`<div class="row mt-2 justify-content-center" id="add_blaterian_disbursement_container" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_disbursement_price" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Blaterian")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><div class="input-group input-group-sm" data-v-36a53fe9${_scopeId}><select class="form-select py-0 d-inline" id="add_blaterian_disbursement" data-v-36a53fe9${_scopeId}><option value="foods" selected data-v-36a53fe9${_scopeId}>${ssrInterpolate("Food")}</option><option value="goods" data-v-36a53fe9${ssrIncludeBooleanAttr(Array.isArray(
+                  _push2(`<div class="row mt-2 justify-content-center" id="add_blaterian_disbursement_container" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_disbursement_price" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>${ssrInterpolate("Blaterian")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><div class="input-group input-group-sm" data-v-06acbe76${_scopeId}><select class="form-select py-0 d-inline" id="add_blaterian_disbursement" data-v-06acbe76${_scopeId}><option value="foods" selected data-v-06acbe76${_scopeId}>${ssrInterpolate("Food")}</option><option value="goods" data-v-06acbe76${ssrIncludeBooleanAttr(Array.isArray(
                     unref(formAddDisbursement).blaterian_disbursement
                   ) ? ssrLooseContain(
                     unref(formAddDisbursement).blaterian_disbursement,
@@ -723,75 +728,75 @@ const _sfc_main = {
                   ) : ssrLooseEqual(
                     unref(formAddDisbursement).blaterian_disbursement,
                     "goods"
-                  )) ? " selected" : ""}${_scopeId}>${ssrInterpolate("Good")}</option></select><label for="add_blaterian_disbursement" class="input-group-text" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Balance")}</label></div></div></div>`);
+                  )) ? " selected" : ""}${_scopeId}>${ssrInterpolate("Good")}</option></select><label for="add_blaterian_disbursement" class="input-group-text" data-v-06acbe76${_scopeId}>${ssrInterpolate("Balance")}</label></div></div></div>`);
                 } else {
                   _push2(`<!---->`);
                 }
-                _push2(`</div><div class="modal-footer p-1" data-v-36a53fe9${_scopeId}><button type="submit" class="btn btn-sm btn-primary" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Add")}</button></div></form></div></div></div>`);
+                _push2(`</div><div class="modal-footer p-1" data-v-06acbe76${_scopeId}><button type="submit" class="btn btn-sm btn-primary" data-v-06acbe76${_scopeId}>${ssrInterpolate("Add")}</button></div></form></div></div></div>`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`</div></div><div class="row mt-2" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><span class="fw-light d-none d-lg-inline me-1 my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Disbursement ")}</span><span class="fw-light my-auto me-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Letter :")}</span><!--[-->`);
+              _push2(`</div></div><div class="row mt-2" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><span class="fw-light d-none d-lg-inline me-1 my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("Disbursement ")}</span><span class="fw-light my-auto me-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Letter :")}</span><!--[-->`);
               ssrRenderList(__props.disbursement_letter_list.filter(
                 (disbursement_letter2) => !disbursement_letter2.disbursement
               ), (disbursement_letter2, disbursement_letter_index) => {
-                _push2(`<button class="me-1 btn btn-sm btn-outline-primary border-0 py-0 position-relative" data-bs-toggle="modal" data-bs-target="#disbursementLetterModal" data-v-36a53fe9${_scopeId}>${ssrInterpolate(disbursement_letter_index + 1)} <i class="bi bi-envelope-exclamation" data-v-36a53fe9${_scopeId}></i></button>`);
+                _push2(`<button class="me-1 btn btn-sm btn-outline-primary border-0 py-0 position-relative" data-bs-toggle="modal" data-bs-target="#disbursementLetterModal" data-v-06acbe76${_scopeId}>${ssrInterpolate(disbursement_letter_index + 1)} <i class="bi bi-envelope-exclamation" data-v-06acbe76${_scopeId}></i></button>`);
               });
-              _push2(`<!--]--><div class="modal fade" id="disbursementLetterModal" tabindex="-1" aria-labelledby="disbursementLetterModal" aria-hidden="true" data-v-36a53fe9${_scopeId}><div class="modal-dialog modal-lg modal-dialog-centered" data-v-36a53fe9${_scopeId}><div class="modal-content shadow mx-3 mt-5" data-v-36a53fe9${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-36a53fe9${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" data-v-36a53fe9${_scopeId}><i class="bi bi-envelope border-secondary border-end me-2 pe-2" data-v-36a53fe9${_scopeId}></i> ${ssrInterpolate("Disbursement Letter")}</span><button type="button" class="btn btn-sm ms-auto" data-v-36a53fe9${_scopeId}><i class="bi bi-x-lg" data-v-36a53fe9${_scopeId}></i></button></div><div class="modal-body bg-light p-1 px-3" data-v-36a53fe9${_scopeId}><div class="row justify-content-center mt-2" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex ratio ratio-16x9" data-v-36a53fe9${_scopeId}><iframe id="disbursement_letter"${ssrRenderAttr(
+              _push2(`<!--]--><div class="modal fade" id="disbursementLetterModal" tabindex="-1" aria-labelledby="disbursementLetterModal" aria-hidden="true" data-v-06acbe76${_scopeId}><div class="modal-dialog modal-lg modal-dialog-centered" data-v-06acbe76${_scopeId}><div class="modal-content shadow mx-3 mt-5" data-v-06acbe76${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-06acbe76${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" data-v-06acbe76${_scopeId}><i class="bi bi-envelope border-secondary border-end me-2 pe-2" data-v-06acbe76${_scopeId}></i> ${ssrInterpolate("Disbursement Letter")}</span><button type="button" class="btn btn-sm ms-auto" data-v-06acbe76${_scopeId}><i class="bi bi-x-lg" data-v-06acbe76${_scopeId}></i></button></div><div class="modal-body bg-light p-1 px-3" data-v-06acbe76${_scopeId}><div class="row justify-content-center mt-2" data-v-06acbe76${_scopeId}><div class="col-12 d-flex ratio ratio-16x9" data-v-06acbe76${_scopeId}><iframe id="disbursement_letter"${ssrRenderAttr(
                 "src",
                 disbursement_letter.value.link
-              )} frameborder="0" data-v-36a53fe9${_scopeId}></iframe></div></div><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><a${ssrRenderAttr(
+              )} frameborder="0" data-v-06acbe76${_scopeId}></iframe></div></div><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><a${ssrRenderAttr(
                 "href",
                 disbursement_letter.value.link
-              )} target="blank" class="mx-auto text-decoration-none" id="disbursement_letter_download" download data-v-36a53fe9${_scopeId}><button class="btn btn-sm btn-light" data-v-36a53fe9${_scopeId}><span class="fw-light d-none d-lg-inline" id="disbursement_letter_name" data-v-36a53fe9${_scopeId}></span><span class="fw-light" data-v-36a53fe9${_scopeId}>${ssrInterpolate(disbursement_letter.value.letter)}</span><i class="bi bi-download text-primary ms-2" data-v-36a53fe9${_scopeId}></i></button></a></div></div></div><div class="modal-footer p-1 px-2" data-v-36a53fe9${_scopeId}><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex px-0" data-v-36a53fe9${_scopeId}><div class="input-group input-group-sm ms-auto" data-v-36a53fe9${_scopeId}>`);
+              )} target="blank" class="mx-auto text-decoration-none" id="disbursement_letter_download" download data-v-06acbe76${_scopeId}><button class="btn btn-sm btn-light" data-v-06acbe76${_scopeId}><span class="fw-light d-none d-lg-inline" id="disbursement_letter_name" data-v-06acbe76${_scopeId}></span><span class="fw-light" data-v-06acbe76${_scopeId}>${ssrInterpolate(disbursement_letter.value.letter)}</span><i class="bi bi-download text-primary ms-2" data-v-06acbe76${_scopeId}></i></button></a></div></div></div><div class="modal-footer p-1 px-2" data-v-06acbe76${_scopeId}><div class="row" data-v-06acbe76${_scopeId}><div class="col-12 d-flex px-0" data-v-06acbe76${_scopeId}><div class="input-group input-group-sm ms-auto" data-v-06acbe76${_scopeId}>`);
               if (unref(auth_user).id == __props.program.pic_id && !disbursement_letter.value.valid) {
-                _push2(`<button id="disbursement_letter_delete" class="btn btn-sm btn-danger text-decoration-none" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Delete")}</button>`);
+                _push2(`<button id="disbursement_letter_delete" class="btn btn-sm btn-danger text-decoration-none" data-v-06acbe76${_scopeId}>${ssrInterpolate("Delete")}</button>`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`<button data-bs-dismiss="modal" aria-label="Close" class="btn btn-sm btn-secondary" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Close")}</button></div></div></div></div></div></div></div>`);
+              _push2(`<button data-bs-dismiss="modal" aria-label="Close" class="btn btn-sm btn-secondary" data-v-06acbe76${_scopeId}>${ssrInterpolate("Close")}</button></div></div></div></div></div></div></div>`);
               if (unref(auth_user).id == __props.program.pic_id) {
-                _push2(`<div class="ms-auto" data-v-36a53fe9${_scopeId}><button class="${ssrRenderClass(
+                _push2(`<div class="ms-auto" data-v-06acbe76${_scopeId}><button class="${ssrRenderClass(
                   "btn btn-sm btn-outline-primary border-0 " + (__props.program.financial_id > 0 ? "" : " disabled")
-                )}" data-v-36a53fe9${_scopeId}><i class="bi bi-envelope-plus" data-v-36a53fe9${_scopeId}></i></button></div>`);
+                )}" data-v-06acbe76${_scopeId}><i class="bi bi-envelope-plus" data-v-06acbe76${_scopeId}></i></button></div>`);
               } else {
                 _push2(`<!---->`);
               }
               if (unref(auth_user).id == __props.program.pic_id && __props.program.financial_id > 0) {
-                _push2(`<div class="modal fade" id="addProgramDisbursementLetter" tabindex="-1" aria-labelledby="addProgramDisbursementLetterLabel" aria-hidden="true" data-v-36a53fe9${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-36a53fe9${_scopeId}><div class="modal-content shadow mx-3" data-v-36a53fe9${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-36a53fe9${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" id="addProgramDisbursementLetterLabel" data-v-36a53fe9${_scopeId}><i class="bi bi-wallet2 border-secondary border-end me-2 pe-2" data-v-36a53fe9${_scopeId}></i> ${ssrInterpolate("New Disbursement Letter")}</span><button type="button" class="btn btn-sm ms-auto" data-v-36a53fe9${_scopeId}><i class="bi bi-x-lg" data-v-36a53fe9${_scopeId}></i></button></div><form method="post" enctype="multipart/form-data" data-v-36a53fe9${_scopeId}><div class="modal-body bg-light" data-v-36a53fe9${_scopeId}><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_disbursement_letter_file" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Letter")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="file" class="form-control form-control-sm" id="add_disbursement_letter_file" data-v-36a53fe9${_scopeId}>`);
+                _push2(`<div class="modal fade" id="addProgramDisbursementLetter" tabindex="-1" aria-labelledby="addProgramDisbursementLetterLabel" aria-hidden="true" data-v-06acbe76${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-06acbe76${_scopeId}><div class="modal-content shadow mx-3" data-v-06acbe76${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-06acbe76${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" id="addProgramDisbursementLetterLabel" data-v-06acbe76${_scopeId}><i class="bi bi-wallet2 border-secondary border-end me-2 pe-2" data-v-06acbe76${_scopeId}></i> ${ssrInterpolate("New Disbursement Letter")}</span><button type="button" class="btn btn-sm ms-auto" data-v-06acbe76${_scopeId}><i class="bi bi-x-lg" data-v-06acbe76${_scopeId}></i></button></div><form method="post" enctype="multipart/form-data" data-v-06acbe76${_scopeId}><div class="modal-body bg-light" data-v-06acbe76${_scopeId}><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_disbursement_letter_file" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>${ssrInterpolate("Letter")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="file" class="form-control form-control-sm" id="add_disbursement_letter_file" data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddDisbursementLetter).errors.letter
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div></div><div class="modal-footer p-1" data-v-36a53fe9${_scopeId}><button type="submit" class="btn btn-sm btn-primary" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Add")}</button></div></form></div></div></div>`);
+                _push2(`</div></div></div><div class="modal-footer p-1" data-v-06acbe76${_scopeId}><button type="submit" class="btn btn-sm btn-primary" data-v-06acbe76${_scopeId}>${ssrInterpolate("Add")}</button></div></form></div></div></div>`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`</div></div></div></nav></div></div><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><div class="scroll-container-3 scroll-container-lg-2 bg-secondary bg-opacity-25 px-2 pt-2 rounded mt-2" data-v-36a53fe9${_scopeId}><!--[-->`);
+              _push2(`</div></div></div></nav></div></div><div class="row" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><div class="scroll-container-3 scroll-container-lg-2 bg-secondary bg-opacity-25 px-2 pt-2 rounded mt-2" data-v-06acbe76${_scopeId}><!--[-->`);
               ssrRenderList(__props.disbursement_list, (disbursement) => {
-                _push2(`<div class="card card-bg-hover shadow mb-2 py-1" data-v-36a53fe9${_scopeId}><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><span class="text-primary-emphasis ms-2 my-auto scroll-x-hidden text-nowrap me-2" data-v-36a53fe9${_scopeId}>${ssrInterpolate(disbursement.name)}</span><span class="fw-light ms-2 d-none d-lg-flex my-auto scroll-x-hidden text-nowrap me-3" data-v-36a53fe9${_scopeId}>${ssrInterpolate("by " + disbursement.financial.name)}</span><span class="fw-light ms-auto d-none d-lg-flex my-auto text-nowrap" data-v-36a53fe9${_scopeId}>${ssrInterpolate("price : ")}</span><span class="fw-normal mx-2 d-none d-lg-flex my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+                _push2(`<div class="card card-bg-hover shadow mb-2 py-1" data-v-06acbe76${_scopeId}><div class="row" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><span class="text-primary-emphasis ms-2 my-auto scroll-x-hidden text-nowrap me-2" data-v-06acbe76${_scopeId}>${ssrInterpolate(disbursement.name)}</span><span class="fw-light ms-2 d-none d-lg-flex my-auto scroll-x-hidden text-nowrap me-3" data-v-06acbe76${_scopeId}>${ssrInterpolate("by " + disbursement.financial.name)}</span><span class="fw-light ms-auto d-none d-lg-flex my-auto text-nowrap" data-v-06acbe76${_scopeId}>${ssrInterpolate("price : ")}</span><span class="fw-normal mx-2 d-none d-lg-flex my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
                   disbursement.price
                 ))}</span>`);
                 if (disbursement.deleted_at == null) {
-                  _push2(`<button class="ms-auto ms-lg-1 btn btn-sm btn-outline-secondary border-0 position-relative" data-v-36a53fe9${_scopeId}><i class="bi bi-envelope-paper" data-v-36a53fe9${_scopeId}></i></button>`);
+                  _push2(`<button class="ms-auto ms-lg-1 btn btn-sm btn-outline-secondary border-0 position-relative" data-v-06acbe76${_scopeId}><i class="bi bi-envelope-paper" data-v-06acbe76${_scopeId}></i></button>`);
                 } else {
                   _push2(`<!---->`);
                 }
-                _push2(`<div class="border-start h-100 mx-1" data-v-36a53fe9${_scopeId}></div><button class="${ssrRenderClass(" btn btn-sm btn-outline-secondary border-0 me-1 ")}" data-v-36a53fe9${_scopeId}><i class="bi bi-receipt" data-v-36a53fe9${_scopeId}></i></button>`);
+                _push2(`<div class="border-start h-100 mx-1" data-v-06acbe76${_scopeId}></div><button class="${ssrRenderClass(" btn btn-sm btn-outline-secondary border-0 me-1 ")}" data-v-06acbe76${_scopeId}><i class="bi bi-receipt" data-v-06acbe76${_scopeId}></i></button>`);
                 if (unref(auth_user).roles_id == 2 && __props.filter["disbursement"]["trashed"] !== "trashed") {
-                  _push2(`<div class="border-start h-100 me-1" data-v-36a53fe9${_scopeId}></div>`);
+                  _push2(`<div class="border-start h-100 me-1" data-v-06acbe76${_scopeId}></div>`);
                 } else {
                   _push2(`<!---->`);
                 }
                 if (unref(auth_user).roles_id == 2 && __props.filter["disbursement"]["trashed"] !== "trashed") {
-                  _push2(`<button class="me-2 btn btn-sm btn-outline-danger border-0" data-v-36a53fe9${_scopeId}><i class="bi bi-trash" data-v-36a53fe9${_scopeId}></i></button>`);
+                  _push2(`<button class="me-2 btn btn-sm btn-outline-danger border-0" data-v-06acbe76${_scopeId}><i class="bi bi-trash" data-v-06acbe76${_scopeId}></i></button>`);
                 } else {
                   _push2(`<!---->`);
                 }
-                _push2(`</div></div><div class="row d-lg-none" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><span class="fw-light ms-2" data-v-36a53fe9${_scopeId}>${ssrInterpolate("by " + disbursement.financial.name)}</span><span class="fw-light ms-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("price : ")}</span><span class="fw-normal mx-2" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+                _push2(`</div></div><div class="row d-lg-none" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><span class="fw-light ms-2" data-v-06acbe76${_scopeId}>${ssrInterpolate("by " + disbursement.financial.name)}</span><span class="fw-light ms-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("price : ")}</span><span class="fw-normal mx-2" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
                   disbursement.price
                 ))}</span></div></div></div>`);
               });
-              _push2(`<!--]--></div></div><div class="modal fade" id="receiptDisbursementModal" tabindex="-1" aria-labelledby="receiptDisbursementModal" aria-hidden="true" data-v-36a53fe9${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-36a53fe9${_scopeId}><div class="modal-content shadow mx-3 mt-5" data-v-36a53fe9${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-36a53fe9${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" data-v-36a53fe9${_scopeId}><i class="bi bi-receipt border-secondary border-end me-2 pe-2" data-v-36a53fe9${_scopeId}></i> ${ssrInterpolate("Disbursement Receipt")}</span><button type="button" class="btn btn-sm ms-auto" data-v-36a53fe9${_scopeId}><i class="bi bi-x-lg" data-v-36a53fe9${_scopeId}></i></button></div><div class="modal-body bg-light p-1 px-3" data-v-36a53fe9${_scopeId}><div class="row justify-content-center mt-2" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><img${ssrRenderAttr(
+              _push2(`<!--]--></div></div><div class="modal fade" id="receiptDisbursementModal" tabindex="-1" aria-labelledby="receiptDisbursementModal" aria-hidden="true" data-v-06acbe76${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-06acbe76${_scopeId}><div class="modal-content shadow mx-3 mt-5" data-v-06acbe76${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-06acbe76${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" data-v-06acbe76${_scopeId}><i class="bi bi-receipt border-secondary border-end me-2 pe-2" data-v-06acbe76${_scopeId}></i> ${ssrInterpolate("Disbursement Receipt")}</span><button type="button" class="btn btn-sm ms-auto" data-v-06acbe76${_scopeId}><i class="bi bi-x-lg" data-v-06acbe76${_scopeId}></i></button></div><div class="modal-body bg-light p-1 px-3" data-v-06acbe76${_scopeId}><div class="row justify-content-center mt-2" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><img${ssrRenderAttr(
                 "src",
                 disbursement_receipt.value.link
               )} alt="image" class="${ssrRenderClass(
@@ -801,62 +806,62 @@ const _sfc_main = {
                 height: "100%",
                 objectFit: "contain",
                 maxHeight: "320px"
-              })}" id="disbursement_receipt_image" data-v-36a53fe9${_scopeId}></div></div><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><a${ssrRenderAttr(
+              })}" id="disbursement_receipt_image" data-v-06acbe76${_scopeId}></div></div><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><a${ssrRenderAttr(
                 "href",
                 disbursement_receipt.value.link
-              )} target="blank" class="mx-auto text-decoration-none" id="disbursement_receipt_download" download data-v-36a53fe9${_scopeId}><button class="btn btn-sm btn-light" data-v-36a53fe9${_scopeId}><span class="fw-light" data-v-36a53fe9${_scopeId}>${ssrInterpolate(disbursement_receipt.value.image)}</span><i class="bi bi-download text-primary ms-2" data-v-36a53fe9${_scopeId}></i></button></a></div></div></div><div class="modal-footer p-1 px-2" data-v-36a53fe9${_scopeId}><button data-bs-dismiss="modal" aria-label="Close" class="btn btn-sm btn-secondary" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Close")}</button></div></div></div></div></div></div>`);
+              )} target="blank" class="mx-auto text-decoration-none" id="disbursement_receipt_download" download data-v-06acbe76${_scopeId}><button class="btn btn-sm btn-light" data-v-06acbe76${_scopeId}><span class="fw-light" data-v-06acbe76${_scopeId}>${ssrInterpolate(disbursement_receipt.value.image)}</span><i class="bi bi-download text-primary ms-2" data-v-06acbe76${_scopeId}></i></button></a></div></div></div><div class="modal-footer p-1 px-2" data-v-06acbe76${_scopeId}><button data-bs-dismiss="modal" aria-label="Close" class="btn btn-sm btn-secondary" data-v-06acbe76${_scopeId}>${ssrInterpolate("Close")}</button></div></div></div></div></div></div>`);
             } else {
               _push2(`<!---->`);
             }
             if (active_tab.value == 3) {
-              _push2(`<div id="content_3" data-v-36a53fe9${_scopeId}><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><nav class="navbar rounded bg-white shadow-sm p-2" data-v-36a53fe9${_scopeId}><form method="post" id="formExpenseFilter" data-v-36a53fe9${_scopeId}></form><div class="container d-block px-0" data-v-36a53fe9${_scopeId}><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><div class="input-group input-group-sm bg-body-tertiary rounded" data-v-36a53fe9${_scopeId}><button type="button" class="btn btn-sm rounded-0 rounded-start text-light bg-secondary" data-v-36a53fe9${_scopeId}><i class="bi bi-funnel-fill" data-v-36a53fe9${_scopeId}></i><span class="ms-1 ps-2 border-start border-light d-none d-md-inline" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Filter")}</span></button><button type="submit" form="formExpenseFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-36a53fe9${_scopeId}><span class="me-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Name")}</span><i class="${ssrRenderClass(
+              _push2(`<div id="content_3" data-v-06acbe76${_scopeId}><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><nav class="navbar rounded bg-white shadow-sm p-2" data-v-06acbe76${_scopeId}><form method="post" id="formExpenseFilter" data-v-06acbe76${_scopeId}></form><div class="container d-block px-0" data-v-06acbe76${_scopeId}><div class="row" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><div class="input-group input-group-sm bg-body-tertiary rounded" data-v-06acbe76${_scopeId}><button type="button" class="btn btn-sm rounded-0 rounded-start text-light bg-secondary" data-v-06acbe76${_scopeId}><i class="bi bi-funnel-fill" data-v-06acbe76${_scopeId}></i><span class="ms-1 ps-2 border-start border-light d-none d-md-inline" data-v-06acbe76${_scopeId}>${ssrInterpolate("Filter")}</span></button><button type="submit" form="formExpenseFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-06acbe76${_scopeId}><span class="me-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Name")}</span><i class="${ssrRenderClass(
                 "bi bi-sort-numeric-" + (__props.filter["expense"]["category"] == "name" && __props.filter["expense"]["order"] == "asc" ? "up" : "down") + "-alt"
-              )}" data-v-36a53fe9${_scopeId}></i></button><button type="submit" form="formExpenseFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-36a53fe9${_scopeId}><span class="me-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Price")}</span><i class="${ssrRenderClass(
+              )}" data-v-06acbe76${_scopeId}></i></button><button type="submit" form="formExpenseFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-06acbe76${_scopeId}><span class="me-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Price")}</span><i class="${ssrRenderClass(
                 "bi bi-sort-numeric-" + (__props.filter["expense"]["category"] == "total_price" && __props.filter["expense"]["order"] == "asc" ? "up" : "down") + "-alt"
-              )}" data-v-36a53fe9${_scopeId}></i></button><button type="submit" form="formExpenseFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-36a53fe9${_scopeId}><span class="me-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Valid")}</span><i class="${ssrRenderClass(
+              )}" data-v-06acbe76${_scopeId}></i></button><button type="submit" form="formExpenseFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-06acbe76${_scopeId}><span class="me-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Valid")}</span><i class="${ssrRenderClass(
                 "bi bi-sort-numeric-" + (__props.filter["expense"]["category"] == "financial_id" && __props.filter["expense"]["order"] == "asc" ? "up" : "down") + "-alt"
-              )}" data-v-36a53fe9${_scopeId}></i></button></div>`);
+              )}" data-v-06acbe76${_scopeId}></i></button></div>`);
               if (unref(auth_user).id == __props.program.pic_id) {
-                _push2(`<div data-v-36a53fe9${_scopeId}><button class="${ssrRenderClass(
+                _push2(`<div data-v-06acbe76${_scopeId}><button class="${ssrRenderClass(
                   "ms-2 btn btn-sm btn-outline-primary border-0 " + (__props.program.financial_id > 0 ? "" : " disabled")
-                )}" data-v-36a53fe9${_scopeId}><i class="bi bi-plus-lg" data-v-36a53fe9${_scopeId}></i></button></div>`);
+                )}" data-v-06acbe76${_scopeId}><i class="bi bi-plus-lg" data-v-06acbe76${_scopeId}></i></button></div>`);
               } else {
                 _push2(`<!---->`);
               }
               if (unref(auth_user).id == __props.program.pic_id && __props.program.financial_id > 0) {
-                _push2(`<div class="modal fade" id="addProgramExpense" tabindex="-1" aria-labelledby="addProgramExpenseLabel" aria-hidden="true" data-v-36a53fe9${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-36a53fe9${_scopeId}><div class="modal-content shadow mx-3" data-v-36a53fe9${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-36a53fe9${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" id="addProgramExpenseLabel" data-v-36a53fe9${_scopeId}><i class="bi bi-cart-plus border-secondary border-end me-2 pe-2" data-v-36a53fe9${_scopeId}></i> ${ssrInterpolate("New Expense Item")}</span><button type="button" class="btn btn-sm ms-auto" data-v-36a53fe9${_scopeId}><i class="bi bi-x-lg" data-v-36a53fe9${_scopeId}></i></button></div><form method="post" enctype="multipart/form-data" data-v-36a53fe9${_scopeId}><div class="modal-body bg-light" data-v-36a53fe9${_scopeId}><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-36a53fe9${_scopeId}><label for="add_expense_name" class="form-label d-inline-block my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Name")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block" name="name"${ssrRenderAttr(
+                _push2(`<div class="modal fade" id="addProgramExpense" tabindex="-1" aria-labelledby="addProgramExpenseLabel" aria-hidden="true" data-v-06acbe76${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-06acbe76${_scopeId}><div class="modal-content shadow mx-3" data-v-06acbe76${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-06acbe76${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" id="addProgramExpenseLabel" data-v-06acbe76${_scopeId}><i class="bi bi-cart-plus border-secondary border-end me-2 pe-2" data-v-06acbe76${_scopeId}></i> ${ssrInterpolate("New Expense Item")}</span><button type="button" class="btn btn-sm ms-auto" data-v-06acbe76${_scopeId}><i class="bi bi-x-lg" data-v-06acbe76${_scopeId}></i></button></div><form method="post" enctype="multipart/form-data" data-v-06acbe76${_scopeId}><div class="modal-body bg-light" data-v-06acbe76${_scopeId}><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-06acbe76${_scopeId}><label for="add_expense_name" class="form-label d-inline-block my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("Name")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block" name="name"${ssrRenderAttr(
                   "value",
                   unref(formAddExpense).name
-                )} required data-v-36a53fe9${_scopeId}>`);
+                )} required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddExpense).errors.name
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-36a53fe9${_scopeId}><label for="add_expense_price" class="form-label d-inline-block my-auto" data-v-36a53fe9${_scopeId}>Price</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="number" class="form-control form-control-sm d-inline-block" name="price" id="add_expense_price"${ssrRenderAttr(
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-06acbe76${_scopeId}><label for="add_expense_price" class="form-label d-inline-block my-auto" data-v-06acbe76${_scopeId}>Price</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="number" class="form-control form-control-sm d-inline-block" name="price" id="add_expense_price"${ssrRenderAttr(
                   "value",
                   unref(formAddExpense).price
-                )} placeholder="Type numbers only" required data-v-36a53fe9${_scopeId}>`);
+                )} placeholder="Type numbers only" required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddExpense).errors.price
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-36a53fe9${_scopeId}><label for="add_expense_unit" class="form-label d-inline-block my-auto" data-v-36a53fe9${_scopeId}>Unit</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block" name="unit" placeholder="gram, ml, pcs, etc.."${ssrRenderAttr(
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-06acbe76${_scopeId}><label for="add_expense_unit" class="form-label d-inline-block my-auto" data-v-06acbe76${_scopeId}>Unit</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block" name="unit" placeholder="gram, ml, pcs, etc.."${ssrRenderAttr(
                   "value",
                   unref(formAddExpense).unit
-                )} required data-v-36a53fe9${_scopeId}>`);
+                )} required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddExpense).errors.unit
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-36a53fe9${_scopeId}><label for="add_expense_qty" class="form-label d-inline-block my-auto" data-v-36a53fe9${_scopeId}>Quantity</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="number" class="form-control form-control-sm d-inline-block" name="qty" id="add_expense_qty" placeholder="Type numbers only"${ssrRenderAttr(
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-06acbe76${_scopeId}><label for="add_expense_qty" class="form-label d-inline-block my-auto" data-v-06acbe76${_scopeId}>Quantity</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="number" class="form-control form-control-sm d-inline-block" name="qty" id="add_expense_qty" placeholder="Type numbers only"${ssrRenderAttr(
                   "value",
                   unref(formAddExpense).qty
-                )} required data-v-36a53fe9${_scopeId}>`);
+                )} required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddExpense).errors.qty
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-36a53fe9${_scopeId}><span data-v-36a53fe9${_scopeId}>${ssrInterpolate("Total Price")}</span></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><span data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-06acbe76${_scopeId}><span data-v-06acbe76${_scopeId}>${ssrInterpolate("Total Price")}</span></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><span data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
                   unref(formAddExpense).price * unref(formAddExpense).qty
-                ))}</span></div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-36a53fe9${_scopeId}><label for="add_expense_receipt" class="form-label d-inline-block my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Receipt")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}>`);
+                ))}</span></div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3 d-flex" data-v-06acbe76${_scopeId}><label for="add_expense_receipt" class="form-label d-inline-block my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("Receipt")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}>`);
                 if (!unref(formAddExpense).same_receipt_check) {
-                  _push2(`<input type="file" class="form-control form-control-sm" name="reciept" data-v-36a53fe9${_scopeId}>`);
+                  _push2(`<input type="file" class="form-control form-control-sm" name="reciept" data-v-06acbe76${_scopeId}>`);
                 } else {
                   _push2(`<!---->`);
                 }
@@ -864,7 +869,7 @@ const _sfc_main = {
                   message: unref(formAddExpense).errors.reciept
                 }, null, _parent2, _scopeId));
                 if (unref(formAddExpense).same_receipt_check) {
-                  _push2(`<div class="input-group input-group-sm" id="add_expense_receipt_same_container" data-v-36a53fe9${_scopeId}><label for="add_expense_receipt_same" class="input-group-text" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Same as item")}</label><select class="form-select py-0 d-inline" id="add_expense_receipt_same" data-v-36a53fe9${_scopeId}><!--[-->`);
+                  _push2(`<div class="input-group input-group-sm" id="add_expense_receipt_same_container" data-v-06acbe76${_scopeId}><label for="add_expense_receipt_same" class="input-group-text" data-v-06acbe76${_scopeId}>${ssrInterpolate("Same as item")}</label><select class="form-select py-0 d-inline" id="add_expense_receipt_same" data-v-06acbe76${_scopeId}><!--[-->`);
                   ssrRenderList(__props.expense_list, (expense) => {
                     _push2(`<option${ssrRenderAttr(
                       "value",
@@ -873,7 +878,7 @@ const _sfc_main = {
                       __props.expense_list.indexOf(
                         expense
                       ) == 1
-                    ) ? " selected" : ""} data-v-36a53fe9${ssrIncludeBooleanAttr(Array.isArray(
+                    ) ? " selected" : ""} data-v-06acbe76${ssrIncludeBooleanAttr(Array.isArray(
                       unref(formAddExpense).receipt_same
                     ) ? ssrLooseContain(
                       unref(formAddExpense).receipt_same,
@@ -888,53 +893,53 @@ const _sfc_main = {
                   _push2(`<!---->`);
                 }
                 if (__props.expense_list.length > 0) {
-                  _push2(`<label for="same_receipt_check" class="inline-flex items-center mt-1" data-v-36a53fe9${_scopeId}><input id="same_receipt_check" type="checkbox"${ssrIncludeBooleanAttr(
+                  _push2(`<label for="same_receipt_check" class="inline-flex items-center mt-1" data-v-06acbe76${_scopeId}><input id="same_receipt_check" type="checkbox"${ssrIncludeBooleanAttr(
                     Array.isArray(
                       unref(formAddExpense).same_receipt_check
                     ) ? ssrLooseContain(
                       unref(formAddExpense).same_receipt_check,
                       null
                     ) : unref(formAddExpense).same_receipt_check
-                  ) ? " checked" : ""} class="rounded" data-v-36a53fe9${_scopeId}><span class="ms-2 text-sm" data-v-36a53fe9${_scopeId}>${ssrInterpolate("same as exist item")}</span></label>`);
+                  ) ? " checked" : ""} class="rounded" data-v-06acbe76${_scopeId}><span class="ms-2 text-sm" data-v-06acbe76${_scopeId}>${ssrInterpolate("same as exist item")}</span></label>`);
                 } else {
                   _push2(`<!---->`);
                 }
-                _push2(`</div></div></div><div class="modal-footer p-1" data-v-36a53fe9${_scopeId}><button type="submit" class="btn btn-sm btn-primary" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Add")}</button></div></form></div></div></div>`);
+                _push2(`</div></div></div><div class="modal-footer p-1" data-v-06acbe76${_scopeId}><button type="submit" class="btn btn-sm btn-primary" data-v-06acbe76${_scopeId}>${ssrInterpolate("Add")}</button></div></form></div></div></div>`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`</div></div></div></nav></div></div><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><div class="scroll-container-3 scroll-container-lg-2 bg-secondary bg-opacity-25 px-2 pt-2 rounded mt-2" data-v-36a53fe9${_scopeId}><!--[-->`);
+              _push2(`</div></div></div></nav></div></div><div class="row" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><div class="scroll-container-3 scroll-container-lg-2 bg-secondary bg-opacity-25 px-2 pt-2 rounded mt-2" data-v-06acbe76${_scopeId}><!--[-->`);
               ssrRenderList(__props.expense_list, (expense) => {
-                _push2(`<div class="card card-bg-hover shadow mb-2 py-1" data-v-36a53fe9${_scopeId}><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><span class="text-primary-emphasis ms-2 my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate(expense.name)}</span><span class="fw-light ms-2 d-none d-lg-flex my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("- " + unref(formatIDR)(
+                _push2(`<div class="card card-bg-hover shadow mb-2 py-1" data-v-06acbe76${_scopeId}><div class="row" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><span class="text-primary-emphasis ms-2 my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate(expense.name)}</span><span class="fw-light ms-2 d-none d-lg-flex my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("- " + unref(formatIDR)(
                   expense.price
-                ) + " /" + expense.unit)}</span><span class="fw-light ms-auto d-none d-lg-flex my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("total (" + expense.qty + ") : ")}</span><span class="fw-normal mx-2 d-none d-lg-flex my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+                ) + " /" + expense.unit)}</span><span class="fw-light ms-auto d-none d-lg-flex my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("total (" + expense.qty + ") : ")}</span><span class="fw-normal mx-2 d-none d-lg-flex my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
                   expense.total_price
-                ))}</span><button class="ms-auto ms-lg-1 me-1 btn btn-sm btn-outline-secondary border-0 position-relative my-auto" data-bs-toggle="modal" data-bs-target="#receiptExpenseModal" data-v-36a53fe9${_scopeId}>`);
+                ))}</span><button class="ms-auto ms-lg-1 me-1 btn btn-sm btn-outline-secondary border-0 position-relative my-auto" data-bs-toggle="modal" data-bs-target="#receiptExpenseModal" data-v-06acbe76${_scopeId}>`);
                 if (expense.financial_id == null) {
-                  _push2(`<span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" data-v-36a53fe9${_scopeId}></span>`);
+                  _push2(`<span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" data-v-06acbe76${_scopeId}></span>`);
                 } else {
                   _push2(`<!---->`);
                 }
-                _push2(`<i class="bi bi-receipt" data-v-36a53fe9${_scopeId}></i></button>`);
+                _push2(`<i class="bi bi-receipt" data-v-06acbe76${_scopeId}></i></button>`);
                 if (unref(auth_user).id == __props.program.pic_id) {
-                  _push2(`<div class="border-start border-secondary-subtle me-1 my-1" data-v-36a53fe9${_scopeId}></div>`);
+                  _push2(`<div class="border-start border-secondary-subtle me-1 my-1" data-v-06acbe76${_scopeId}></div>`);
                 } else {
                   _push2(`<!---->`);
                 }
                 if (unref(auth_user).id == __props.program.pic_id) {
-                  _push2(`<div class="me-1 my-auto" data-v-36a53fe9${_scopeId}><button class="${ssrRenderClass(
+                  _push2(`<div class="me-1 my-auto" data-v-06acbe76${_scopeId}><button class="${ssrRenderClass(
                     "btn btn-sm btn-outline-danger border-0 " + (expense.financial_id > 0 ? "disabled" : "")
-                  )}" data-v-36a53fe9${_scopeId}><i class="bi bi-trash" data-v-36a53fe9${_scopeId}></i></button></div>`);
+                  )}" data-v-06acbe76${_scopeId}><i class="bi bi-trash" data-v-06acbe76${_scopeId}></i></button></div>`);
                 } else {
                   _push2(`<!---->`);
                 }
-                _push2(`</div></div><div class="row d-lg-none" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><span class="fw-light ms-2" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+                _push2(`</div></div><div class="row d-lg-none" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><span class="fw-light ms-2" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
                   expense.price
-                ) + " /" + expense.unit)}</span><span class="fw-light ms-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("total (" + expense.qty + ") : ")}</span><span class="fw-normal mx-2" data-v-36a53fe9${_scopeId}>${ssrInterpolate(unref(formatIDR)(
+                ) + " /" + expense.unit)}</span><span class="fw-light ms-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("total (" + expense.qty + ") : ")}</span><span class="fw-normal mx-2" data-v-06acbe76${_scopeId}>${ssrInterpolate(unref(formatIDR)(
                   expense.total_price
                 ))}</span></div></div></div>`);
               });
-              _push2(`<!--]--></div></div><div class="modal fade" id="receiptExpenseModal" tabindex="-1" aria-labelledby="receiptExpenseModal" aria-hidden="true" data-v-36a53fe9${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-36a53fe9${_scopeId}><div class="modal-content shadow mx-3 mt-5" data-v-36a53fe9${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-36a53fe9${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" data-v-36a53fe9${_scopeId}><i class="bi bi-receipt border-secondary border-end me-2 pe-2" data-v-36a53fe9${_scopeId}></i> ${ssrInterpolate("Expense Receipt")}</span><button type="button" class="btn btn-sm ms-auto" data-bs-dismiss="modal" aria-label="Close" data-v-36a53fe9${_scopeId}><i class="bi bi-x-lg" data-v-36a53fe9${_scopeId}></i></button></div><div class="modal-body bg-light p-1 px-3" data-v-36a53fe9${_scopeId}><div class="row justify-content-center mt-2" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><img${ssrRenderAttr(
+              _push2(`<!--]--></div></div><div class="modal fade" id="receiptExpenseModal" tabindex="-1" aria-labelledby="receiptExpenseModal" aria-hidden="true" data-v-06acbe76${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-06acbe76${_scopeId}><div class="modal-content shadow mx-3 mt-5" data-v-06acbe76${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-06acbe76${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" data-v-06acbe76${_scopeId}><i class="bi bi-receipt border-secondary border-end me-2 pe-2" data-v-06acbe76${_scopeId}></i> ${ssrInterpolate("Expense Receipt")}</span><button type="button" class="btn btn-sm ms-auto" data-bs-dismiss="modal" aria-label="Close" data-v-06acbe76${_scopeId}><i class="bi bi-x-lg" data-v-06acbe76${_scopeId}></i></button></div><div class="modal-body bg-light p-1 px-3" data-v-06acbe76${_scopeId}><div class="row justify-content-center mt-2" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><img${ssrRenderAttr(
                 "src",
                 expense_receipt.value.link
               )} alt="image" class="${ssrRenderClass(
@@ -944,19 +949,19 @@ const _sfc_main = {
                 height: "100%",
                 objectFit: "contain",
                 maxHeight: "320px"
-              })}" id="expense_receipt_image" data-v-36a53fe9${_scopeId}></div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><span class="fw-light ms-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Status : ")}</span><span class="fw-normal text-primary-emphasis me-auto ms-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate(expense_receipt.value.status)}</span></div></div><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><a${ssrRenderAttr(
+              })}" id="expense_receipt_image" data-v-06acbe76${_scopeId}></div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><span class="fw-light ms-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate("Status : ")}</span><span class="fw-normal text-primary-emphasis me-auto ms-1" data-v-06acbe76${_scopeId}>${ssrInterpolate(expense_receipt.value.status)}</span></div></div><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><a${ssrRenderAttr(
                 "href",
                 expense_receipt.value.link
-              )} target="blank" class="mx-auto text-decoration-none" id="expense_receipt_download" download data-v-36a53fe9${_scopeId}><button class="btn btn-sm btn-light" data-v-36a53fe9${_scopeId}><span class="fw-light" data-v-36a53fe9${_scopeId}>${ssrInterpolate(expense_receipt.value.image)}</span><i class="bi bi-download text-primary ms-2" data-v-36a53fe9${_scopeId}></i></button></a></div></div></div><div class="modal-footer p-1 px-2" data-v-36a53fe9${_scopeId}>`);
+              )} target="blank" class="mx-auto text-decoration-none" id="expense_receipt_download" download data-v-06acbe76${_scopeId}><button class="btn btn-sm btn-light" data-v-06acbe76${_scopeId}><span class="fw-light" data-v-06acbe76${_scopeId}>${ssrInterpolate(expense_receipt.value.image)}</span><i class="bi bi-download text-primary ms-2" data-v-06acbe76${_scopeId}></i></button></a></div></div></div><div class="modal-footer p-1 px-2" data-v-06acbe76${_scopeId}>`);
               if (unref(auth_user).roles_id == 2 || unref(auth_user).roles_id == 99) {
                 _push2(`<button type="button" data-bs-dismiss="modal" aria-label="Close" class="${ssrRenderClass(
                   "btn btn-sm btn-" + (expense_receipt.value.valid ? "secondary" : "success")
-                )}" id="expense_receipt_button" data-v-36a53fe9${_scopeId}>${ssrInterpolate(expense_receipt.value.valid ? "Unvalidate" : "Validate")}</button>`);
+                )}" id="expense_receipt_button" data-v-06acbe76${_scopeId}>${ssrInterpolate(expense_receipt.value.valid ? "Unvalidate" : "Validate")}</button>`);
               } else {
                 _push2(`<!---->`);
               }
               if (unref(auth_user).roles_id !== 2) {
-                _push2(`<button data-bs-dismiss="modal" aria-label="Close" class="btn btn-sm btn-secondary" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Close")}</button>`);
+                _push2(`<button data-bs-dismiss="modal" aria-label="Close" class="btn btn-sm btn-secondary" data-v-06acbe76${_scopeId}>${ssrInterpolate("Close")}</button>`);
               } else {
                 _push2(`<!---->`);
               }
@@ -965,34 +970,34 @@ const _sfc_main = {
               _push2(`<!---->`);
             }
             if (active_tab.value == 4) {
-              _push2(`<div id="content_4" data-v-36a53fe9${_scopeId}><div class="row justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><nav class="navbar rounded bg-white shadow-sm p-2" data-v-36a53fe9${_scopeId}><form method="post" id="formStaffFilter" data-v-36a53fe9${_scopeId}></form><div class="container d-block px-0" data-v-36a53fe9${_scopeId}><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12 d-flex" data-v-36a53fe9${_scopeId}><div class="input-group input-group-sm bg-body-tertiary rounded" data-v-36a53fe9${_scopeId}><button type="button" class="btn btn-sm rounded-0 rounded-start text-light bg-secondary" data-v-36a53fe9${_scopeId}><i class="bi bi-funnel-fill" data-v-36a53fe9${_scopeId}></i><span class="ms-1 ps-2 border-start border-light d-none d-md-inline" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Filter")}</span></button><button type="submit" form="formStaffFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-36a53fe9${_scopeId}><span class="me-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Name")}</span><i class="${ssrRenderClass(
+              _push2(`<div id="content_4" data-v-06acbe76${_scopeId}><div class="row justify-content-center" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><nav class="navbar rounded bg-white shadow-sm p-2" data-v-06acbe76${_scopeId}><form method="post" id="formStaffFilter" data-v-06acbe76${_scopeId}></form><div class="container d-block px-0" data-v-06acbe76${_scopeId}><div class="row" data-v-06acbe76${_scopeId}><div class="col-12 d-flex" data-v-06acbe76${_scopeId}><div class="input-group input-group-sm bg-body-tertiary rounded" data-v-06acbe76${_scopeId}><button type="button" class="btn btn-sm rounded-0 rounded-start text-light bg-secondary" data-v-06acbe76${_scopeId}><i class="bi bi-funnel-fill" data-v-06acbe76${_scopeId}></i><span class="ms-1 ps-2 border-start border-light d-none d-md-inline" data-v-06acbe76${_scopeId}>${ssrInterpolate("Filter")}</span></button><button type="submit" form="formStaffFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-06acbe76${_scopeId}><span class="me-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Name")}</span><i class="${ssrRenderClass(
                 "bi bi-sort-numeric-" + (__props.filter["staff"]["category"] == "name" && __props.filter["staff"]["order"] == "asc" ? "up" : "down") + "-alt"
-              )}" data-v-36a53fe9${_scopeId}></i></button><button type="submit" form="formStaffFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-36a53fe9${_scopeId}><span class="me-1" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Date")}</span><i class="${ssrRenderClass(
+              )}" data-v-06acbe76${_scopeId}></i></button><button type="submit" form="formStaffFilter" class="btn btn-sm btn-outline-secondary border-0 rounded-0 my-0" data-v-06acbe76${_scopeId}><span class="me-1" data-v-06acbe76${_scopeId}>${ssrInterpolate("Date")}</span><i class="${ssrRenderClass(
                 "bi bi-sort-numeric-" + (__props.filter["staff"]["category"] == "created_at" && __props.filter["staff"]["order"] == "asc" ? "up" : "down") + "-alt"
-              )}" data-v-36a53fe9${_scopeId}></i></button></div>`);
+              )}" data-v-06acbe76${_scopeId}></i></button></div>`);
               if (unref(auth_user).id == __props.program.pic_id) {
                 _push2(`<button class="${ssrRenderClass(
                   "ms-2 btn btn-sm btn-outline-primary border-0 " + (__props.program.financial_id > 0 ? "" : "disabled")
-                )}" data-v-36a53fe9${_scopeId}><i class="bi bi-plus-lg" data-v-36a53fe9${_scopeId}></i></button>`);
+                )}" data-v-06acbe76${_scopeId}><i class="bi bi-plus-lg" data-v-06acbe76${_scopeId}></i></button>`);
               } else {
                 _push2(`<!---->`);
               }
               if (unref(auth_user).id == __props.program.pic_id) {
-                _push2(`<div class="modal fade" id="addProgramStaff" tabindex="-1" aria-labelledby="addProgramStaffLabel" aria-hidden="true" data-v-36a53fe9${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-36a53fe9${_scopeId}><div class="modal-content shadow mx-3" data-v-36a53fe9${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-36a53fe9${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" id="addProgramStaffLabel" data-v-36a53fe9${_scopeId}><i class="bi bi-person-fill-add border-secondary border-end me-2 pe-2" data-v-36a53fe9${_scopeId}></i> ${ssrInterpolate("Add New Staff")}</span><button type="button" class="btn btn-sm ms-auto" data-v-36a53fe9${_scopeId}><i class="bi bi-x-lg" data-v-36a53fe9${_scopeId}></i></button></div><form method="post" data-v-36a53fe9${_scopeId}><div class="modal-body bg-light" data-v-36a53fe9${_scopeId}><div class="row mt-0 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_staff_title" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Title")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block" id="add_staff_title"${ssrRenderAttr(
+                _push2(`<div class="modal fade" id="addProgramStaff" tabindex="-1" aria-labelledby="addProgramStaffLabel" aria-hidden="true" data-v-06acbe76${_scopeId}><div class="modal-dialog modal-dialog-centered" data-v-06acbe76${_scopeId}><div class="modal-content shadow mx-3" data-v-06acbe76${_scopeId}><div class="modal-header py-1 ps-3 pe-2" data-v-06acbe76${_scopeId}><span class="modal-title fs-5 text-primary-emphasis" id="addProgramStaffLabel" data-v-06acbe76${_scopeId}><i class="bi bi-person-fill-add border-secondary border-end me-2 pe-2" data-v-06acbe76${_scopeId}></i> ${ssrInterpolate("Add New Staff")}</span><button type="button" class="btn btn-sm ms-auto" data-v-06acbe76${_scopeId}><i class="bi bi-x-lg" data-v-06acbe76${_scopeId}></i></button></div><form method="post" data-v-06acbe76${_scopeId}><div class="modal-body bg-light" data-v-06acbe76${_scopeId}><div class="row mt-0 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_staff_title" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>${ssrInterpolate("Title")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}><input type="text" class="form-control form-control-sm d-inline-block" id="add_staff_title"${ssrRenderAttr(
                   "value",
                   unref(formAddStaff).staff_title
-                )} placeholder="PDD, ATP, etc.." required data-v-36a53fe9${_scopeId}>`);
+                )} placeholder="PDD, ATP, etc.." required data-v-06acbe76${_scopeId}>`);
                 _push2(ssrRenderComponent(_sfc_main$3, {
                   message: unref(formAddStaff).errors.staff_title
                 }, null, _parent2, _scopeId));
-                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-36a53fe9${_scopeId}><div class="col-4 col-lg-3" data-v-36a53fe9${_scopeId}><label for="add_staff_id" class="form-label d-inline-block" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Staff")}</label></div><div class="col-8 col-lg-7" data-v-36a53fe9${_scopeId}>`);
+                _push2(`</div></div><div class="row mt-2 justify-content-center" data-v-06acbe76${_scopeId}><div class="col-4 col-lg-3" data-v-06acbe76${_scopeId}><label for="add_staff_id" class="form-label d-inline-block" data-v-06acbe76${_scopeId}>${ssrInterpolate("Staff")}</label></div><div class="col-8 col-lg-7" data-v-06acbe76${_scopeId}>`);
                 if (__props.employee_list.length == 0) {
-                  _push2(`<span class="fw-light fst-italic" data-v-36a53fe9${_scopeId}>${ssrInterpolate("There are no available staff.")}</span>`);
+                  _push2(`<span class="fw-light fst-italic" data-v-06acbe76${_scopeId}>${ssrInterpolate("There are no available staff.")}</span>`);
                 } else {
                   _push2(`<!---->`);
                 }
                 if (__props.employee_list.length > 0) {
-                  _push2(`<select class="form-select py-0 d-inline" id="add_staff_id" required data-v-36a53fe9${_scopeId}><!--[-->`);
+                  _push2(`<select class="form-select py-0 d-inline" id="add_staff_id" required data-v-06acbe76${_scopeId}><!--[-->`);
                   ssrRenderList(__props.employee_list, (employee) => {
                     _push2(`<option${ssrRenderAttr(
                       "value",
@@ -1001,7 +1006,7 @@ const _sfc_main = {
                       __props.employee_list.indexOf(
                         employee
                       ) == 1
-                    ) ? " selected" : ""} data-v-36a53fe9${ssrIncludeBooleanAttr(Array.isArray(
+                    ) ? " selected" : ""} data-v-06acbe76${ssrIncludeBooleanAttr(Array.isArray(
                       unref(formAddStaff).staff_id
                     ) ? ssrLooseContain(
                       unref(formAddStaff).staff_id,
@@ -1015,33 +1020,33 @@ const _sfc_main = {
                 } else {
                   _push2(`<!---->`);
                 }
-                _push2(`</div></div></div><div class="modal-footer p-1" data-v-36a53fe9${_scopeId}><button${ssrRenderAttr(
+                _push2(`</div></div></div><div class="modal-footer p-1" data-v-06acbe76${_scopeId}><button${ssrRenderAttr(
                   "type",
                   __props.employee_list.length > 0 ? "submit" : "button"
                 )} class="${ssrRenderClass(
                   "btn btn-sm btn-primary " + (__props.employee_list.length == 0 ? "disabled" : "")
-                )}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("Add")}</button></div></form></div></div></div>`);
+                )}" data-v-06acbe76${_scopeId}>${ssrInterpolate("Add")}</button></div></form></div></div></div>`);
               } else {
                 _push2(`<!---->`);
               }
-              _push2(`</div></div></div></nav></div></div><div class="row" data-v-36a53fe9${_scopeId}><div class="col-12" data-v-36a53fe9${_scopeId}><div class="scroll-container-3 scroll-container-lg-2 bg-secondary bg-opacity-25 px-2 pt-2 rounded mt-2" data-v-36a53fe9${_scopeId}><!--[-->`);
+              _push2(`</div></div></div></nav></div></div><div class="row" data-v-06acbe76${_scopeId}><div class="col-12" data-v-06acbe76${_scopeId}><div class="scroll-container-3 scroll-container-lg-2 bg-secondary bg-opacity-25 px-2 pt-2 rounded mt-2" data-v-06acbe76${_scopeId}><!--[-->`);
               ssrRenderList(__props.staff_list, (staff) => {
                 var _a;
-                _push2(`<div class="card card-bg-hover shadow mb-2" data-v-36a53fe9${_scopeId}><div class="row gx-0 px-1" style="${ssrRenderStyle({ height: "100%" })}" data-v-36a53fe9${_scopeId}><div class="col-auto d-flex" data-v-36a53fe9${_scopeId}><div class="card position-relative shadow-sm rounded-circle border-primary border-2 my-auto" style="${ssrRenderStyle({
+                _push2(`<div class="card card-bg-hover shadow mb-2" data-v-06acbe76${_scopeId}><div class="row gx-0 px-1" style="${ssrRenderStyle({ height: "100%" })}" data-v-06acbe76${_scopeId}><div class="col-auto d-flex" data-v-06acbe76${_scopeId}><div class="card position-relative shadow-sm rounded-circle border-primary border-2 my-auto" style="${ssrRenderStyle({
                   paddingBottom: "25px",
                   width: "25px"
-                })}" data-v-36a53fe9${_scopeId}><img${ssrRenderAttr(
+                })}" data-v-06acbe76${_scopeId}><img${ssrRenderAttr(
                   "src",
                   "/storage/images/profile/" + (staff.employee.profile_image !== null ? staff.employee.profile_image : "example.png")
                 )} alt="image" class="${ssrRenderClass(
                   "rounded-circle position-absolute top-0 inset-s-0 w-100 h-100 " + placeholder.value
                 )}" style="${ssrRenderStyle({
                   objectFit: "cover"
-                })}" data-v-36a53fe9${_scopeId}></div></div><div class="col d-flex my-1" data-v-36a53fe9${_scopeId}><a${ssrRenderAttr("href", `/seeo/staff/profile/${(_a = staff == null ? void 0 : staff.employee) == null ? void 0 : _a.id}`)} rel="noopener noreferrer" class="text-decoration-none d-flex w-100" data-v-36a53fe9${_scopeId}><div class="d-flex scroll-x-hidden text-nowrap ms-2" data-v-36a53fe9${_scopeId}><span class="text-primary-emphasis my-auto" data-v-36a53fe9${_scopeId}>${ssrInterpolate(staff.employee.name)}</span><span class="${ssrRenderClass(
+                })}" data-v-06acbe76${_scopeId}></div></div><div class="col d-flex my-1" data-v-06acbe76${_scopeId}><a${ssrRenderAttr("href", `/seeo/staff/profile/${(_a = staff == null ? void 0 : staff.employee) == null ? void 0 : _a.id}`)} rel="noopener noreferrer" class="text-decoration-none d-flex w-100" data-v-06acbe76${_scopeId}><div class="d-flex scroll-x-hidden text-nowrap ms-2" data-v-06acbe76${_scopeId}><span class="text-primary-emphasis my-auto" data-v-06acbe76${_scopeId}>${ssrInterpolate(staff.employee.name)}</span><span class="${ssrRenderClass(
                   "fw-light ms-1 my-auto " + (staff.employee.id == __props.program.pic_id ? "text-dark" : "")
-                )}" data-v-36a53fe9${_scopeId}>${ssrInterpolate("- " + staff.title)}</span></div></a>`);
+                )}" data-v-06acbe76${_scopeId}>${ssrInterpolate("- " + staff.title)}</span></div></a>`);
                 if (unref(auth_user).id == __props.program.pic_id && __props.program.staff_lock <= 0 && staff.user_id !== __props.program.pic_id) {
-                  _push2(`<button class="ms-auto btn btn-sm btn-outline-danger border-0" data-v-36a53fe9${_scopeId}><i class="bi bi-trash" data-v-36a53fe9${_scopeId}></i></button>`);
+                  _push2(`<button class="ms-auto btn btn-sm btn-outline-danger border-0" data-v-06acbe76${_scopeId}><i class="bi bi-trash" data-v-06acbe76${_scopeId}></i></button>`);
                 } else {
                   _push2(`<!---->`);
                 }
@@ -1344,7 +1349,7 @@ const _sfc_main = {
                                 (openBlock(true), createBlock(Fragment, null, renderList(__props.staff_list, (staff) => {
                                   return openBlock(), createBlock("button", {
                                     type: "button",
-                                    class: "btn btn-sm staff-carousel-item shadow-sm my-1 me-2 d-inline-flex align-items-center " + (staff.employee.id == selected_user.value.id ? "is-selected" : ""),
+                                    class: "btn btn-sm staff-carousel-item shadow-sm my-1 me-2 d-inline-flex align-items-center " + (staff.employee.id == selectedUser.value.id ? "is-selected" : ""),
                                     onClick: ($event) => setSelectedUser(
                                       staff.employee
                                     )
@@ -1365,8 +1370,8 @@ const _sfc_main = {
                           createVNode("div", { class: "row mt-3" }, [
                             createVNode("div", { class: "col-12" }, [
                               createVNode("div", { class: "logbook-selected-staff mx-2 px-2 py-2" }, [
-                                createVNode("span", { class: "h6 text-primary-emphasis mb-0" }, toDisplayString(selected_user.value.name ?? "Select Staff"), 1),
-                                selected_user.value.id ? (openBlock(), createBlock("a", {
+                                createVNode("span", { class: "h6 text-primary-emphasis mb-0" }, toDisplayString(selectedUser.value.name ?? "Select Staff"), 1),
+                                selectedUser.value.id ? (openBlock(), createBlock("a", {
                                   key: 0,
                                   href: `/seeo/staff/program/disbursement/filter/${props.program.id}`,
                                   class: "text-decoration-none ms-auto d-flex",
@@ -1465,11 +1470,11 @@ const _sfc_main = {
                                               key: 1,
                                               class: "text-" + (logbook.validated > 0 ? "success" : "secondary")
                                             }, toDisplayString(logbook.validated > 0 ? "valid" : "unvalid"), 3)) : createCommentVNode("", true),
-                                            unref(auth_user).id == selected_user.value.id && logbook.validated == 0 ? (openBlock(), createBlock("div", {
+                                            unref(auth_user).id == selectedUser.value.id && logbook.validated == 0 ? (openBlock(), createBlock("div", {
                                               key: 2,
                                               class: "my-1 border-start mx-1"
                                             })) : createCommentVNode("", true),
-                                            unref(auth_user).id == selected_user.value.id && logbook.validated == 0 ? (openBlock(), createBlock("button", {
+                                            unref(auth_user).id == selectedUser.value.id && logbook.validated == 0 ? (openBlock(), createBlock("button", {
                                               key: 3,
                                               class: "btn btn-sm btn-outline-secondary border-0 py-0",
                                               onClick: ($event) => confirmation(
@@ -1502,10 +1507,10 @@ const _sfc_main = {
                                       ]),
                                       createVNode("div", { class: "w-100" }, [
                                         createVNode("div", { class: "d-flex" }, [
-                                          createVNode("div", { class: "fw-light card me-auto" }, toDisplayString(selected_user.value == 0 ? "Logbook date" : "-"), 1),
-                                          createVNode("div", { class: "text-secondary d-block ms-auto me-2" }, toDisplayString(selected_user.value == 0 ? "Logbook status" : ""), 1)
+                                          createVNode("div", { class: "fw-light card me-auto" }, toDisplayString(!selectedUser.value.id ? "Logbook date" : "-"), 1),
+                                          createVNode("div", { class: "text-secondary d-block ms-auto me-2" }, toDisplayString(!selectedUser.value.id ? "Logbook status" : ""), 1)
                                         ]),
-                                        createVNode("div", null, toDisplayString(selected_user.value == 0 ? "Logbook detail" : selected_user.value.name + " have not create any logbook."), 1)
+                                        createVNode("div", null, toDisplayString(!selectedUser.value.id ? "Logbook detail" : selectedUser.value.name + " have not create any logbook."), 1)
                                       ])
                                     ])
                                   ])) : createCommentVNode("", true)
@@ -3235,8 +3240,8 @@ _sfc_main.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("resources/js/Pages/Staff/SEEO/Program.vue");
   return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
 };
-const Program = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-36a53fe9"]]);
+const Program = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-06acbe76"]]);
 export {
   Program as default
 };
-//# sourceMappingURL=Program-CQA8vGZa.js.map
+//# sourceMappingURL=Program-BE6muLAy.js.map

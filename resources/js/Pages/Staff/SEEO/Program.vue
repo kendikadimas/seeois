@@ -43,12 +43,22 @@ const modalAddDisbursementRef = ref(null);
 const modalAddExpenseRef = ref(null);
 const modalAddStaffRef = ref(null);
 const modalReceiptDisbursementRef = ref(null);
+const selected_user = ref({});
+const selectedUser = computed(() => {
+    if (selected_user.value?.id) {
+        return selected_user.value;
+    }
+
+    const requestedUserId = Number(props.default_logbook_id || auth_user.id);
+    return props.staff_list.find(
+        (staff) => Number(staff.user_id) === requestedUserId
+    )?.employee ?? {};
+});
 const active_logbook = computed(() => {
     return props.logbook_list.filter(
-        (logbook) => logbook.user_id == selected_user.value.id
+        (logbook) => Number(logbook.user_id) === Number(selectedUser.value.id)
     );
 });
-const selected_user = ref(0);
 const active_tab = ref(1);
 const next_tab = ref(0);
 const prev_tab = ref(0);
@@ -417,11 +427,6 @@ const showInternshipButton = computed(() => {
 
 onMounted(() => {
     placeholder.value = "";
-    if (props.default_logbook_id > 0) {
-        if (props.default_logbook_id == auth_user.id) {
-            setSelectedUser(auth_user);
-        }
-    }
     window.addEventListener("resize", handleResize);
 });
 
@@ -779,7 +784,7 @@ watch(
                                                 :class="
                                                     'btn btn-sm staff-carousel-item shadow-sm my-1 me-2 d-inline-flex align-items-center ' +
                                                     (staff.employee.id ==
-                                                    selected_user.id
+                                                    selectedUser.id
                                                         ? 'is-selected'
                                                         : '')
                                                 "
@@ -810,10 +815,10 @@ watch(
                                     <div class="col-12">
                                         <div class="logbook-selected-staff mx-2 px-2 py-2">
                                             <span class="h6 text-primary-emphasis mb-0">
-                                                {{ selected_user.name ?? "Select Staff" }}
+                                                {{ selectedUser.name ?? "Select Staff" }}
                                             </span>
                                             <a
-                                                v-if="selected_user.id"
+                                                v-if="selectedUser.id"
                                                 :href="
                                                     `/seeo/staff/program/disbursement/filter/${props.program.id}`
                                                 "
@@ -1007,7 +1012,7 @@ watch(
                                                                 <div
                                                                     v-if="
                                                                         auth_user.id ==
-                                                                            selected_user.id &&
+                                                                            selectedUser.id &&
                                                                         logbook.validated ==
                                                                             0
                                                                     "
@@ -1016,7 +1021,7 @@ watch(
                                                                 <button
                                                                     v-if="
                                                                         auth_user.id ==
-                                                                            selected_user.id &&
+                                                                            selectedUser.id &&
                                                                         logbook.validated ==
                                                                             0
                                                                     "
@@ -1063,8 +1068,7 @@ watch(
                                                                     class="fw-light card me-auto"
                                                                 >
                                                                     {{
-                                                                        selected_user ==
-                                                                        0
+                                                                        !selectedUser.id
                                                                             ? "Logbook date"
                                                                             : "-"
                                                                     }}
@@ -1073,8 +1077,7 @@ watch(
                                                                     class="text-secondary d-block ms-auto me-2"
                                                                 >
                                                                     {{
-                                                                        selected_user ==
-                                                                        0
+                                                                        !selectedUser.id
                                                                             ? "Logbook status"
                                                                             : ""
                                                                     }}
@@ -1082,10 +1085,9 @@ watch(
                                                             </div>
                                                             <div>
                                                                 {{
-                                                                    selected_user ==
-                                                                    0
+                                                                    !selectedUser.id
                                                                         ? "Logbook detail"
-                                                                        : selected_user.name +
+                                                                        : selectedUser.name +
                                                                           " have not create any logbook."
                                                                 }}
                                                             </div>

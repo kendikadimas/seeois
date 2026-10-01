@@ -77,9 +77,15 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
+<<<<<<< HEAD
+                (defined('Pdo\Mysql::ATTR_SSL_CA')
+                    ? constant('Pdo\Mysql::ATTR_SSL_CA')
+                    : (defined('PDO::MYSQL_ATTR_SSL_CA') ? constant('PDO::MYSQL_ATTR_SSL_CA') : 1012)) => env('MYSQL_ATTR_SSL_CA'),
+=======
                 (defined('Pdo\\Mysql::ATTR_SSL_CA')
                     ? constant('Pdo\\Mysql::ATTR_SSL_CA')
                     : constant('PDO::MYSQL_ATTR_SSL_CA')) => env('MYSQL_ATTR_SSL_CA'),
+>>>>>>> 59afe8d7f436decabf6b1204a410db0e3fd62a8b
             ]) : [],
         ],
 

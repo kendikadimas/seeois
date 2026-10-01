@@ -40,7 +40,7 @@ class ExpenseItemController extends Controller
             $manager = new ImageManager($driver);
             // get last id
             $last = ExpenseItem::orderBy('id', 'desc')->first();
-            $last_id = $last->id;
+            $last_id = $last?->id ?? 0;
             // read receipt image
             $receipt_image = $manager->read($receipt->getRealPath());
             // encod jpeg data
