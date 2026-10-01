@@ -16,6 +16,6 @@ return [
         13 => ['iwp.manage'],
         15 => ['internship.manage', 'internship.review'],
         99 => ['*'],
-        100 => ['marketing.manage'],
+        100 => ['marketing.manage', 'organization.view'],
     ],
 ];

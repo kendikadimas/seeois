@@ -33,7 +33,7 @@ class LogbookController extends Controller
         $manager = new ImageManager($driver);
         // get last id
         $last = Logbook::orderBy('id', 'desc')->first();
-        $last_id = $last->id;
+        $last_id = $last?->id ?? 0;
         // read receipt image
         $receipt_image = $manager->read($receipt->getRealPath());
         // encod jpeg data
@@ -51,6 +51,7 @@ class LogbookController extends Controller
             'image' => $receipt_name,
             'date_time' => $request->input('date_time'),
             'title' => $request->input('description'),
+            'validated' => 0,
         ]);
 
         if ($log) {

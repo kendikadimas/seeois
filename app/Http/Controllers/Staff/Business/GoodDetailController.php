@@ -46,7 +46,7 @@ class GoodDetailController extends Controller
     {
         $validated = $request->validate([
             'note' => ['nullable', 'string', 'max:255'],
-            'image' => ['required', File::image()->max(5 * 1024), 'dimensions:ratio=1/1'],
+            'image' => ['required', File::image()->max(5 * 1024)],
         ]);
 
         $product = GoodsProduct::findOrFail($id);

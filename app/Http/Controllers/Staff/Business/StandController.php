@@ -682,7 +682,7 @@ class StandController extends Controller
             'category' => ['required', 'string', 'max:100'],
             'food_tag' => ['nullable', 'array'],
             'food_tag.*' => ['integer', 'distinct', 'exists:food_tag,id'],
-            'image' => ['nullable', File::types(['webp', 'jpeg', 'jpg', 'png'])->image()->max(5 * 1024), 'dimensions:ratio=1'],
+            'image' => ['nullable', File::types(['webp', 'jpeg', 'jpg', 'png'])->image()->max(5 * 1024)],
             'volume' => ['nullable', 'numeric', 'min:0'],
             'volume_unit' => ['nullable', 'required_with:volume', Rule::in(['ml', 'l', 'cc'])],
             'mass' => ['nullable', 'numeric', 'min:0'],
@@ -898,7 +898,7 @@ class StandController extends Controller
     function updateImage(Request $request, $id)
     {
         $request->validate([
-            'image' => ['required', File::image()->max(5 * 1024), 'dimensions:ratio=1'],
+            'image' => ['required', File::image()->max(5 * 1024)],
         ], [
             'image.dimensions' => 'Gambar menu harus berbentuk persegi (rasio 1:1).',
         ]);

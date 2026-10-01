@@ -10,6 +10,7 @@ use App\Models\DisbursementLetter;
 use App\Models\ExpenseItem;
 use App\Models\Logbook;
 use App\Models\Program;
+use App\Models\GovernanceYear;
 use App\Models\ProgramStaff;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -149,9 +150,20 @@ class ProgramController extends Controller
     function showMyLogbook(int $program_id, int $logbook_id)
     {
         $user_id =  Auth::user()->id;
-        if ($logbook_id == $user_id) {
+        // The second route parameter represents the requested staff user ID.
+        // Only allow a user to open their own logbook and only for a program
+        // where they are registered as staff.
+        if ($logbook_id === $user_id && ProgramStaff::where('program_id', $program_id)
+            ->where('user_id', $user_id)
+            ->exists()) {
             session()->put('defaultLogbookId', $user_id);
+        } else {
+            return redirect()->route('profile.edit')->with('notif', [
+                'type' => 'warning',
+                'message' => 'Anda belum terdaftar pada program ini.',
+            ]);
         }
+
         return redirect()->route('program', $program_id);
     }
 
@@ -173,10 +185,13 @@ class ProgramController extends Controller
             return back()->with('notif', ['type' => 'info', 'message' => 'You are not allowed. Please contact the Manager.']);
         };
 
+        $activeYear = GovernanceYear::current();
+
         $program = Program::create([
             'name' => $request->input('name'),
             'pic_id' => $request->input('pic_id'),
             'department_id' => $department->id,
+            'year_id' => $activeYear?->id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
