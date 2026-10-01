@@ -1466,20 +1466,6 @@ watch(
                                             </button>
                                         </div>
                                     </form>
-                                    <div class="mt-2 d-flex">
-                                        <a
-                                            class="ms-auto text-primary text-decoration-none"
-                                            style="font-size: 0.7rem"
-                                            :href="
-                                                `/seeo/staff/contribution/${profile.id}`
-                                            "
-                                        >
-                                            {{ auth_user.id == profile.id ? "check my contribution" : "check contribution" }}
-                                            <i
-                                                class="bi bi-box-arrow-up-right ms-1"
-                                            ></i>
-                                        </a>
-                                    </div>
                                 </div>
                             </transition>
                         </div>
