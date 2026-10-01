@@ -1,7 +1,0 @@
-<<<<<<<< HEAD:public/build/assets/Notif-ANjJyqmb.js
-import{u}from"./index-DsdHFIb4.js";import{r as n,o as l,c as f}from"./app-49BL_B6C.js";const d={__name:"Notif",setup(_,{expose:a}){n(""),n("");const r=u(),s={position:"bottom-right",timeout:5e3,closeOnClick:!1,pauseOnFocusLoss:!1,pauseOnHover:!0,draggable:!0,draggablePercent:.6,showCloseButtonOnHover:!0,hideProgressBar:!1,closeButton:"button",icon:!0,rtl:!1};function c(e,o){Array.isArray(o)?o.forEach(i=>{t(e,i)}):t(e,o)}function t(e,o){e=="warning"?r.warning(o,s):e=="danger"?r.error(o,s):e=="success"?r.success(o,s):r.info(o,s)}return a({showToast:c}),(e,o)=>(l(),f("div"))}};export{d as _};
-//# sourceMappingURL=Notif-ANjJyqmb.js.map
-========
-import{u}from"./index-Ci7bmHLE.js";import{r as n,o as l,c as f}from"./app-CiaE4_5m.js";const d={__name:"Notif",setup(_,{expose:a}){n(""),n("");const r=u(),s={position:"bottom-right",timeout:5e3,closeOnClick:!1,pauseOnFocusLoss:!1,pauseOnHover:!0,draggable:!0,draggablePercent:.6,showCloseButtonOnHover:!0,hideProgressBar:!1,closeButton:"button",icon:!0,rtl:!1};function c(e,o){Array.isArray(o)?o.forEach(i=>{t(e,i)}):t(e,o)}function t(e,o){e=="warning"?r.warning(o,s):e=="danger"?r.error(o,s):e=="success"?r.success(o,s):r.info(o,s)}return a({showToast:c}),(e,o)=>(l(),f("div"))}};export{d as _};
-//# sourceMappingURL=Notif-SS3Y2c-h.js.map
->>>>>>>> 59afe8d7f436decabf6b1204a410db0e3fd62a8b:public/build/assets/Notif-SS3Y2c-h.js
