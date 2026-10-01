@@ -80,7 +80,7 @@ export function formatDateOnly(dateString) {
 
     const date = new Date(dateString);
 
-    return format(date, "EEE, dd MMM yyy");
+    return format(date, "EEE, dd MMM yyyy");
 }
 
 export function getMonthName(monthNumber, format = null) {

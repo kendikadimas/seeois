@@ -81,16 +81,25 @@ function imageHandler() {
     input.onchange = async () => {
         const file = input.files[0];
         if (file) {
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                alert('Gunakan gambar JPG, PNG, atau WEBP.');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Ukuran gambar maksimal 5 MB.');
+                return;
+            }
+
             const formData = new FormData();
             formData.append('image', file);
 
             try {
-                // Use axios for upload
-                const response = await window.axios.post('/marketing/upload-image', formData, {
+                const response = await window.axios.post(window.route('marketing.upload.image'), formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 
-                const range = quill.getSelection();
+                const range = quill.getSelection(true) || { index: quill.getLength() };
                 quill.insertEmbed(range.index, 'image', response.data.url);
             } catch (error) {
                 console.error('Image upload failed:', error);

@@ -637,6 +637,19 @@ describe('Production Panel', function () {
         ]);
     });
 
+    test('production cannot create menu for an unassigned stand', function () {
+        $otherStand = makeStand();
+
+        $this->post('/seeo/staff/sales-distribution/menu', menuPayload($otherStand, [
+            'name' => 'Menu Stand Lain',
+        ]))->assertForbidden();
+
+        $this->assertDatabaseMissing('foods_menu', [
+            'stand_id' => $otherStand->id,
+            'name' => 'Menu Stand Lain',
+        ]);
+    });
+
     test('role 11 can mark a menu ready for sales', function () {
         $response = $this->post("/seeo/staff/production/panel/menu/{$this->menu->id}/publish");
 

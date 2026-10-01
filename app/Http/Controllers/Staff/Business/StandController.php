@@ -16,7 +16,7 @@ use App\Models\StandExpense;
 use App\Models\StandSales;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -190,48 +190,51 @@ class StandController extends Controller
     function insertStand(Request $request)
     {
         [$activeYear, $defaultYearId] = $this->activeYearScope();
-        $yearId = $request->input('year_id', $defaultYearId);
+        $yearId = $request->integer('year_id') ?: $defaultYearId;
 
-        // Validating data
-        $request->validate([
-            'name' => ['required', 'string'],
-            'pic_id' => ['required', 'numeric'],
-            'place' => ['required', 'string'],
-            'type' => ['required', 'numeric'],
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'pic_id' => [
+                'required',
+                'integer',
+                Rule::exists('users', 'id')->where(fn ($query) => $query
+                    ->where('roles_id', '>', 0)
+                    ->where('year_id', $yearId)),
+            ],
+            'place' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'integer', Rule::in([0, 1, 2])],
             'date' => ['required', 'date', 'after_or_equal:today'],
-            'year_id' => ['nullable', 'integer'],
+            'year_id' => ['nullable', 'integer', 'exists:governance_years,id'],
         ]);
 
-        // Insert new stand
-        $stand = Stand::create([
-            'name' => $request->input('name'),
-            'pic_id' => $request->input('pic_id'),
-            'date' => $request->input('date'),
-            'place' => $request->input('place'),
-            'type' => $request->input('type'),
-            'year_id' => $yearId,
-        ]);
+        $stand = DB::transaction(function () use ($validated, $yearId) {
+            $stand = Stand::create([
+                'name' => trim($validated['name']),
+                'pic_id' => $validated['pic_id'],
+                'date' => $validated['date'],
+                'place' => trim($validated['place']),
+                'type' => $validated['type'],
+                'year_id' => $yearId,
+            ]);
 
-        // Insert new foods expense
-        $expense = FoodsExpense::create([
-            'category' => 'stand expense',
-            'category_id' => $stand->id,
-            'price' => 0,
-        ]);
+            FoodsExpense::create([
+                'category' => 'stand expense',
+                'category_id' => $stand->id,
+                'price' => 0,
+            ]);
 
-        // Insert new foods income
-        $income = FoodsIncome::create([
-            'category' => 'stand income',
-            'category_id' => $stand->id,
-            'price' => 0,
-        ]);
+            FoodsIncome::create([
+                'category' => 'stand income',
+                'category_id' => $stand->id,
+                'price' => 0,
+            ]);
 
-        // sucees insert
-        if ($stand && $expense && $income) {
-            return redirect()->route('food.stand', ['year_id' => $yearId])->with('notif', ['type' => 'info', 'message' => 'Success create new stand.']);
-        } else {
-            return redirect()->route('food.stand', ['year_id' => $yearId])->with('notif', ['type' => 'warning', 'message' => 'Failed to create new stand. Please try again or contact admin.']);
-        }
+            return $stand;
+        });
+
+        return redirect()
+            ->route('food.stand.detail', ['id' => $stand->id])
+            ->with('notif', ['type' => 'info', 'message' => "Stand '{$stand->name}' berhasil dibuat. Lanjutkan dengan menambahkan tim, menu, dan bahan belanja."]);
     }
 
     /**
@@ -248,6 +251,9 @@ class StandController extends Controller
         ]);
 
         $stand = Stand::find($id);
+        if (!$stand) {
+            return redirect()->route('food.stand')->with('notif', ['type' => 'warning', 'message' => 'Stand tidak ditemukan.']);
+        }
         $stand->name = $request->input('name');
         $stand->place = $request->input('place');
         $stand->date = $request->input('date');
@@ -265,6 +271,11 @@ class StandController extends Controller
      */
     public function deleteStand(Request $request, $id)
     {
+        $stand = Stand::find($id);
+        if (!$stand) {
+            return redirect()->route('food.stand')->with('notif', ['type' => 'warning', 'message' => 'Stand tidak ditemukan atau sudah dihapus.']);
+        }
+
         // Authorization check
         if (!Hash::check($request->input('password'), $request->user()->password)) {
             return back()->with('notif', ['type' => 'danger', 'message' => 'Your password is wrong.']);
@@ -284,7 +295,6 @@ class StandController extends Controller
         FoodsIncome::where('category', 'stand income')->where('category_id', $id)->delete();
 
         // delete stand
-        $stand = Stand::find($id);
         $name = $stand->name;
         $stand->delete();
 
@@ -401,83 +411,160 @@ class StandController extends Controller
      */
     public function insertStandExpense(Request $request, $id)
     {
-        $request->flash();
-        // Validating data
-        $request->validate([
-            'name' => ['required', 'string'],
-            'price' => ['required', 'integer'],
-            'qty' => ['required', 'integer'],
-            'unit' => ['required', 'string'],
-            'reciept' => [!$request->input('same_receipt_check') ? File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024) : ''],
-            'receipt_same' => [$request->input('same_receipt_check') ? 'integer' : ''],
-        ]);
-        $auth_user = Auth::user();
-        $stand = Stand::find($id);
-        if ($stand->cashier->contains('cashier_id', $auth_user->id)) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not cashier in Stand (' . $stand->pic->name . '). Only cashier can add transaction.']);
-        }
-        $last = StandExpense::orderBy('id', 'desc')->first();
-        // A stand may not have any previous expenses yet. Start receipt numbering at 1.
-        $last_id = $last?->id ?? 0;
-        if (!$request->input('same_receipt_check')) {
-            // Format receipt file
-            $receipt = $request->file('reciept');
-            // create new manager instance with desired driver
-            $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
-            $manager = new ImageManager($driver);
+        $user = $request->user();
+        abort_unless($user, 401);
 
-            // read receipt image
-            $receipt_image = $manager->read($receipt->getRealPath());
-            // encod jpeg data
-            $receipt_encoded = $receipt_image->toWebp(60);
-            // Format receipt name
-            // Correct filename generation: ensure arithmetic before concatenation and add underscore separator
-            $reciept_name = 'SE' . $id . '_' . ($last_id + 1) . '_receipt.webp';
-            // Always use google disk for receipt storage (unified across envs)
-            Storage::disk('google')->put('images/receipt/stand/expense/' . $reciept_name, $receipt_encoded);
-            // Also save to public disk for local environment previews and reliability
-            Storage::disk('public')->put('images/receipt/stand/expense/' . $reciept_name, $receipt_encoded);
-        } else {
-            $reciept_name = StandExpense::find($request->input('receipt_same'))->reciept;
+        $stand = Stand::with('production')->find($id);
+        if (!$stand) {
+            return redirect()->route('food.stand')->with('notif', [
+                'type' => 'warning',
+                'message' => 'Stand tidak ditemukan. Silakan pilih stand yang masih tersedia.',
+            ]);
         }
-        $total_price =  $request->input('qty') *  $request->input('price');
-        $data = [
-            'stand_id' => $id,
-            'name' => $request->input('name'),
-            'price' => $request->input('price'),
-            'qty' => $request->input('qty'),
-            'unit' => $request->input('unit'),
-            'total_price' => $total_price,
-            'reciept' => $reciept_name,
-            'updated_at' => now(),
-            'created_at' => now()
-        ];
-        // sucees insert
-        $standExpense = StandExpense::create($data);
-        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'New stand expense item has been added.']);
+
+        $canAddExpense = is_super_admin($user)
+            || $user->canPerform('stands.manage')
+            || $stand->production->contains('id', $user->id);
+        abort_unless($canAddExpense, 403, 'Anda tidak memiliki akses untuk menambahkan pengeluaran pada stand ini.');
+
+        $reuseReceipt = $request->boolean('same_receipt_check');
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'price' => ['required', 'integer', 'min:1'],
+            'qty' => ['required', 'integer', 'min:1'],
+            'unit' => ['required', 'string', 'max:50'],
+            'same_receipt_check' => ['nullable', 'boolean'],
+            'reciept' => [
+                Rule::requiredIf(!$reuseReceipt),
+                'nullable',
+                File::types(['jpg', 'jpeg', 'png', 'webp'])->max(5 * 1024),
+            ],
+            'receipt_same' => [
+                Rule::requiredIf($reuseReceipt),
+                'nullable',
+                'integer',
+                Rule::exists('stand_expense_item', 'id')->where(fn ($query) => $query
+                    ->where('stand_id', $stand->id)
+                    ->whereNotNull('reciept')
+                    ->whereNull('deleted_at')),
+            ],
+        ], [
+            'reciept.required' => 'Foto struk wajib diunggah.',
+            'reciept.max' => 'Ukuran foto struk maksimal 5 MB.',
+            'receipt_same.required' => 'Pilih pengeluaran yang struknya ingin digunakan kembali.',
+            'receipt_same.exists' => 'Struk yang dipilih tidak tersedia pada stand ini.',
+        ]);
+
+        if ($reuseReceipt) {
+            $sourceExpense = StandExpense::where('stand_id', $stand->id)
+                ->whereKey($validated['receipt_same'])
+                ->whereNotNull('reciept')
+                ->firstOrFail();
+            $receiptName = $sourceExpense->reciept;
+        } else {
+            try {
+                $receipt = $request->file('reciept');
+                $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
+                $manager = new ImageManager($driver);
+                $receiptEncoded = $manager->read($receipt->getRealPath())->toWebp(60);
+                $receiptName = 'SE' . $stand->id . '_' . now()->format('YmdHis') . random_int(100000, 999999) . '_receipt.webp';
+                $receiptPath = 'images/receipt/stand/expense/' . $receiptName;
+
+                // Public storage keeps the feature usable if the remote disk is temporarily unavailable.
+                $stored = Storage::disk('public')->put($receiptPath, $receiptEncoded);
+                try {
+                    $stored = Storage::disk('google')->put($receiptPath, $receiptEncoded) || $stored;
+                } catch (\Throwable $exception) {
+                    Log::warning('Stand expense receipt could not be mirrored to Google Drive', [
+                        'stand_id' => $stand->id,
+                        'message' => $exception->getMessage(),
+                    ]);
+                }
+
+                if (!$stored) {
+                    throw new \RuntimeException('Receipt could not be stored.');
+                }
+            } catch (\Throwable $exception) {
+                Log::error('Failed to process stand expense receipt', [
+                    'stand_id' => $stand->id,
+                    'user_id' => $user->id,
+                    'message' => $exception->getMessage(),
+                ]);
+
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['reciept' => 'Foto struk gagal diproses. Gunakan JPG, PNG, atau WebP maksimal 5 MB.']);
+            }
+        }
+
+        StandExpense::create([
+            'stand_id' => $stand->id,
+            'name' => trim($validated['name']),
+            'price' => $validated['price'],
+            'qty' => $validated['qty'],
+            'unit' => trim($validated['unit']),
+            'total_price' => $validated['qty'] * $validated['price'],
+            'reciept' => $receiptName,
+        ]);
+
+        return redirect()->back()->with('notif', [
+            'type' => 'info',
+            'message' => "Pengeluaran '{$validated['name']}' berhasil ditambahkan.",
+        ]);
     }
 
     /**
      * delete StandExpenseItem.
      */
-    public function deleteStandExpenseItem($id)
+    public function deleteStandExpenseItem(Request $request, $id)
     {
-        $expenseItem = StandExpense::find($id);
-        $name = $expenseItem->name;
+        $expenseItem = StandExpense::with(['stand.production'])->find($id);
+        if (!$expenseItem || !$expenseItem->stand) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Data pengeluaran tidak ditemukan.']);
+        }
+
+        $user = $request->user();
         $stand = $expenseItem->stand;
-        if ($expenseItem->financial_id > 0) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You can not delete Expense Item after validated by Financial Officer']);
+        $canDeleteExpense = is_super_admin($user)
+            || $user?->canPerform('stands.manage')
+            || $stand->production->contains('id', $user?->id);
+        abort_unless($canDeleteExpense, 403, 'Anda tidak memiliki akses untuk menghapus pengeluaran ini.');
+
+        if ($expenseItem->operational_id) {
+            return redirect()->back()->with('notif', [
+                'type' => 'warning',
+                'message' => 'Pengeluaran yang sudah divalidasi tidak dapat dihapus. Batalkan validasi terlebih dahulu.',
+            ]);
         }
-        // update necessary data
-        if (StandExpense::where('reciept', '=', $expenseItem->reciept)->get()->count() == 0) {
-            // Always delete from google disk (unified storage)
-            Storage::disk('google')->delete('images/receipt/stand/expense/' . $expenseItem->reciept);
+
+        if ($stand->sale_validation > 0) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Stand sudah ditutup sehingga pengeluaran tidak dapat diubah.']);
         }
-        if ($expenseItem->delete()) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success delete ' . $name . ' from Stand ' . $stand->name . ' Expense Item']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Success delete ' . $name . ' from Stand ' . $stand->name . ' Expense Item']);
+
+        $name = $expenseItem->name;
+        $receiptName = $expenseItem->reciept;
+        $expenseItem->delete();
+
+        $receiptStillUsed = $receiptName && StandExpense::where('reciept', $receiptName)->exists();
+        if ($receiptName && !$receiptStillUsed) {
+            $receiptPath = 'images/receipt/stand/expense/' . $receiptName;
+            foreach (['public', 'google'] as $disk) {
+                try {
+                    Storage::disk($disk)->delete($receiptPath);
+                } catch (\Throwable $exception) {
+                    Log::warning('Could not delete unused stand expense receipt', [
+                        'disk' => $disk,
+                        'path' => $receiptPath,
+                        'message' => $exception->getMessage(),
+                    ]);
+                }
+            }
         }
+
+        return redirect()->back()->with('notif', [
+            'type' => 'info',
+            'message' => "Pengeluaran '{$name}' berhasil dihapus dari stand {$stand->name}.",
+        ]);
     }
 
     /**
@@ -485,21 +572,30 @@ class StandController extends Controller
      */
     public function validateExpenseReceipt(Request $request, $id)
     {
-        $auth_user = Auth::user();
-        $stand_expense = StandExpense::find($id);
+        $authUser = $request->user();
+        abort_unless($authUser, 401);
+
+        $stand_expense = StandExpense::with('stand')->find($id);
+        if (!$stand_expense || !$stand_expense->stand) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Data pengeluaran tidak ditemukan.']);
+        }
+
         $stand = $stand_expense->stand;
         if ($stand->sale_validation > 0) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Stand ' . $stand->name . ' sale has been validated. This stand is inactive, You can not change anyting.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => "Stand {$stand->name} sudah ditutup sehingga validasi tidak dapat diubah."]);
         }
-        $valid = !($stand_expense->operational_id > 0);
-        $stand_expense->operational_id = $valid ? $auth_user->id : 0;
+
+        $valid = !$stand_expense->operational_id;
+        $stand_expense->operational_id = $valid ? $authUser->id : null;
+        $stand_expense->save();
         $this->updateStandExpense($stand->id, $valid, $stand_expense->total_price);
-        $validation = $valid ? 'validate' : 'unvalidate';
-        if ($stand_expense->save()) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Succes ' . $validation . ' from Stand ' . $stand->name . ' Expense List.']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to  ' . $validation . ' from Stand ' . $stand->name . ' Expense List.']);
-        }
+
+        return redirect()->back()->with('notif', [
+            'type' => 'info',
+            'message' => $valid
+                ? "Pengeluaran '{$stand_expense->name}' berhasil divalidasi."
+                : "Validasi pengeluaran '{$stand_expense->name}' berhasil dibatalkan.",
+        ]);
     }
 
     /**
@@ -510,28 +606,30 @@ class StandController extends Controller
      */
     public function updateStandExpense(int $id, bool $add, int $new_expense)
     {
-        // retrieve stand and foods expense model
         $stand = Stand::find($id);
-        $foodsExpense = FoodsExpense::where('category_id', '=', $id)->first();
+        if (!$stand) {
+            return null;
+        }
 
-        // determine add/minus expense
-        $new_expense = $add ? $new_expense : $new_expense * (-1);
+        // Recalculate from the source records to prevent totals drifting after retries.
+        $updatedExpense = StandExpense::where('stand_id', $id)
+            ->whereNotNull('operational_id')
+            ->where('operational_id', '>', 0)
+            ->sum('total_price');
 
-        // update current expense with new expense
-        $updated_expense = $stand->expense + $new_expense;
-
-        // set new expense value to model
-        $foodsExpense->price = $updated_expense;
-        $stand->expense = $updated_expense;
+        $foodsExpense = FoodsExpense::firstOrNew([
+            'category' => 'stand expense',
+            'category_id' => $id,
+        ]);
+        $foodsExpense->price = $updatedExpense;
+        $stand->expense = $updatedExpense;
 
         // Recalculate profit using recipe components if available, else fallback
         $recalc = ProfitCalculator::calculateStandProfit($stand->id);
         $stand->profit = $recalc !== null ? $recalc : ($stand->income - $stand->expense);
 
         // save model
-        $stand->updated_at = now();
         $stand->save();
-        $foodsExpense->updated_at = now();
         $foodsExpense->save();
         return BlaterianFoodBalanceController::refreshBalance();
     }
@@ -555,78 +653,105 @@ class StandController extends Controller
      */
     public function insertMenu(Request $request, $id)
     {
-        $request->flash();
         $stand = Stand::find($id);
+        if (!$stand) {
+            return redirect()->route('food.stand')->with('notif', ['type' => 'warning', 'message' => 'Stand tidak ditemukan.']);
+        }
+
+        $user = $request->user();
+        $isProductionOnly = !$user->canPerform('menu.manage');
+        if ($isProductionOnly) {
+            abort_unless(
+                $stand->production()->where('users.id', $user->id)->exists(),
+                403,
+                'Anda tidak ditugaskan pada stand ini.'
+            );
+        }
+
         if ($stand->menu_lock > 0) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You can not add new menu to Stand ' . $stand->name . ' after stand menu locked by Operational Officer.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => "Menu stand {$stand->name} sudah dikunci dan tidak dapat ditambah."]);
         }
         if ($stand->sale_validation > 0) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You can not add new menu to Stand ' . $stand->name . ' after stand income validated by Operational Officer.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => "Stand {$stand->name} sudah ditutup dan tidak dapat diubah."]);
         }
-        // Validating data
-        $integer1 = $request->input('menu_volume_unit') !== null ? 'integer' : '';
-        $integer2 = $request->input('menu_mass_unit') !== null ? 'integer' : '';
-        $string1 = $request->input('menu_volume') !== null ? 'string' : '';
-        $string2 = $request->input('menu_mass') !== null ? 'string' : '';
-        $request->validate([
-            'name' => ['required', 'string'],
-            'price' => ['required', 'integer'],
-            'stock' => ['required', 'integer'],
-            'category' => ['required', 'string'],
-            'food_tag' => ['required', 'array'],
-            'image' => ['nullable', 'file', File::types(['webp', 'jpeg', 'jpg', 'png', 'heic'])->max(5 * 1024), 'dimensions:ratio=1'],
-            'volume' => [Rule::requiredIf($request->input('volume_unit') !== null), $integer1],
-            'volume_unit' => [Rule::requiredIf($request->input('volume') !== null), $string1],
-            'mass' => [Rule::requiredIf($request->input('mass_unit') !== null), $integer2],
-            'mass_unit' => [Rule::requiredIf($request->input('mass') !== null), $string2],
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'price' => ['required', 'integer', 'min:0'],
+            'stock' => ['required', 'integer', 'min:0'],
+            'category' => ['required', 'string', 'max:100'],
+            'food_tag' => ['nullable', 'array'],
+            'food_tag.*' => ['integer', 'distinct', 'exists:food_tag,id'],
+            'image' => ['nullable', File::types(['webp', 'jpeg', 'jpg', 'png'])->image()->max(5 * 1024), 'dimensions:ratio=1'],
+            'volume' => ['nullable', 'numeric', 'min:0'],
+            'volume_unit' => ['nullable', 'required_with:volume', Rule::in(['ml', 'l', 'cc'])],
+            'mass' => ['nullable', 'numeric', 'min:0'],
+            'mass_unit' => ['nullable', 'required_with:mass', Rule::in(['g', 'gr', 'kg'])],
+        ], [
+            'image.dimensions' => 'Gambar menu harus berbentuk persegi (rasio 1:1).',
         ]);
-        // Store image
+
         $data = [
-            'stand_id' => $id,
-            'name' => $request->input('name'),
-            'price' => $request->input('price'),
-            'volume' => $request->input('volume'),
-            'volume_unit' => $request->input('volume_unit'),
-            'mass' => $request->input('mass'),
-            'mass_unit' => $request->input('mass_unit'),
-            'stock' => $request->input('stock'),
-            'category' => $request->input('category'),
-            'updated_at' => now(),
-            'created_at' => now()
+            'stand_id' => $stand->id,
+            'name' => trim($validated['name']),
+            'price' => $validated['price'],
+            'volume' => $validated['volume'] ?? null,
+            'volume_unit' => $validated['volume_unit'] ?? null,
+            'mass' => $validated['mass'] ?? null,
+            'mass_unit' => $validated['mass_unit'] ?? null,
+            'stock' => $validated['stock'],
+            'category' => trim($validated['category']),
+            'workflow_status' => 'draft',
+            'is_published' => false,
         ];
+
         $image = $request->file('image');
         if ($image) {
-            // Checkk for env
-            $disk = config('app.env') === 'production' ? 'google' : 'public';
-            // Format receipt file
-            // create new manager instance with desired driver
-            $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
-            $manager = new ImageManager($driver);
-            // read receipt image
-            $menu_image = $manager->read($image->getRealPath());
-            // encod jpeg data
-            $image_encoded = $menu_image->toWebp(60);
-            // Get last id
-            $last_id = MenuItem::orderBy('id', 'desc')->first()->id;
-            // Format receipt name
-            $image_name =  'M_' . $last_id + 1 . '_' . now()->format('dmyhis') . '.webp';
-            // store reciept file
-            Storage::disk($disk)->put('images/shop/foods/menu/' . $image_name, $image_encoded);
-            $data['image'] =  $image_name;
+            try {
+                $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
+                $imageEncoded = (new ImageManager($driver))->read($image->getRealPath())->toWebp(70);
+                $imageName = 'M_' . $stand->id . '_' . now()->format('YmdHis') . random_int(1000, 9999) . '.webp';
+                $imagePath = 'images/shop/foods/menu/' . $imageName;
+                $stored = Storage::disk('public')->put($imagePath, $imageEncoded);
+                try {
+                    $stored = Storage::disk('google')->put($imagePath, $imageEncoded) || $stored;
+                } catch (\Throwable $exception) {
+                    Log::warning('Menu image could not be mirrored to Google Drive', [
+                        'stand_id' => $stand->id,
+                        'message' => $exception->getMessage(),
+                    ]);
+                }
+                if (!$stored) {
+                    throw new \RuntimeException('Menu image could not be stored.');
+                }
+                $data['image'] = $imageName;
+            } catch (\Throwable $exception) {
+                Log::error('Failed to process menu image', ['stand_id' => $stand->id, 'message' => $exception->getMessage()]);
+                return redirect()->back()->withInput()->withErrors(['image' => 'Gambar gagal diproses. Gunakan JPG, PNG, atau WebP persegi maksimal 5 MB.']);
+            }
         }
-        // sucees insert
-        $menuItem = MenuItem::create($data);
-        $menuItem->tags()->attach($request->input('food_tag'));
-        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'New menu item has been added.']);
+
+        $menuItem = DB::transaction(function () use ($data, $validated) {
+            $menuItem = MenuItem::create($data);
+            if (!empty($validated['food_tag'])) {
+                $menuItem->tags()->attach($validated['food_tag']);
+            }
+            return $menuItem;
+        });
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => "Menu '{$menuItem->name}' berhasil ditambahkan."]);
     }
 
     /**
      * lock Menu Item.
      */
-    public function lockMenu($id)
+    public function lockMenu(Request $request, $id)
     {
-        $auth_user = Auth::user();
+        $auth_user = $request->user();
         $stand = Stand::find($id);
+        if (!$stand) {
+            return redirect()->route('food.stand')->with('notif', ['type' => 'warning', 'message' => 'Stand tidak ditemukan.']);
+        }
         if ($stand->sale_validation > 0) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Stand ' . $stand->name . ' sale has been validated. This stand is inactive, You can not change anyting.']);
         }
@@ -646,6 +771,9 @@ class StandController extends Controller
     public function deleteMenu($id)
     {
         $menu_item = MenuItem::find($id);
+        if (!$menu_item || !$menu_item->stand) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Menu tidak ditemukan.']);
+        }
         $name = $menu_item->name;
         $stand = $menu_item->stand;
         if ($stand->sale_validation > 0) {
@@ -658,11 +786,16 @@ class StandController extends Controller
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You can not delete ' . $name . ' from Stand ' . $stand->name . ' Menu. This menu have sales.']);
         }
         $menu_item->tags()->detach();
-        // Checkk for env
-        $disk = config('app.env') === 'production' ? 'google' : 'public';
-        // store reciept file
-        Storage::disk($disk)->delete('images/shop/foods/menu/' . $menu_item->image);
-        $data['image'] =  $menu_item->image;
+        if ($menu_item->image) {
+            $imagePath = 'images/shop/foods/menu/' . $menu_item->image;
+            foreach (['public', 'google'] as $disk) {
+                try {
+                    Storage::disk($disk)->delete($imagePath);
+                } catch (\Throwable $exception) {
+                    Log::warning('Could not delete menu image', ['disk' => $disk, 'path' => $imagePath]);
+                }
+            }
+        }
         if ($menu_item->delete()) {
             return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Succes delete ' . $name . ' from Stand ' . $stand->name . ' Menu.']);
         } else {
@@ -676,6 +809,9 @@ class StandController extends Controller
     public function refreshProfit($stand_id)
     {
         $stand = Stand::find($stand_id);
+        if (!$stand) {
+            return redirect()->route('food.stand')->with('notif', ['type' => 'warning', 'message' => 'Stand tidak ditemukan.']);
+        }
         // Attempt detailed profit first
         $detailed = ProfitCalculator::calculateStandProfit($stand_id);
         if ($detailed !== null) {
@@ -762,32 +898,57 @@ class StandController extends Controller
     function updateImage(Request $request, $id)
     {
         $request->validate([
-            'image' => ['required', File::types(['webp', 'jpeg', 'jpg', 'png', 'heic'])->max(5 * 1024), 'dimensions:ratio=1'],
+            'image' => ['required', File::image()->max(5 * 1024), 'dimensions:ratio=1'],
+        ], [
+            'image.dimensions' => 'Gambar menu harus berbentuk persegi (rasio 1:1).',
         ]);
         $menu = MenuItem::find($id);
         if (!$menu) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Menu item is not found. Please try again or ask IT Support.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Menu tidak ditemukan.']);
         }
-        // Checkk for env
-        $disk = config('app.env') === 'production' ? 'google' : 'public';
-        if ($menu->image) {
-            Storage::disk($disk)->delete('images/shop/foods/menu/' . $menu->image);
+
+        try {
+            $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
+            $imageEncoded = (new ImageManager($driver))
+                ->read($request->file('image')->getRealPath())
+                ->toWebp(70);
+            $imageName = 'M_' . $menu->id . '_' . now()->format('YmdHis') . random_int(1000, 9999) . '.webp';
+            $imagePath = 'images/shop/foods/menu/' . $imageName;
+            $stored = Storage::disk('public')->put($imagePath, $imageEncoded);
+
+            try {
+                $stored = Storage::disk('google')->put($imagePath, $imageEncoded) || $stored;
+            } catch (\Throwable $exception) {
+                Log::warning('Updated menu image could not be mirrored to Google Drive', [
+                    'menu_id' => $menu->id,
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+
+            if (!$stored) {
+                throw new \RuntimeException('Menu image could not be stored.');
+            }
+        } catch (\Throwable $exception) {
+            Log::error('Failed to update menu image', ['menu_id' => $menu->id, 'message' => $exception->getMessage()]);
+            return redirect()->back()->withErrors(['image' => 'Gambar gagal diproses. Gunakan gambar persegi maksimal 5 MB.']);
         }
-        // Format receipt file
-        $image = $request->file('image');
-        // create new manager instance with desired driver
-        $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
-        $manager = new ImageManager($driver);
-        // read receipt image
-        $menu_image = $manager->read($image->getRealPath());
-        // encod jpeg data
-        $image_encoded = $menu_image->toWebp(60);
-        $image_name = 'M_' . $menu->id . '_' . now()->format('dmyhis') . '.webp';
-        // store reciept file
-        Storage::disk($disk)->put('images/shop/foods/menu/' . $image_name, $image_encoded);
-        $menu->image = $image_name;
+
+        $oldImage = $menu->image;
+        $menu->image = $imageName;
         $menu->save();
-        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Successfully update ' . $menu->name . ' image.']);
+
+        if ($oldImage) {
+            $oldPath = 'images/shop/foods/menu/' . $oldImage;
+            foreach (['public', 'google'] as $disk) {
+                try {
+                    Storage::disk($disk)->delete($oldPath);
+                } catch (\Throwable $exception) {
+                    Log::warning('Could not delete replaced menu image', ['disk' => $disk, 'path' => $oldPath]);
+                }
+            }
+        }
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => "Foto menu '{$menu->name}' berhasil diperbarui."]);
     }
 
     /**

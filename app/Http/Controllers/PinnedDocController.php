@@ -35,7 +35,7 @@ class PinnedDocController extends Controller
         [$activeYear] = $this->activeYearScope();
         $data = $request->validate([
             'title'       => 'required|string|max:255',
-            'document'    => 'nullable|file|max:10240',
+            'document'    => 'nullable|file|mimes:pdf,doc,docx|max:10240',
             'link'        => 'nullable|url',
             'pinned_year' => 'nullable|integer|min:2000|max:2099',
             'type'        => 'nullable|integer',
@@ -63,20 +63,24 @@ class PinnedDocController extends Controller
     {
         $data = $request->validate([
             'title'       => 'required|string|max:255',
-            'document'    => 'nullable|file|max:10240',
+            'document'    => 'nullable|file|mimes:pdf,doc,docx|max:10240',
             'link'        => 'nullable|url',
             'pinned_year' => 'nullable|integer|min:2000|max:2099',
         ]);
 
         if ($request->hasFile('document')) {
-            if ($pinnedDoc->document) Storage::disk('public')->delete($pinnedDoc->document);
+            $oldDocument = $pinnedDoc->document;
             $data['document'] = $request->file('document')->store('documents/pinned', 'public');
             $pinnedDoc->update(['document' => $data['document']]);
+
+            if ($oldDocument && $oldDocument !== $data['document']) {
+                Storage::disk('public')->delete($oldDocument);
+            }
         }
 
         $pinnedDoc->update([
             'title' => $data['title'],
-            'link' => $data['link'] ?? $pinnedDoc->link,
+            'link' => $data['link'] ?? null,
             'pinned_year' => $data['pinned_year'],
         ]);
 
@@ -85,8 +89,12 @@ class PinnedDocController extends Controller
 
     public function destroy(Attachment $pinnedDoc)
     {
-        if ($pinnedDoc->document) Storage::disk('public')->delete($pinnedDoc->document);
+        $document = $pinnedDoc->document;
         $pinnedDoc->delete();
+
+        if ($document) {
+            Storage::disk('public')->delete($document);
+        }
         return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Pinned document removed']);
     }
 }

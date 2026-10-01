@@ -92,7 +92,11 @@ function safeNameLabel(option) {
     return '';
 }
 
+const route = (name, params = {}) => window.route(name, params);
 const auth_user = usePage().props.auth.user;
+const user_capabilities = computed(() => auth_user?.capabilities || []);
+const has_capability = (capability) =>
+    user_capabilities.value.includes("*") || user_capabilities.value.includes(capability);
 const title = ref(stand.value?.name || 'Stand Detail');
 const modalConfirmationRef = ref(null);
 const modalAlertNotificationRef = ref(null);
@@ -108,8 +112,10 @@ const modalDeleteStand = ref(null);
 const modalAddMenu = ref(null);
 const modalAddStock = ref(null);
 const modalAddExpense = ref(null);
+const fileAddExpenseReceipt = ref(null);
 const modalIncomeDetail = ref(null);
 const modalEditMenuImage = ref(null);
+const fileAddMenuImageRef = ref(null);
 const fileEditMenuImageRef = ref(null);
 const modalExpenseReceipt = ref(null);
 const stand_status = computed(() => {
@@ -122,6 +128,12 @@ const stand_status = computed(() => {
         return "Waiting for menu lock";
     }
 });
+const stand_status_label = computed(() => ({
+    Active: "Aktif",
+    Inactive: "Selesai",
+    "Waiting for menu lock": "Menunggu menu dikunci",
+    "Loading...": "Memuat...",
+}[stand_status.value] || stand_status.value));
 const stand_type = [
     { value: 0, name: "Live" },
     { value: 1, name: "Pre-Order" },
@@ -166,8 +178,29 @@ const is_production = computed(() => {
         (production) => production.id == auth_user.id
     ) || false;
 });
+const can_manage_stand = computed(() => has_capability("stands.manage"));
+const can_assign_team = computed(() => has_capability("stand.assign"));
+const can_open_operating_panel = computed(() => has_capability("operations.manage"));
+const can_add_expense = computed(() => can_manage_stand.value || is_production.value);
+const can_create_menu = computed(() =>
+    has_capability("menu.manage") || (has_capability("menu.create") && is_production.value)
+);
+const can_lock_menu = computed(() =>
+    has_capability("stand.validate") || has_capability("menu.manage")
+);
+const can_validate_stand = computed(() => has_capability("stand.validate"));
+const can_open_cashier = computed(() => is_cashier.value);
+const has_menu_items = computed(() => Object.values(menu_category.value).some((items) => items?.length));
 const food_tags = computed(() => props.food_tag_list || []);
 const category_options = computed(() => props.all_categories || []);
+const reusable_receipts = computed(() =>
+    expense_list.value.filter((expense) => expense?.id && expense?.reciept)
+);
+const add_expense_total = computed(() => {
+    const price = Number(form_add_expense.price) || 0;
+    const quantity = Number(form_add_expense.qty) || 0;
+    return price * quantity;
+});
 
 const shop_status = computed(() => {
     if (!props.stand) return "close";
@@ -210,7 +243,7 @@ const form_filter_income = useForm({
 const form_add_menu = useForm({
     name: null,
     category: null,
-    food_tag: null,
+    food_tag: [],
     price: null,
     stock: null,
     volume: null,
@@ -581,6 +614,26 @@ function showAddExpenseModal(is_show) {
     }
 }
 
+function resetAddExpenseForm() {
+    form_add_expense.reset();
+    form_add_expense.clearErrors();
+    if (fileAddExpenseReceipt.value) {
+        fileAddExpenseReceipt.value.value = "";
+    }
+}
+
+function handleReuseReceiptToggle() {
+    form_add_expense.clearErrors("reciept", "receipt_same");
+    if (form_add_expense.same_receipt_check) {
+        form_add_expense.reciept = null;
+        if (fileAddExpenseReceipt.value) {
+            fileAddExpenseReceipt.value.value = "";
+        }
+    } else {
+        form_add_expense.receipt_same = null;
+    }
+}
+
 function showIncomeDetailModal(is_show) {
     if (modalIncomeDetail.value == null) {
         const modal = document.getElementById("incomeDetailModal");
@@ -675,7 +728,8 @@ function handleAddMenu() {
         onSuccess: () => {
             showAddMenuModal(false);
             form_add_menu.reset();
-            toastNotifRef.value.showToast("info", "Menu added successfully");
+            if (fileAddMenuImageRef.value) fileAddMenuImageRef.value.value = "";
+            toastNotifRef.value?.showToast("info", "Menu berhasil ditambahkan");
         },
         onError: (e) => {
             for (let key in e) {
@@ -707,7 +761,8 @@ function handleEditMenuImage() {
 }
 
 const handleFileUploadMenuImage = (event) => {
-    form_add_menu.image = event.target.files[0];
+    form_add_menu.image = event.target.files?.[0] || null;
+    form_add_menu.clearErrors("image");
 };
 
 const handleFileEditMenuImage = (event) => {
@@ -729,7 +784,7 @@ function handleAddStock() {
     if (!props.stand?.id) return;
     form_add_stock.id = selected_stock.value?.id;
     form_add_stock.request_id = crypto.randomUUID();
-    form_add_stock.post(window.route("stand.menu.stock.update"), {
+    form_add_stock.post(route("stand.menu.stock.update"), {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
@@ -752,10 +807,8 @@ function handleAddExpense() {
         preserveState: true,
         onSuccess: () => {
             showAddExpenseModal(false);
-            form_add_expense.reset();
-            toastNotifRef.value.showToast("info", "Expense added successfully");
-            // Force reload to be 100% sure props are fresh
-            router.reload({ only: ['stand'] });
+            resetAddExpenseForm();
+            toastNotifRef.value?.showToast("info", "Pengeluaran berhasil ditambahkan");
         },
         onError: (e) => {
             for (let key in e) {
@@ -843,7 +896,8 @@ function handleFilterIncome() {
 }
 
 function handleFileAddExpenseReceipt(event) {
-    form_add_expense.reciept = event.target.files[0];
+    form_add_expense.reciept = event.target.files?.[0] || null;
+    form_add_expense.clearErrors("reciept");
 }
 
 function handleSetProductionStaff() {
@@ -978,7 +1032,6 @@ const printReceipt = async () => {
 const isLargeScreen = ref(window.innerWidth >= 768);
 const handleResize = () => {
     isLargeScreen.value = window.innerWidth >= 768;
-    window.addEventListener("resize", handleResize);
 };
 
 onMounted(() => {
@@ -1030,8 +1083,7 @@ onUnmounted(() => {
 watch(
     () => props.notif,
     (newValue) => {
-        const notification = newValue;
-        toastNotifRef.value.showToast(notification.type, notification.message);
+        if (newValue) toastNotifRef.value?.showToast(newValue.type, newValue.message);
     }
 );
 </script>
@@ -1045,10 +1097,10 @@ watch(
         <ModalAlertNotification ref="modalAlertNotificationRef" />
         <template #header>
             <a
-                :href="`/seeo/staff/blaterian/foods/stand`"
+                :href="route('food.stand')"
                 class="bg-opacity-0 text-decoration-none text-primary-emphasis"
             >
-                <span class="fw-light">{{ "Stand" }}</span>
+                <span class="fw-light">Manajemen Stand</span>
             </a>
             <span class="ms-2">{{ "/" }}</span>
             {{ title }}
@@ -1061,39 +1113,37 @@ watch(
                     <div class="card bg-white p-3">
                         <div class="d-flex ">
                             <span class="h5 text-primary-emphasis me-auto">
-                                <i class="bi bi-shop me-2"></i>{{ "Stand " + (stand?.name || 'Unknown') }}
+                                <i class="bi bi-shop me-2"></i>{{ stand?.name || 'Stand tanpa nama' }}
                             </span>
                             <div class="ms-auto d-flex gap-2">
                                 <button
                                     @click="showWorkflowGuideModal(true)"
-                                    class="btn btn-sm btn-outline-info border-0 py-0 mb-auto"
-                                    title="Workflow Guide"
+                                    class="btn btn-sm btn-outline-info rounded-pill px-3 mb-auto"
+                                    title="Buka panduan pengelolaan stand"
                                 >
-                                    <i class="bi bi-lightbulb-fill"></i>
+                                    <i class="bi bi-lightbulb-fill me-1"></i><span class="d-none d-md-inline">Panduan</span>
                                 </button>
                                 <a
-                                    v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
-                                    href="/seeo/staff/operating/panel"
-                                    class="btn btn-sm btn-outline-primary border-0 py-0 mb-auto"
-                                    title="Go to Operating Panel"
+                                    v-if="can_open_operating_panel"
+                                    :href="route('operating.panel')"
+                                    class="btn btn-sm btn-outline-primary rounded-pill px-3 mb-auto"
+                                    title="Buka panel operasional"
                                 >
-                                    <i class="bi bi-box-arrow-up-right"></i>
+                                    <i class="bi bi-box-arrow-up-right me-1"></i><span class="d-none d-xl-inline">Panel Operasional</span>
                                 </a>
                                 <button
-                                    v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id"
+                                    v-if="can_manage_stand"
                                     @click="() => { showEditStandModal(true); form_edit_stand.name = stand?.name || null; form_edit_stand.pic_id = stand?.pic_id || null; form_edit_stand.place = stand?.place || null; form_edit_stand.date = stand?.date || null; form_edit_stand.type = stand?.type || null; }"
-                                    class="btn btn-sm btn-outline-secondary border-0 py-0 mb-auto"
+                                    class="btn btn-sm btn-outline-secondary rounded-pill px-3 mb-auto"
                                 >
-                                    <span class="d-none d-lg-block">Edit</span>
-                                    <i class="bi bi-pencil d-lg-none"></i>
+                                    <i class="bi bi-pencil me-1"></i><span>Edit</span>
                                 </button>
                                 <button
-                                    v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
+                                    v-if="can_manage_stand"
                                     @click="showDeleteStandModal(true)"
-                                    class="btn btn-sm btn-outline-danger border-0 py-0 mb-auto"
+                                    class="btn btn-sm btn-outline-danger rounded-pill px-3 mb-auto"
                                 >
-                                    <span class="d-none d-lg-block">Delete</span>
-                                    <i class="bi bi-trash3 d-lg-none"></i>
+                                    <i class="bi bi-trash3 me-1"></i><span>Hapus</span>
                                 </button>
                             </div>
                         </div>
@@ -1102,12 +1152,12 @@ watch(
                                 <span
                                     class="d-block text-secondary"
                                     style="font-size: 0.8rem"
-                                    >{{ "Person In Charge" }}</span
+                                    >Penanggung jawab</span
                                 >
                                 <div class="scroll-x-hidden">
                                     <span
                                         class="d-block text-primary-emphasis text-nowrap"
-                                        >{{ stand.pic?.name || 'Not Assigned' }}</span
+                                        >{{ stand.pic?.name || 'Belum ditentukan' }}</span
                                     >
                                 </div>
                             </div>
@@ -1126,7 +1176,7 @@ watch(
                                                     ? 'text-success'
                                                     : 'text-primary-emphasis')
                                             "
-                                            >{{ stand_status }}
+                                            >{{ stand_status_label }}
                                         </span>
                                     </div>
                                     <span
@@ -1144,7 +1194,7 @@ watch(
                                 <span
                                     class="d-block text-secondary"
                                     style="font-size: 0.8rem"
-                                    >{{ "Place" }}</span
+                                    >Lokasi</span
                                 >
                                 <div class="scroll-x-hidden">
                                     <span
@@ -1157,7 +1207,7 @@ watch(
                                 <span
                                     class="d-block text-secondary"
                                     style="font-size: 0.8rem"
-                                    >{{ "Date" }}</span
+                                    >Tanggal</span
                                 >
                                 <div class="scroll-x-hidden">
                                     <span
@@ -1170,7 +1220,7 @@ watch(
                                 <span
                                     class="d-block text-secondary"
                                     style="font-size: 0.8rem"
-                                    >{{ "Type" }}</span
+                                    >Tipe penjualan</span
                                 >
                                 <div class="scroll-x-hidden">
                                     <span
@@ -1179,7 +1229,7 @@ watch(
                                             stand_type.find(
                                                 (item) =>
                                                     item.value == stand.type
-                                            )?.name || 'Unknown Type'
+                                            )?.name || 'Belum ditentukan'
                                         }}</span
                                     >
                                 </div>
@@ -1188,7 +1238,7 @@ watch(
                                 <span
                                     class="d-block text-secondary"
                                     style="font-size: 0.8rem"
-                                    >{{ "Profit" }}</span
+                                    >Keuntungan</span
                                 >
                                 <div class="scroll-x-hidden">
                                     <span
@@ -1201,7 +1251,7 @@ watch(
                                 <span
                                     class="d-block text-secondary"
                                     style="font-size: 0.8rem"
-                                    >{{ "Income" }}</span
+                                    >Pemasukan</span
                                 >
                                 <div class="scroll-x-hidden">
                                     <span
@@ -1214,7 +1264,7 @@ watch(
                                 <span
                                     class="d-block text-secondary"
                                     style="font-size: 0.8rem"
-                                    >{{ "Expense" }}</span
+                                    >Pengeluaran</span
                                 >
                                 <div class="scroll-x-hidden">
                                     <span
@@ -1237,36 +1287,20 @@ watch(
                                 @click="showTab(1)"
                                 class="btn btn-sm btn-outline-primary border-0 w-100 me-2"
                             >
-                                <span v-if="active_tab == 1">{{ "Menu" }}</span>
-                                <i
-                                    class="bi bi-list-ul"
-                                    v-if="active_tab !== 1"
-                                ></i>
+                                <i class="bi bi-list-ul me-1"></i>Menu
                             </button>
                             <button
                                 @click="showTab(2)"
                                 class="btn btn-sm btn-outline-primary border-0 w-100 me-2"
                             >
-                                <span v-if="active_tab == 2">{{
-                                    "Expense"
-                                }}</span>
-                                <i
-                                    class="bi bi-cart4"
-                                    v-if="active_tab !== 2"
-                                ></i>
+                                <i class="bi bi-cart4 me-1"></i>Pengeluaran
                             </button>
 
                             <button
                                 @click="showTab(3)"
                                 class="btn btn-sm btn-outline-primary border-0 w-100 me-2"
                             >
-                                <span v-if="active_tab == 3">{{
-                                    "Income"
-                                }}</span>
-                                <i
-                                    class="bi bi-graph-up"
-                                    v-if="active_tab !== 3"
-                                ></i>
+                                <i class="bi bi-graph-up me-1"></i>Pemasukan
                             </button>
                         </div>
                     </div>
@@ -1292,22 +1326,22 @@ watch(
                                     ></i
                                     >{{ "Menu" }}</span
                                 >
-                                <div class="ms-auto me-2 d-flex">
+                                <div class="ms-auto me-2 d-flex gap-1">
                                     <div
                                         @click="
                                             (stand_status !== 'Waiting for menu lock' && auth_user.roles_id != 99)
                                                 ? stand_status == 'Active'
                                                     ? alertNotification(
-                                                          'You can`t change menu list after being locked by Operational Staff.'
+                                                          'Daftar menu sudah dikunci. Buka kunci terlebih dahulu untuk mengubahnya.'
                                                       )
                                                     : alertNotification(
-                                                          'This stand is inactive. All feature are locked.'
+                                                          'Stand sudah selesai. Semua fitur perubahan telah dikunci.'
                                                       )
                                                 : ''
                                         "
                                     >
                                         <button
-                                            v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id"
+                                            v-if="can_create_menu"
                                             @click="
                                                 (stand_status == 'Waiting for menu lock' || auth_user.roles_id == 99)
                                                     ? showAddMenuModal(true)
@@ -1319,15 +1353,15 @@ watch(
                                                     ? 'secondary disabled'
                                                     : 'primary')
                                             "
-                                            title="Add Menu"
+                                            title="Tambah menu"
                                         >
-                                            <i class="bi bi-plus-lg"></i>
+                                            <i class="bi bi-plus-lg me-1"></i>Tambah
                                         </button>
                                         <a
-                                            v-if="auth_user.roles_id == 10 || auth_user.roles_id == 99"
-                                            :href="window.route('staff.sales-distribution.index')"
+                                            v-if="has_capability('sales.manage')"
+                                            :href="route('staff.sales-distribution.index')"
                                             class="btn btn-sm border-0 py-0 btn-outline-primary ms-1"
-                                            title="Go to Sales Distribution Panel"
+                                            title="Buka panel distribusi penjualan"
                                         >
                                             <i class="bi bi-box-arrow-up-right"></i>
                                         </a>
@@ -1349,21 +1383,20 @@ watch(
                                         "
                                     >
                                         <button
-                                            v-if="auth_user.roles_id == 3 || auth_user.roles_id == 10 || auth_user.roles_id == 99"
+                                            v-if="can_lock_menu"
                                             @click="
-                                                menu_category
+                                                has_menu_items
                                                     ? stand_status == 'Inactive'
                                                         ? ''
                                                         : confirmation(
                                                               `/seeo/staff/food/stand/menu/lock/${stand.id}`,
-                                                              'Are you sure want to ' +
-                                                                  (stand.menu_lock > 0 ? 'unlock' : 'lock') +
-                                                                  ' the menu list of Stand ' +
-                                                                  (stand?.name || '') +
-                                                                  '?'
+                                                              'Yakin ingin ' +
+                                                                  (stand.menu_lock > 0 ? 'membuka kunci' : 'mengunci') +
+                                                                  ' daftar menu stand ' +
+                                                                  (stand?.name || '') + '?'
                                                           )
                                                     : alertNotification(
-                                                          'Please create a menu'
+                                                          'Tambahkan minimal satu menu terlebih dahulu.'
                                                       )
                                             "
                                             :class="
@@ -1381,6 +1414,7 @@ watch(
                                                         : 'unlock')
                                                 "
                                             ></i>
+                                            <span class="ms-1">{{ stand.menu_lock > 0 ? 'Buka' : 'Kunci' }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1495,12 +1529,13 @@ watch(
                                                         </div>
                                                         <div v-if="auth_user.roles_id == 99 || auth_user.roles_id == 10 || is_production">
                                                             <button
-                                                                class="btn btn-sm btn-outline-success border-0 p-1"
+                                                                class="btn btn-sm btn-success px-2 py-1 d-inline-flex align-items-center gap-1"
                                                                 @click="showAttachRecipeModal(true, item)"
                                                                 :disabled="stand.sale_validation > 0 && auth_user.roles_id != 99"
-                                                                title="Set Ingredients"
+                                                                title="Atur bahan, takaran, dan HPP menu"
                                                             >
-                                                                <i class="bi bi-clipboard-plus" style="font-size: 1.1rem;"></i>
+                                                                <i class="bi bi-calculator"></i>
+                                                                <span>Atur HPP</span>
                                                             </button>
                                                         </div>
                                                         <div v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id">
@@ -1542,10 +1577,10 @@ watch(
                                     <i
                                         class="bi bi-cart4 me-2 d-none d-lg-inline"
                                     ></i
-                                    >{{ "Expenses" }}</span
+                                    >Pengeluaran</span
                                 >
                                 <div
-                                    class="ms-auto me-2"
+                                    class="ms-auto me-2 d-flex gap-1"
                                     @click="
                                         stand_status == 'Inactive'
                                             ? alertNotification(
@@ -1555,11 +1590,7 @@ watch(
                                     "
                                 >
                                     <button
-                                        v-if="
-                                            auth_user.roles_id == 99 || stand.production.some(
-                                                (staff) => staff.id == auth_user.id
-                                            )
-                                        "
+                                        v-if="can_add_expense"
                                         @click="
                                             stand_status == 'Inactive'
                                                 ? ''
@@ -1571,11 +1602,12 @@ watch(
                                                 ? 'secondary disabled '
                                                 : 'primary')
                                         "
-                                        title="Add Expense"
+                                        title="Tambah pengeluaran"
                                     >
-                                        <i class="bi bi-plus-lg"></i>
+                                        <i class="bi bi-plus-lg me-1"></i>Tambah
                                     </button>
                                     <button
+                                        v-if="can_assign_team"
                                         @click="
                                             (stand_status == 'Inactive' && auth_user.roles_id != 99)
                                                 ? ''
@@ -1587,15 +1619,15 @@ watch(
                                                 ? 'secondary disabled '
                                                 : 'primary')
                                         "
-                                        title="Production Staff"
+                                        title="Atur tim produksi"
                                     >
-                                        <i class="bi bi-people"></i>
+                                        <i class="bi bi-people me-1"></i>Tim
                                     </button>
                                     <a
-                                        v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
-                                        href="/seeo/staff/operating/panel"
+                                        v-if="can_open_operating_panel"
+                                        :href="route('operating.panel')"
                                         class="btn btn-sm border-0 py-0 btn-outline-primary ms-1"
-                                        title="Go to Operating Panel"
+                                        title="Buka panel operasional"
                                     >
                                         <i class="bi bi-box-arrow-up-right"></i>
                                     </a>
@@ -1606,15 +1638,15 @@ watch(
                                     <input
                                         type="text"
                                         class="form-control form-control-sm py-0"
-                                        placeholder="Search"
-                                        aria-label="Search"
-                                        aria-describedby="basic-addon1"
+                                        placeholder="Cari pengeluaran..."
+                                        aria-label="Cari pengeluaran"
+                                        aria-describedby="expense-search-addon"
                                         v-model="form_filter_expense.name"
                                         @input="handleFilterExpense"
                                     />
                                     <span
                                         class="input-group-text py-0"
-                                        id="basic-addon1"
+                                        id="expense-search-addon"
                                         ><i
                                             class="bi bi-search"
                                             style="font-size: 0.9rem"
@@ -1629,7 +1661,7 @@ watch(
                                 >
                                     <i class="bi bi-exclamation-triangle"></i>
                                     {{
-                                        "Expenses must be validated to update stand expense."
+                                        "Pengeluaran perlu divalidasi agar masuk ke total stand."
                                     }}
                                 </span>
                             </div>
@@ -1638,8 +1670,24 @@ watch(
                             >
                                 <ul class="list-group list-group-flush">
                                     <li
+                                        v-if="expense_list.length === 0"
+                                        class="list-group-item text-center py-4 text-secondary"
+                                    >
+                                        <i class="bi bi-receipt d-block fs-3 mb-2"></i>
+                                        <span class="d-block">Belum ada pengeluaran.</span>
+                                        <button
+                                            v-if="can_add_expense && stand_status != 'Inactive'"
+                                            type="button"
+                                            class="btn btn-sm btn-primary mt-2"
+                                            @click="showAddExpenseModal(true)"
+                                        >
+                                            Tambah Pengeluaran Pertama
+                                        </button>
+                                    </li>
+                                    <li
                                         class="list-group-item list-group-item-action px-2 py-1"
                                         v-for="item in expense_list"
+                                        :key="item.id"
                                     >
                                         <div class="d-block">
                                             <div class="scroll-x-hidden mb-1">
@@ -1668,14 +1716,14 @@ watch(
                                                         'btn btn-sm border-0 ' +
                                                         ((stand?.sale_validation || 0) > 0 ? 'text-body-tertiary' : 'btn-outline-secondary')
                                                     "
-                                                    v-if="is_production"
+                                                    v-if="can_add_expense"
                                                     @click="() => {
                                                         if ((stand?.sale_validation || 0) > 0) {
-                                                            alertNotification('This stand is inactive. All feature are disabled.');
+                                                            alertNotification('Stand sudah selesai. Pengeluaran tidak dapat diubah.');
                                                         } else {
                                                             confirmation(
                                                                 `/seeo/staff/food/stand/expense/delete/${item.id}`,
-                                                                'Are you sure want to delete ' + (item?.name || '') + ' from Stand ' + (stand?.name || '') + '?'
+                                                                'Yakin ingin menghapus ' + (item?.name || '') + ' dari pengeluaran stand ' + (stand?.name || '') + '?'
                                                             );
                                                         }
                                                     }"
@@ -1706,21 +1754,21 @@ watch(
                         <div class="card bg-white p-2">
                             <div class="d-flex mb-2">
                                 <span class="text-primary ms-2">
-                                    <i class="bi bi-graph-up me-2 d-none d-lg-inline"></i>{{ "Income" }}
+                                    <i class="bi bi-graph-up me-2 d-none d-lg-inline"></i>Pemasukan
                                 </span>
                                 <div class="ms-auto me-2 d-flex gap-1">
                                     <!-- Validate Stand Button for Super Admin & Operating -->
                                     <button
-                                        v-if="(auth_user.roles_id == 99 || auth_user.roles_id == 3) && stand.sale_validation == 0"
-                                        @click="confirmation(`/seeo/staff/food/stand/sales/validate/${stand.id}`, 'Finalize and validate all sales for this stand?')"
+                                        v-if="can_validate_stand && stand.sale_validation == 0"
+                                        @click="confirmation(`/seeo/staff/food/stand/sales/validate/${stand.id}`, 'Yakin ingin menutup stand dan memfinalkan seluruh penjualan?')"
                                         class="btn btn-sm btn-success border-0 py-0"
-                                        title="Validate Stand Sales"
+                                        title="Tutup dan validasi penjualan stand"
                                     >
-                                        <i class="bi bi-check-all"></i>
+                                        <i class="bi bi-check-all me-1"></i>Tutup
                                     </button>
 
                                     <button
-                                        v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id"
+                                        v-if="can_assign_team"
                                         @click="
                                             (stand_status == 'Inactive' && auth_user.roles_id != 99)
                                                 ? ''
@@ -1732,19 +1780,19 @@ watch(
                                                 ? 'secondary disabled'
                                                 : 'primary')
                                         "
-                                        title="Cashier Staff"
+                                        title="Atur tim kasir"
                                     >
-                                        <i class="bi bi-person-badge"></i>
+                                        <i class="bi bi-person-badge me-1"></i>Tim
                                     </button>
 
                                     <!-- Open Cashier Panel Button -->
                                     <a
-                                        v-if="auth_user.roles_id == 99 || auth_user.id == stand?.pic_id"
-                                        :href="`/seeo/staff/blaterian/foods/cashier/${stand.id}`"
+                                        v-if="can_open_cashier"
+                                        :href="route('food.stand.cashier', { id: stand.id })"
                                         class="btn btn-sm btn-outline-info border-0 py-0"
-                                        title="Open Cashier Panel"
+                                        title="Buka panel kasir"
                                     >
-                                        <i class="bi bi-cart-plus"></i>
+                                        <i class="bi bi-cart-plus me-1"></i>Kasir
                                     </a>
                                 </div>
                             </div>
@@ -1753,15 +1801,15 @@ watch(
                                     <input
                                         type="text"
                                         class="form-control form-control-sm py-0"
-                                        placeholder="Search"
-                                        aria-label="Search"
-                                        aria-describedby="basic-addon1"
+                                        placeholder="Cari pemasukan..."
+                                        aria-label="Cari pemasukan"
+                                        aria-describedby="income-search-addon"
                                         v-model="form_filter_income.name"
                                         @input="handleFilterIncome"
                                     />
                                     <span
                                         class="input-group-text py-0"
-                                        id="basic-addon1"
+                                        id="income-search-addon"
                                         ><i
                                             class="bi bi-search"
                                             style="font-size: 0.9rem"
@@ -2053,82 +2101,6 @@ watch(
         </div>
     </div>
 
-    <!-- Attach Recipe Modal -->
-    <div class="modal fade" id="attachRecipeModal" tabindex="-1" aria-labelledby="attachRecipeModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="attachRecipeModalLabel">Set Ingredients for {{ selected_menu?.name || 'Menu' }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-secondary" style="font-size:0.8rem">Input penggunaan bahan per 1 porsi menu. Hanya bahan yang sudah tervalidasi (operational) ditampilkan.</p>
-                    <div v-if="form_attach_recipe.components.length > 0" class="table-responsive" style="max-height:50vh;">
-                        <table class="table table-sm align-middle">
-                            <thead class="table-light" style="position:sticky; top:0;">
-                                <tr>
-                                    <th style="width:25%">Ingredient</th>
-                                    <th style="width:15%">Unit</th>
-                                    <th style="width:15%">Purchase Cost/Unit</th>
-                                    <th style="width:15%">Qty Purchase</th>
-                                    <th style="width:15%">Used / Portion</th>
-                                    <th style="width:15%">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="comp in form_attach_recipe.components" :key="comp.stand_expense_id">
-                                    <td><span class="text-primary-emphasis d-block fw-medium" :title="comp.name">{{ comp.name }}</span></td>
-                                    <td><span class="text-secondary small">{{ comp.unit }}</span></td>
-                                    <td><span class="text-dark small">{{ formatIDR(comp.price) }}</span></td>
-                                    <td><span class="text-secondary small">{{ comp.qty }}</span></td>
-                                    <td>
-                                        <div class="input-group input-group-sm">
-                                            <input type="number" min="0" step="0.001" class="form-control" v-model.number="comp.quantity_used" />
-                                            <span class="input-group-text">{{ comp.unit }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="small fw-bold text-primary">{{ formatIDR(Math.round(comp.quantity_used * comp.price)) }}</div>
-                                        <button class="btn btn-sm btn-link text-danger p-0 border-0" @click="comp.quantity_used = 0" type="button" title="Clear">
-                                            <i class="bi bi-trash-fill" style="font-size: 0.75rem;"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-light">
-                                <tr>
-                                    <td colspan="4" class="text-end fw-bold">Total Modal / Porsi:</td>
-                                    <td colspan="2" class="text-end fw-bold text-danger">
-                                        {{ formatIDR(form_attach_recipe.components.reduce((acc, curr) => acc + (curr.quantity_used * curr.price), 0)) }}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4" class="text-end fw-bold">Harga Jual:</td>
-                                    <td colspan="2" class="text-end fw-bold text-primary">
-                                        {{ formatIDR(selected_menu?.price || 0) }}
-                                    </td>
-                                </tr>
-                                <tr class="table-success border-top border-2 border-success border-opacity-25">
-                                    <td colspan="4" class="text-end fw-bold">Estimasi Keuntungan / Porsi:</td>
-                                    <td colspan="2" class="text-end fw-bold" :class="(selected_menu?.price || 0) - form_attach_recipe.components.reduce((acc, curr) => acc + (curr.quantity_used * curr.price), 0) >= 0 ? 'text-success' : 'text-danger'">
-                                        {{ formatIDR((selected_menu?.price || 0) - form_attach_recipe.components.reduce((acc, curr) => acc + (curr.quantity_used * curr.price), 0)) }}
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    <div v-else class="text-center py-3">
-                        <span class="text-secondary">Tidak ada expense tervalidasi untuk dijadikan bahan.</span>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary btn-sm" @click="handleAttachRecipe" :disabled="!selected_menu">Save Ingredients</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Edit Menu Modal -->
     <div class="modal fade" id="editMenuModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -2194,7 +2166,7 @@ watch(
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="addMenuModalLabel">
-                        {{ "Add Menu" }}
+                        Tambah Menu Stand
                     </h5>
                     <button
                         type="button"
@@ -2205,22 +2177,26 @@ watch(
                 </div>
                 <div class="modal-body">
                     <form @submit.prevent="handleAddMenu">
+                        <p class="small text-secondary">
+                            Isi data utama menu. Ukuran dan foto bersifat opsional; HPP dapat diatur setelah menu tersimpan.
+                        </p>
                         <div class="mb-3">
                             <label
                                 for="addMenuName"
                                 class="form-label fw-medium"
                             >
-                                {{ "Menu Name" }}
+                                Nama menu <span class="text-danger">*</span>
                             </label>
                             <input
                                 v-model="form_add_menu.name"
                                 type="text"
                                 class="form-control form-control-sm"
                                 id="addMenuName"
+                                placeholder="Contoh: Nasi Ayam Sambal Matah"
                                 required
                             />
                             <InputError
-                                :message="errors.name"
+                                :message="form_add_menu.errors.name"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2229,24 +2205,24 @@ watch(
                                 for="addMenuCategory"
                                 class="form-label fw-medium"
                             >
-                                {{ "Category" }}
+                                Kategori <span class="text-danger">*</span>
                             </label>
                             <v-select
                                 v-model="form_add_menu.category"
-                                :options="[...new Set([...(all_categories || []), 'Main Course', 'Drink', 'Snack', 'Dessert'])]"
+                                :options="[...new Set([...category_options, 'Main Course', 'Drink', 'Snack', 'Dessert'])]"
                                 id="addMenuCategory"
                                 class="basic-single"
                                 :class="{
-                                    'is-invalid': errors.category,
+                                    'is-invalid': form_add_menu.errors.category,
                                 }"
-                                placeholder="Select Category"
+                                placeholder="Pilih atau ketik kategori"
                                 :disabled="
                                     auth_user.roles_id != 99 &&
                                     stand_status !== 'Waiting for menu lock'
                                 "
                             />
                             <InputError
-                                :message="errors.category"
+                                :message="form_add_menu.errors.category"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2255,7 +2231,7 @@ watch(
                                 for="addMenuFoodTag"
                                 class="form-label fw-medium"
                             >
-                                {{ "Food Tag" }}
+                                Tag makanan <span class="text-secondary fw-normal">(opsional)</span>
                             </label>
                             <v-select
                                 v-model="form_add_menu.food_tag"
@@ -2266,16 +2242,16 @@ watch(
                                 class="basic-single"
                                 multiple
                                 :class="{
-                                    'is-invalid': errors.food_tag,
+                                    'is-invalid': form_add_menu.errors.food_tag,
                                 }"
-                                placeholder="Select Food Tag"
+                                placeholder="Pilih tag yang sesuai"
                                 :disabled="
                                     auth_user.roles_id != 99 &&
                                     stand_status !== 'Waiting for menu lock'
                                 "
                             />
                             <InputError
-                                :message="errors.food_tag"
+                                :message="form_add_menu.errors.food_tag"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2284,17 +2260,20 @@ watch(
                                 for="addMenuPrice"
                                 class="form-label fw-medium"
                             >
-                                {{ "Price" }}
+                                Harga jual <span class="text-danger">*</span>
                             </label>
                             <input
                                 v-model="form_add_menu.price"
                                 type="number"
                                 class="form-control form-control-sm"
                                 id="addMenuPrice"
+                                min="0"
+                                step="1"
+                                placeholder="Contoh: 15000"
                                 required
                             />
                             <InputError
-                                :message="errors.price"
+                                :message="form_add_menu.errors.price"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2303,17 +2282,20 @@ watch(
                                 for="addMenuStock"
                                 class="form-label fw-medium"
                             >
-                                {{ "Stock" }}
+                                Stok awal <span class="text-danger">*</span>
                             </label>
                             <input
                                 v-model="form_add_menu.stock"
                                 type="number"
                                 class="form-control form-control-sm"
                                 id="addMenuStock"
+                                min="0"
+                                step="1"
+                                placeholder="Boleh 0"
                                 required
                             />
                             <InputError
-                                :message="errors.stock"
+                                :message="form_add_menu.errors.stock"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2322,7 +2304,7 @@ watch(
                                 for="addMenuVolume"
                                 class="form-label fw-medium"
                             >
-                                {{ "Volume" }}
+                                Volume <span class="text-secondary fw-normal">(opsional)</span>
                             </label>
                             <div class="input-group">
                                 <input
@@ -2330,24 +2312,24 @@ watch(
                                     type="number"
                                     class="form-control form-control-sm"
                                     id="addMenuVolume"
-                                    required
+                                    min="0"
+                                    step="any"
+                                    placeholder="Jumlah"
                                 />
                                 <select
                                     v-model="form_add_menu.volume_unit"
                                     class="form-select form-select-sm"
                                     id="addMenuVolumeUnit"
-                                    required
+                                    :required="form_add_menu.volume !== null && form_add_menu.volume !== ''"
                                 >
-                                    <option value="">{{ "-- Select Unit --" }}</option>
+                                    <option :value="null">Pilih satuan</option>
                                     <option value="ml">ml</option>
                                     <option value="l">l</option>
                                     <option value="cc">cc</option>
-                                    <option value="g">g</option>
-                                    <option value="kg">kg</option>
                                 </select>
                             </div>
                             <InputError
-                                :message="errors.volume"
+                                :message="form_add_menu.errors.volume || form_add_menu.errors.volume_unit"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2356,7 +2338,7 @@ watch(
                                 for="addMenuMass"
                                 class="form-label fw-medium"
                             >
-                                {{ "Mass" }}
+                                Berat <span class="text-secondary fw-normal">(opsional)</span>
                             </label>
                             <div class="input-group">
                                 <input
@@ -2364,21 +2346,24 @@ watch(
                                     type="number"
                                     class="form-control form-control-sm"
                                     id="addMenuMass"
-                                    required
+                                    min="0"
+                                    step="any"
+                                    placeholder="Jumlah"
                                 />
                                 <select
                                     v-model="form_add_menu.mass_unit"
                                     class="form-select form-select-sm"
                                     id="addMenuMassUnit"
-                                    required
+                                    :required="form_add_menu.mass !== null && form_add_menu.mass !== ''"
                                 >
-                                    <option value="">{{ "-- Select Unit --" }}</option>
+                                    <option :value="null">Pilih satuan</option>
+                                    <option value="g">g</option>
                                     <option value="gr">gr</option>
                                     <option value="kg">kg</option>
                                 </select>
                             </div>
                             <InputError
-                                :message="errors.mass"
+                                :message="form_add_menu.errors.mass || form_add_menu.errors.mass_unit"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2387,18 +2372,19 @@ watch(
                                 for="addMenuImage"
                                 class="form-label fw-medium"
                             >
-                                {{ "Image" }}
+                                Foto menu <span class="text-secondary fw-normal">(opsional)</span>
                             </label>
                             <input
-                                ref="fileEditMenuImageRef"
+                                ref="fileAddMenuImageRef"
                                 @change="handleFileUploadMenuImage"
                                 class="form-control form-control-sm"
                                 type="file"
                                 id="addMenuImage"
-                                accept="image/*"
+                                accept="image/jpeg,image/png,image/webp"
                             />
+                            <div class="form-text">Gunakan gambar persegi JPG, PNG, atau WebP maksimal 5 MB.</div>
                             <InputError
-                                :message="errors.image"
+                                :message="form_add_menu.errors.image"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2406,15 +2392,17 @@ watch(
                             <button
                                 type="button"
                                 class="btn btn-secondary btn-sm me-2"
-                                data-bs-dismiss="modal"
+                                @click="showAddMenuModal(false)"
                             >
-                                {{ "Close" }}
+                                Batal
                             </button>
                             <button
                                 type="submit"
                                 class="btn btn-primary btn-sm"
+                                :disabled="form_add_menu.processing"
                             >
-                                {{ "Add Menu" }}
+                                <span v-if="form_add_menu.processing" class="spinner-border spinner-border-sm me-1"></span>
+                                {{ form_add_menu.processing ? "Menyimpan..." : "Simpan Menu" }}
                             </button>
                         </div>
                     </form>
@@ -2514,7 +2502,7 @@ watch(
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="addExpenseModalLabel">
-                        {{ "Add Expense" }}
+                        Tambah Pengeluaran Stand
                     </h5>
                     <button
                         type="button"
@@ -2525,22 +2513,26 @@ watch(
                 </div>
                 <div class="modal-body">
                     <form @submit.prevent="handleAddExpense">
+                        <p class="small text-secondary mb-3">
+                            Catat satu jenis bahan atau kebutuhan per baris. Total akan dihitung otomatis dari harga satuan × jumlah.
+                        </p>
                         <div class="mb-3">
                             <label
                                 for="addExpenseName"
                                 class="form-label fw-medium"
                             >
-                                {{ "Expense Name" }}
+                                Nama bahan/kebutuhan <span class="text-danger">*</span>
                             </label>
                             <input
                                 v-model="form_add_expense.name"
                                 type="text"
                                 class="form-control form-control-sm"
                                 id="addExpenseName"
+                                placeholder="Contoh: Tepung terigu"
                                 required
                             />
                             <InputError
-                                :message="errors.name"
+                                :message="form_add_expense.errors.name"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2549,17 +2541,20 @@ watch(
                                 for="addExpensePrice"
                                 class="form-label fw-medium"
                             >
-                                {{ "Price" }}
+                                Harga satuan <span class="text-danger">*</span>
                             </label>
                             <input
                                 v-model="form_add_expense.price"
                                 type="number"
                                 class="form-control form-control-sm"
                                 id="addExpensePrice"
+                                min="1"
+                                step="1"
+                                placeholder="Contoh: 12000"
                                 required
                             />
                             <InputError
-                                :message="errors.price"
+                                :message="form_add_expense.errors.price"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2568,17 +2563,20 @@ watch(
                                 for="addExpenseQty"
                                 class="form-label fw-medium"
                             >
-                                {{ "Quantity" }}
+                                Jumlah <span class="text-danger">*</span>
                             </label>
                             <input
                                 v-model="form_add_expense.qty"
                                 type="number"
                                 class="form-control form-control-sm"
                                 id="addExpenseQty"
+                                min="1"
+                                step="1"
+                                placeholder="Contoh: 2"
                                 required
                             />
                             <InputError
-                                :message="errors.qty"
+                                :message="form_add_expense.errors.qty"
                                 class="mt-2"
                             ></InputError>
                         </div>
@@ -2587,43 +2585,29 @@ watch(
                                 for="addExpenseUnit"
                                 class="form-label fw-medium"
                             >
-                                {{ "Unit" }}
+                                Satuan <span class="text-danger">*</span>
                             </label>
                             <input
                                 v-model="form_add_expense.unit"
                                 type="text"
                                 class="form-control form-control-sm"
                                 id="addExpenseUnit"
+                                placeholder="Contoh: kg, bungkus, liter"
                                 required
                             />
                             <InputError
-                                :message="errors.unit"
+                                :message="form_add_expense.errors.unit"
                                 class="mt-2"
                             ></InputError>
                         </div>
-                        <div class="mb-3">
-                            <label
-                                for="addExpenseReceipt"
-                                class="form-label fw-medium"
-                            >
-                                {{ "Receipt" }}
-                            </label>
-                            <input
-                                ref="fileAddExpenseReceipt"
-                                @change="handleFileAddExpenseReceipt"
-                                class="form-control form-control-sm"
-                                type="file"
-                                id="addExpenseReceipt"
-                                accept="image/*"
-                            />
-                            <InputError
-                                :message="errors.reciept"
-                                class="mt-2"
-                            ></InputError>
+                        <div class="alert alert-light border py-2 mb-3" v-if="add_expense_total > 0">
+                            <span class="small text-secondary">Total pengeluaran</span>
+                            <strong class="float-end">{{ formatIDR(add_expense_total) }}</strong>
                         </div>
-                        <div class="mb-3 form-check">
+                        <div class="mb-3 form-check" v-if="reusable_receipts.length > 0">
                             <input
-                                v-model="form_add_expense.receipt_same"
+                                v-model="form_add_expense.same_receipt_check"
+                                @change="handleReuseReceiptToggle"
                                 type="checkbox"
                                 class="form-check-input"
                                 id="addExpenseReceiptSame"
@@ -2632,22 +2616,77 @@ watch(
                                 class="form-check-label"
                                 for="addExpenseReceiptSame"
                             >
-                                {{ "Use same receipt for all items" }}
+                                Gunakan foto struk yang sudah ada
                             </label>
+                            <div class="form-text">
+                                Pilih ini jika beberapa bahan dibeli dalam satu struk yang sama.
+                            </div>
+                        </div>
+                        <div class="mb-3" v-if="form_add_expense.same_receipt_check">
+                            <label for="addExpenseReceiptSource" class="form-label fw-medium">
+                                Ambil struk dari pengeluaran <span class="text-danger">*</span>
+                            </label>
+                            <select
+                                v-model="form_add_expense.receipt_same"
+                                id="addExpenseReceiptSource"
+                                class="form-select form-select-sm"
+                                required
+                            >
+                                <option :value="null" disabled>Pilih pengeluaran</option>
+                                <option
+                                    v-for="expense in reusable_receipts"
+                                    :key="expense.id"
+                                    :value="expense.id"
+                                >
+                                    {{ expense.name }} — {{ formatIDR(expense.total_price) }}
+                                </option>
+                            </select>
+                            <InputError
+                                :message="form_add_expense.errors.receipt_same"
+                                class="mt-2"
+                            />
+                        </div>
+                        <div class="mb-3" v-else>
+                            <label
+                                for="addExpenseReceipt"
+                                class="form-label fw-medium"
+                            >
+                                Foto struk <span class="text-danger">*</span>
+                            </label>
+                            <input
+                                ref="fileAddExpenseReceipt"
+                                @change="handleFileAddExpenseReceipt"
+                                class="form-control form-control-sm"
+                                type="file"
+                                id="addExpenseReceipt"
+                                accept="image/jpeg,image/png,image/webp"
+                                required
+                            />
+                            <div class="form-text">JPG, PNG, atau WebP. Maksimal 5 MB.</div>
+                            <InputError
+                                :message="form_add_expense.errors.reciept"
+                                class="mt-2"
+                            ></InputError>
                         </div>
                         <div class="d-flex justify-content-end">
                             <button
                                 type="button"
                                 class="btn btn-secondary btn-sm me-2"
-                                data-bs-dismiss="modal"
+                                @click="showAddExpenseModal(false); resetAddExpenseForm()"
                             >
-                                {{ "Close" }}
+                                Batal
                             </button>
                             <button
                                 type="submit"
                                 class="btn btn-primary btn-sm"
+                                :disabled="form_add_expense.processing"
                             >
-                                {{ "Add Expense" }}
+                                <span
+                                    v-if="form_add_expense.processing"
+                                    class="spinner-border spinner-border-sm me-1"
+                                    aria-hidden="true"
+                                ></span>
+                                {{ form_add_expense.processing ? "Menyimpan..." : "Simpan Pengeluaran" }}
                             </button>
                         </div>
                     </form>
@@ -2774,7 +2813,7 @@ watch(
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header border-0" style="background-color:#412f55;">
                     <h5 class="modal-title fw-bold text-white" id="workflowGuideModalLabel">
-                        <i class="bi bi-map me-2"></i>Stand Management â€” Panduan Lengkap
+                        <i class="bi bi-map me-2"></i>Manajemen Stand — Panduan Lengkap
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -2803,7 +2842,7 @@ watch(
                                 <p class="small text-muted mb-2">Buat stand baru dari halaman <strong>Stand List</strong>. Isi nama, tempat, tanggal, tipe (Live / Pre-Order), dan tentukan PIC.</p>
                                 <div class="bg-light rounded p-2 small">
                                     <i class="bi bi-info-circle text-primary me-1"></i>
-                                    Setelah dibuat, stand berstatus <strong>"Waiting for menu lock"</strong> â€” semua fitur editing terbuka.
+                                    Setelah dibuat, stand berstatus <strong>"Menunggu menu dikunci"</strong> — semua fitur pengaturan masih terbuka.
                                 </div>
                             </div>
                         </div>
@@ -2900,7 +2939,7 @@ watch(
                                     <div class="col-6">
                                         <div class="border rounded p-2 small h-100">
                                             <i class="bi bi-clipboard-plus text-success me-1"></i><strong>Set Resep</strong><br>
-                                            <span class="text-muted">Input qty bahan per porsi â†’ modal & untung terhitung otomatis.</span>
+                                            <span class="text-muted">Input jumlah bahan per porsi → modal dan untung dihitung otomatis.</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2915,7 +2954,7 @@ watch(
                             </div>
                             <div class="pb-3" style="flex:1;">
                                 <div class="d-flex align-items-center gap-2 mb-1">
-                                    <h6 class="fw-bold mb-0">Menu Lock â€” Stand Siap Berjualan</h6>
+                                    <h6 class="fw-bold mb-0">Kunci Menu — Stand Siap Berjualan</h6>
                                     <span class="badge bg-primary" style="font-size:0.6rem;">Operating (3)</span>
                                     <span class="badge bg-dark" style="font-size:0.6rem;">Super Admin (99)</span>
                                 </div>
@@ -2935,10 +2974,10 @@ watch(
                             </div>
                             <div class="pb-3" style="flex:1;">
                                 <div class="d-flex align-items-center gap-2 mb-1">
-                                    <h6 class="fw-bold mb-0">Operasional â€” Catat Transaksi</h6>
+                                    <h6 class="fw-bold mb-0">Operasional — Catat Transaksi</h6>
                                     <span class="badge bg-secondary" style="font-size:0.6rem;">Cashier Staff</span>
                                 </div>
-                                <p class="small text-muted mb-2">Kasir membuka panel kasir via tombol <i class="bi bi-cart-plus"></i> di tab Income. Pilih menu â†’ isi customer â†’ submit transaksi â†’ cetak/share receipt.</p>
+                                <p class="small text-muted mb-2">Kasir membuka panel kasir melalui tombol <i class="bi bi-cart-plus"></i> di tab Pemasukan. Pilih menu → isi pelanggan → simpan transaksi → cetak atau bagikan struk.</p>
                                 <div class="bg-light rounded p-2 small">
                                     <i class="bi bi-lightbulb text-warning me-1"></i>
                                     Stok menu berkurang otomatis setiap transaksi. Update stok manual via ikon <i class="bi bi-box-seam"></i> jika diperlukan.
@@ -2953,7 +2992,7 @@ watch(
                             </div>
                             <div style="flex:1;">
                                 <div class="d-flex align-items-center gap-2 mb-1">
-                                    <h6 class="fw-bold mb-0">Tutup Stand â€” Validasi Sales</h6>
+                                    <h6 class="fw-bold mb-0">Tutup Stand — Validasi Penjualan</h6>
                                     <span class="badge bg-primary" style="font-size:0.6rem;">Operating (3)</span>
                                     <span class="badge bg-dark" style="font-size:0.6rem;">Super Admin (99)</span>
                                 </div>
@@ -2998,14 +3037,14 @@ watch(
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-secondary text-white border-0">
-                    <h5 class="modal-title fw-bold">Update Menu Image</h5>
+                    <h5 class="modal-title fw-bold">Perbarui Foto Menu</h5>
                     <button type="button" class="btn-close btn-close-white" @click="showEditMenuImageModal(false)"></button>
                 </div>
                 <form @submit.prevent="handleEditMenuImage">
                     <div class="modal-body p-4 text-center">
-                        <p class="small text-muted mb-3">Update image for <strong>{{ selected_menu?.name }}</strong>.</p>
+                        <p class="small text-muted mb-3">Pilih foto baru untuk <strong>{{ selected_menu?.name }}</strong>.</p>
                         <div class="alert alert-warning py-2 small mb-3">
-                            <i class="bi bi-exclamation-triangle me-2"></i>Image <strong>MUST</strong> be square (Ratio 1:1) or it will be rejected.
+                            <i class="bi bi-exclamation-triangle me-2"></i>Foto harus berbentuk <strong>persegi (rasio 1:1)</strong> dan maksimal 5 MB.
                         </div>
                         <div class="mb-3">
                             <input
@@ -3013,16 +3052,17 @@ watch(
                                 @change="handleFileEditMenuImage"
                                 class="form-control"
                                 type="file"
-                                accept="image/*"
+                                accept="image/jpeg,image/png,image/webp"
                                 required
                             />
+                            <InputError :message="form_edit_menu_image.errors.image" class="mt-2 text-start" />
                         </div>
                     </div>
                     <div class="modal-footer border-0 p-4 pt-0">
-                        <button type="button" class="btn btn-light px-4" @click="showEditMenuImageModal(false)">Cancel</button>
+                        <button type="button" class="btn btn-light px-4" @click="showEditMenuImageModal(false)">Batal</button>
                         <button type="submit" class="btn btn-secondary px-4" :disabled="form_edit_menu_image.processing">
                             <span v-if="form_edit_menu_image.processing" class="spinner-border spinner-border-sm me-2"></span>
-                            Update Image
+                            {{ form_edit_menu_image.processing ? "Mengunggah..." : "Perbarui Foto" }}
                         </button>
                     </div>
                 </form>
@@ -3030,22 +3070,24 @@ watch(
         </div>
     </div>
 
-    <!-- Attach Recipe Modal (Clipboard Icon) -->
+    <!-- Modal pengaturan takaran dan HPP -->
     <div class="modal fade" id="attachRecipeModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-success text-white border-0">
-                    <h5 class="modal-title fw-bold">Set Ingredients for {{ selected_menu?.name }}</h5>
+                    <h5 class="modal-title fw-bold">Atur Takaran & HPP — {{ selected_menu?.name }}</h5>
                     <button type="button" class="btn-close btn-close-white" @click="showAttachRecipeModal(false)"></button>
                 </div>
                 <form @submit.prevent="handleAttachRecipe">
                     <div class="modal-body p-4">
-                        <p class="small text-muted mb-4">Input the quantity of each validated ingredient used per portion. Cost and profit will be calculated automatically.</p>
+                        <div class="alert alert-light border mb-4 small">
+                            Isi jumlah setiap bahan yang digunakan untuk <strong>1 porsi</strong>. Kosongkan atau isi 0 untuk bahan yang tidak digunakan. HPP dan estimasi keuntungan dihitung otomatis.
+                        </div>
                         
                         <div class="scroll-container-3 pe-2">
                             <div v-if="form_attach_recipe.components.length === 0" class="text-center py-5">
                                 <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
-                                <p class="text-muted">No validated ingredients found for this stand.<br>Please add and validate expenses first.</p>
+                                <p class="text-muted mb-0">Belum ada bahan belanja tervalidasi. Tambahkan bahan melalui bagian <strong>Expense</strong>, lalu minta bagian operasional memvalidasi bukti belanjanya.</p>
                             </div>
                             
                             <div v-for="(comp, index) in form_attach_recipe.components" :key="comp.stand_expense_id" class="card border-0 bg-light mb-3">
@@ -3053,7 +3095,7 @@ watch(
                                     <div class="row align-items-center">
                                         <div class="col-md-5">
                                             <div class="fw-bold text-primary">{{ comp.name }}</div>
-                                            <div class="small text-muted">Stock: {{ comp.qty }} {{ comp.unit }} | Price: {{ formatIDR(comp.price) }}</div>
+                                            <div class="small text-muted">Pembelian: {{ comp.qty }} {{ comp.unit }} × {{ formatIDR(comp.price) }}</div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="input-group input-group-sm">
@@ -3062,7 +3104,7 @@ watch(
                                             </div>
                                         </div>
                                         <div class="col-md-3 text-end">
-                                            <div class="small text-muted mb-0">Cost per portion:</div>
+                                            <div class="small text-muted mb-0">Biaya per porsi:</div>
                                             <div class="fw-bold">{{ formatIDR(comp.quantity_used * comp.price) }}</div>
                                         </div>
                                     </div>
@@ -3074,25 +3116,25 @@ watch(
                         <div class="mt-4 p-3 bg-dark text-white rounded-3">
                             <div class="row align-items-center">
                                 <div class="col-sm-4">
-                                    <div class="small opacity-75">Modal per portion:</div>
+                                    <div class="small opacity-75">HPP per porsi:</div>
                                     <div class="fs-5 fw-bold">{{ formatIDR(form_attach_recipe.components.reduce((acc, curr) => acc + (curr.quantity_used * curr.price), 0)) }}</div>
                                 </div>
                                 <div class="col-sm-4 border-start border-white border-opacity-25">
-                                    <div class="small opacity-75">Selling Price:</div>
+                                    <div class="small opacity-75">Harga jual:</div>
                                     <div class="fs-5 fw-bold">{{ formatIDR(selected_menu?.price || 0) }}</div>
                                 </div>
                                 <div class="col-sm-4 border-start border-white border-opacity-25 text-warning">
-                                    <div class="small opacity-75 text-warning">Estimated Profit:</div>
+                                    <div class="small opacity-75 text-warning">Estimasi keuntungan:</div>
                                     <div class="fs-5 fw-bold text-warning">{{ formatIDR((selected_menu?.price || 0) - form_attach_recipe.components.reduce((acc, curr) => acc + (curr.quantity_used * curr.price), 0)) }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer border-0 p-4 pt-0">
-                        <button type="button" class="btn btn-light px-4" @click="showAttachRecipeModal(false)">Cancel</button>
+                        <button type="button" class="btn btn-light px-4" @click="showAttachRecipeModal(false)">Batal</button>
                         <button type="submit" class="btn btn-success px-4" :disabled="form_attach_recipe.processing">
                             <span v-if="form_attach_recipe.processing" class="spinner-border spinner-border-sm me-2"></span>
-                            Save Ingredients
+                            Simpan Takaran & HPP
                         </button>
                     </div>
                 </form>

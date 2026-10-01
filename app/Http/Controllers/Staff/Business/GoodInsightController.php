@@ -8,27 +8,27 @@ use App\Models\GoodsExpense;
 use App\Models\GoodsSales;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class GoodInsightController extends Controller
 {
     /**
      * Show insight page of product.
      */
-    function insight(Request $request)
+    public function insight(Request $request): Response
     {
         // Retrieve or create session
         $sale_session = session('sale', ['category' => 'created_at', 'order' => 'desc', 'keyword' => null]);
         $capital_session = session('capital', ['category' => 'created_at', 'order' => 'desc']);
-        // Save session to database
-        $request->session()->put('sale', $sale_session);
-        $request->session()->put('capital', $capital_session);
-        // Sale filter
-        $sale_category = $sale_session['category'];
-        $sale_order = $sale_session['order'];
-        $sale_keyword = $sale_session['keyword'];
+        $sale_category = in_array($sale_session['category'] ?? null, ['created_at', 'customer', 'transaction'], true) ? $sale_session['category'] : 'created_at';
+        $sale_order = in_array($sale_session['order'] ?? null, ['asc', 'desc'], true) ? $sale_session['order'] : 'desc';
+        $sale_keyword = filled($sale_session['keyword'] ?? null) ? trim($sale_session['keyword']) : null;
+        $request->session()->put('sale', ['category' => $sale_category, 'order' => $sale_order, 'keyword' => $sale_keyword]);
         $sale_list = $sale_keyword !== null ? GoodsSales::where('transaction', '>', 0)->with(['operational', 'cashier', 'order' => ['variant' => ['product']]])->orderByRaw("
                 CASE
                 WHEN customer = ? THEN 1
@@ -39,10 +39,11 @@ class GoodInsightController extends Controller
             ", [$sale_keyword, "$sale_keyword%", "%$sale_keyword%"])->get()
             : GoodsSales::where('transaction', '>', 0)->orderBy($sale_category, $sale_order)->with(['operational', 'cashier', 'order' => ['variant' => ['product']]])->get();
         // Capital filter
-        $capital_category = $capital_session['category'];
-        $capital_order = $capital_session['order'];
+        $capital_category = in_array($capital_session['category'] ?? null, ['created_at', 'name', 'total_price'], true) ? $capital_session['category'] : 'created_at';
+        $capital_order = in_array($capital_session['order'] ?? null, ['asc', 'desc'], true) ? $capital_session['order'] : 'desc';
+        $request->session()->put('capital', ['category' => $capital_category, 'order' => $capital_order, 'keyword' => null]);
         $capital_list = GoodsCapital::with(['operational'])->orderBy($capital_category, $capital_order)->get();
-        $data = [
+        return Inertia::render('Staff/Business/GoodInsight', [
             'filter' => [
                 'sale' => [
                     'category' => $sale_category,
@@ -56,18 +57,28 @@ class GoodInsightController extends Controller
             ],
             'sale_list' => $sale_list,
             'capital_list' => $capital_list,
-        ];
-        return view('pages.staff.good.insight', $data);
+            'notif' => session('notif'),
+            'errors' => session('errors')?->getBag('default')?->getMessages() ?? (object) [],
+        ]);
     }
 
     /**
      * Filtering product list order.
      */
-    function filterInsight(Request $request, $filter_name = 'sale')
+    public function filterInsight(Request $request, $filter_name = 'sale')
     {
-        $keyword = $request->has('keyword') ? $request->input('keyword') : null;
-        $category = !$request->has('keyword') && $request->has('category') ?  $request->input('category') : 'name';
-        $order = !$request->has('keyword') && $request->has('order') ?  $request->input('order') : 'asc';
+        abort_unless(in_array($filter_name, ['sale', 'capital'], true), 404);
+        $allowedCategories = $filter_name === 'sale'
+            ? ['created_at', 'customer', 'transaction']
+            : ['created_at', 'name', 'total_price'];
+        $validated = $request->validate([
+            'keyword' => ['nullable', 'string', 'max:100'],
+            'category' => ['nullable', Rule::in($allowedCategories)],
+            'order' => ['nullable', 'in:asc,desc'],
+        ]);
+        $keyword = filled($validated['keyword'] ?? null) ? trim($validated['keyword']) : null;
+        $category = $validated['category'] ?? 'created_at';
+        $order = $validated['order'] ?? 'desc';
         session()->put($filter_name, ['category' => $category, 'order' => $order, 'keyword' => $keyword,]);
         return redirect()->route('good.insight');
     }
@@ -75,85 +86,76 @@ class GoodInsightController extends Controller
     /**
      * Filtering product list order.
      */
-    function insertCapital(Request $request)
+    public function insertCapital(Request $request)
     {
-        if (!Auth::user()->product) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not in charge of any product. Please contact the person in charge.']);
-        }
-        $request->flash();
-        // Validating data
-        $request->validate([
-            'name' => ['required', 'string'],
-            'price' => ['required', 'integer'],
-            'qty' => ['required', 'integer'],
-            'unit' => ['required', 'string'],
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'price' => ['required', 'integer', 'min:1'],
+            'qty' => ['required', 'integer', 'min:1'],
+            'unit' => ['required', 'string', 'max:50'],
             'receipt' => [Rule::requiredIf($request->input('same_receipt_check') != 'on'), File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024)],
-            'receipt_same' => [Rule::requiredIf($request->input('same_receipt_check') == 'on'), 'integer'],
-        ]);
-        $last = GoodsCapital::orderBy('id', 'desc')->first();
-        $last_id = $last ? $last->id : 0;
-        if ($request->input('same_receipt_check') != 'on') {
-            $receipt = $request->file('receipt');
-            $receipt_name =  'GE' . $last_id + 1 . '_receipt.' . $receipt->extension();
-            // store reciept file
-            $receipt->storePubliclyAs('images/receipt/goods/expense', $receipt_name, 'google');
-        } else {
-            $receipt_name = GoodsCapital::find($request->input('receipt_same'))->receipt;
-        }
-        $total_price =  $request->input('qty') *  $request->input('price');
-        $goods_expense = GoodsCapital::create([
-            'name' => $request->input('name'),
-            'price' => $request->input('price'),
-            'qty' => $request->input('qty'),
-            'unit' => $request->input('unit'),
-            'total_price' => $total_price,
-            'receipt' => $receipt_name,
-            'updated_at' => now(),
-            'created_at' => now()
+            'receipt_same' => [Rule::requiredIf($request->input('same_receipt_check') == 'on'), 'nullable', 'integer', 'exists:goods_capital,id'],
+            'same_receipt_check' => ['nullable', 'in:on'],
         ]);
 
-        // sucees insert
-        if ($goods_expense) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success to add new Goods Expense.']);
+        if ($request->input('same_receipt_check') != 'on') {
+            $receipt = $validated['receipt'];
+            $receipt_name = 'GE_'.now()->format('YmdHis').'_'.str()->random(6).'.'.$receipt->extension();
+            $disk = app()->environment('production') ? 'google' : 'public';
+            $receipt->storePubliclyAs('images/receipt/goods/expense', $receipt_name, $disk);
         } else {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to add new Goods Expense. Please try again or contact admin.']);
-        };
+            $receipt_name = GoodsCapital::findOrFail($validated['receipt_same'])->receipt;
+        }
+
+        $total_price = $validated['qty'] * $validated['price'];
+        $goods_expense = GoodsCapital::create([
+            'name' => $validated['name'],
+            'price' => $validated['price'],
+            'qty' => $validated['qty'],
+            'unit' => $validated['unit'],
+            'total_price' => $total_price,
+            'receipt' => $receipt_name,
+        ]);
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => "Pengeluaran '{$goods_expense->name}' berhasil ditambahkan."]);
     }
 
     /**
      * Change the validatiion status of the product receipt.
      */
-    function validateCapital(Request $request)
+    public function validateCapital(Request $request)
     {
         $id = $request->input('receipt_id');
         $capital = GoodsCapital::find($id);
         if (!$capital) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Can not find the goods expense. Please contact admin.']);
         }
-        // Update data 
         $is_valid = $capital->operational_id == 0;
-        $capital->operational_id = $is_valid ? Auth::user()->id : null;
-        $goods_expense_balance = $is_valid ? GoodsExpense::create([
-            'category' => 'goods expense',
-            'category_id' => $id,
-            'price' => $capital->total_price,
-        ]) : GoodsExpense::where('category', '=', 'Goods Expense')->where('category_id', '=', $id)->first()->delete();
+        DB::transaction(function () use ($capital, $is_valid, $id) {
+            $capital->operational_id = $is_valid ? Auth::id() : null;
+            $capital->save();
 
-        if ($capital->save() && $goods_expense_balance) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success ' . ($capital->operational_id > 0 ? 'validate' : 'unvalidate') . ' goods expense item.']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to ' . ($capital->operational_id > 0 ? 'validate' : 'unvalidate') . ' goods expense item. Please try again or contact admin.']);
-        }
+            if ($is_valid) {
+                GoodsExpense::updateOrCreate(
+                    ['category' => 'goods expense', 'category_id' => $id],
+                    ['price' => $capital->total_price]
+                );
+            } else {
+                GoodsExpense::where('category', 'goods expense')->where('category_id', $id)->delete();
+            }
+        });
+
+        return redirect()->back()->with('notif', [
+            'type' => 'info',
+            'message' => $is_valid ? 'Pengeluaran berhasil divalidasi.' : 'Validasi pengeluaran berhasil dibatalkan.',
+        ]);
     }
 
     /**
      * Delete the product capital.
      */
-    function deleteCapital(Request $request, $id)
+    public function deleteCapital(Request $request, int $id)
     {
-        if (!Auth::user()->product) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not in charge of any product. Please contact the person in charge.']);
-        }
         $capital = GoodsCapital::find($id);
         if (!$capital) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Can not find the goods expense. Please contact admin.']);
@@ -162,14 +164,15 @@ class GoodInsightController extends Controller
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'This goods expense has been validated by Operational Officer.']);
         }
         // update necessary data
-        if (GoodsCapital::where('receipt', '=', $capital->receipt)->get()->count() == 0) {
-            // remove capital receipt
-            Storage::disk('public')->move('images/receipt/goods/expense/' . $capital->receipt, 'trash/images/receipt/goods/expense/' . $capital->receipt);
+        if ($capital->receipt && GoodsCapital::where('receipt', $capital->receipt)->count() <= 1) {
+            $disk = Storage::disk(app()->environment('production') ? 'google' : 'public');
+            $path = 'images/receipt/goods/expense/' . $capital->receipt;
+            if ($disk->exists($path)) {
+                $disk->move($path, 'trash/images/receipt/goods/expense/' . $capital->receipt);
+            }
         }
-        if ($capital->delete()) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success delete goods expense item.']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to delete goods expense item. Please try again or contact admin.']);
-        }
+        $capital->delete();
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Pengeluaran berhasil dihapus.']);
     }
 }

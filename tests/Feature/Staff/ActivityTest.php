@@ -130,6 +130,16 @@ describe('Activity Update', function () {
         $this->post("/seeo/staff/marketing/activities/{$this->activity->id}", [])
             ->assertSessionHasErrors(['title', 'description']);
     });
+
+    test('activity update rejects a non-image upload', function () {
+        $file = UploadedFile::fake()->create('malware.txt', 10, 'text/plain');
+
+        $this->post(route('marketing.activities.update', $this->activity), [
+            'title' => 'Judul',
+            'description' => 'Deskripsi',
+            'image_path' => $file,
+        ])->assertSessionHasErrors('image_path');
+    });
 });
 
 describe('Activity Delete', function () {
@@ -164,6 +174,25 @@ describe('Activity Delete', function () {
         $this->delete("/seeo/staff/marketing/activities/{$activity->id}");
 
         Storage::disk('public')->assertMissing($path);
+    });
+
+    test('deleting activity also deletes gallery images', function () {
+        $gallery = ['images/activities/gallery/one.jpg', 'images/activities/gallery/two.jpg'];
+        foreach ($gallery as $path) {
+            Storage::disk('public')->put($path, 'image');
+        }
+
+        $activity = Activity::factory()->create([
+            'title' => 'Aktivitas Bergaleri',
+            'description' => 'Deskripsi',
+            'slug' => 'aktivitas-bergaleri-'.uniqid(),
+            'gallery' => $gallery,
+        ]);
+        $this->delete(route('marketing.activities.destroy', $activity))->assertRedirect();
+
+        foreach ($gallery as $path) {
+            Storage::disk('public')->assertMissing($path);
+        }
     });
 });
 

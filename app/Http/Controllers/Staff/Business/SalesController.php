@@ -28,7 +28,7 @@ class SalesController extends Controller
      */
     public function sales(Request $request, $id)
     {
-        $auth_user = Auth::user();
+        $auth_user = $request->user();
         $query = Stand::with(['pic', 'cashier']);
         
         // Super Admin bypass
@@ -39,6 +39,12 @@ class SalesController extends Controller
         $stand = $query->find($id);
         if (!$stand) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Stand is not found. Try again from Stand Detail page.']);
+        }
+        if (!is_super_admin($auth_user) && !$stand->cashier->contains('id', $auth_user->id)) {
+            return redirect()->route('food.stand.detail', ['id' => $stand->id])->with('notif', [
+                'type' => 'warning',
+                'message' => "Anda belum ditugaskan sebagai kasir di stand {$stand->name}.",
+            ]);
         }
         $menu_list = MenuItem::where('stand_id', $stand->id)->orderBy('name', 'asc')->get()->groupBy('category');
         $payment_method_list = PaymentMethod::all();
@@ -86,7 +92,7 @@ class SalesController extends Controller
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Stand tidak ditemukan.']);
         }
 
-        $auth_user = Auth::user();
+        $auth_user = $request->user();
         // Allow Super Admin or authorized cashier
         if ($auth_user->roles_id != 99 && !$stand->cashier->contains('id', $auth_user->id)) {
             $standLabel = $stand->pic?->name ?? $stand->name ?? 'this stand';

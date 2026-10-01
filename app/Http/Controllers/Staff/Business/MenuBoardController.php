@@ -114,6 +114,17 @@ class MenuBoardController extends Controller
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
 
+        $stand = Stand::findOrFail($validated['stand_id']);
+        $isProductionOnly = ! $request->user()->canPerform('menu.manage');
+
+        if ($isProductionOnly) {
+            abort_unless(
+                $stand->production()->where('users.id', $request->user()->id)->exists(),
+                403,
+                'Anda tidak ditugaskan pada stand ini.'
+            );
+        }
+
         $data = collect($validated)->only([
             'stand_id', 'name', 'category', 'price', 'stock',
             'volume', 'volume_unit', 'mass', 'mass_unit',
@@ -139,7 +150,11 @@ class MenuBoardController extends Controller
             return $menu;
         });
 
-        return redirect()->back()
+        $redirect = $isProductionOnly
+            ? redirect()->route('staff.production.panel.index', ['stand_id' => $stand->id])
+            : redirect()->back();
+
+        return $redirect
             ->with('notif', ['type' => 'info', 'message' => "Menu '{$menu->name}' berhasil dibuat."]);
     }
 

@@ -12,7 +12,10 @@ use App\Models\GoodsIncome;
 use App\Models\GoodsSales;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\File;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class BlaterianGoodBalanceController extends Controller
 {
@@ -23,31 +26,27 @@ class BlaterianGoodBalanceController extends Controller
      * display foods balance.
      * 
      */
-    function balance(Request $request, $default_tab = 1, $refresh = false)
+    public function balance(Request $request, $default_tab = 1, $refresh = false): Response
     {
-        // Retrieve or create session
-        if ($refresh) {
-            $this->refreshBalance();
-        }
+        $this->refreshBalance();
         $income_session = session('balance_cash_in', ['category' => 'price', 'order' => 'desc', 'income' => null]);
         $expense_session = session('balance_cash_out', ['category' => 'price', 'order' => 'desc', 'expense' => null]);
-        // Save session to database
-        $request->session()->put('balance_cash_in', $income_session);
-        $request->session()->put('balance_cash_out', $expense_session);
-        // Balance filter
-        $income_category = $income_session['category'];
-        $income_order = $income_session['order'];
-        $cash_in_list = $income_session['income'] == 'income' ?
+        $income_category = in_array($income_session['category'] ?? null, ['price', 'category', 'created_at'], true) ? $income_session['category'] : 'price';
+        $income_order = in_array($income_session['order'] ?? null, ['asc', 'desc'], true) ? $income_session['order'] : 'desc';
+        $income_scope = ($income_session['income'] ?? null) === 'income' ? 'income' : null;
+        $request->session()->put('balance_cash_in', ['category' => $income_category, 'order' => $income_order, 'income' => $income_scope]);
+        $cash_in_list = $income_scope === 'income' ?
             GoodsIncome::orderBy($income_category, $income_order)->with(['program', 'sales'])->get() :
             GoodsIncome::where('category', '!=', 'goods income')->orderBy($income_category, $income_order)->with(['program', 'sales'])->get();
-        $expense_category = $expense_session['category'];
-        $expense_order = $expense_session['order'];
-        $cash_out_list = $expense_session['expense'] == 'expense' ?
+        $expense_category = in_array($expense_session['category'] ?? null, ['price', 'category', 'created_at'], true) ? $expense_session['category'] : 'price';
+        $expense_order = in_array($expense_session['order'] ?? null, ['asc', 'desc'], true) ? $expense_session['order'] : 'desc';
+        $expense_scope = ($expense_session['expense'] ?? null) === 'expense' ? 'expense' : null;
+        $request->session()->put('balance_cash_out', ['category' => $expense_category, 'order' => $expense_order, 'expense' => $expense_scope]);
+        $cash_out_list = $expense_scope === 'expense' ?
             GoodsExpense::orderBy($expense_category, $expense_order)->with(['withdraw', 'capital'])->get() :
             GoodsExpense::where('category', '!=', 'goods expense')->orderBy($expense_category, $expense_order)->with(['withdraw', 'capital'])->get();
 
-        $balance = BlaterianGoodBalance::find(1);
-        $balance = $balance ? $balance : BlaterianGoodBalance::create();
+        $balance = BlaterianGoodBalance::firstOrCreate(['id' => 1], ['income' => 0, 'expense' => 0, 'balance' => 0]);
 
         $income = GoodsSales::where('operational_id', '>', 0)->sum('transaction');
         $expense = GoodsCapital::where('operational_id', '>', 0)->sum('total_price');
@@ -65,7 +64,7 @@ class BlaterianGoodBalanceController extends Controller
             'labels' => $labels->all(),
             'sales' => $sales->all(),
         ];
-        $data = [
+        return Inertia::render('Staff/Business/GoodBalance', [
             'balance' => $balance,
             'total_income' => $income,
             'total_expense' => $expense,
@@ -77,27 +76,33 @@ class BlaterianGoodBalanceController extends Controller
                 'cash_in' => [
                     'category' => $income_category,
                     'order' => $income_order,
-                    'income' => $income_session['income'],
+                    'income' => $income_scope,
                 ],
                 'cash_out' => [
                     'category' => $expense_category,
                     'order' => $expense_order,
-                    'expense' => $expense_session['expense'],
+                    'expense' => $expense_scope,
                 ],
-            ]
-        ];
-
-        return view('pages.staff.good.balance', $data);
+            ],
+            'notif' => session('notif'),
+            'errors' => session('errors')?->getBag('default')?->getMessages() ?? (object) [],
+        ]);
     }
 
     /**
      * filter cash in balance.
      */
-    function filterCashIn(Request $request)
+    public function filterCashIn(Request $request)
     {
-        $category = !$request->input('income') ? $request->input('category') : session('balance_cash_in')['category'];
-        $order = !$request->input('income') ? $request->input('order') : session('balance_cash_in')['order'];
-        $income = $request->input('income') ? $request->input('income') : session('balance_cash_in')['income'];
+        $validated = $request->validate([
+            'category' => ['nullable', 'in:price,category,created_at'],
+            'order' => ['nullable', 'in:asc,desc'],
+            'income' => ['nullable', 'in:income'],
+        ]);
+        $current = session('balance_cash_in', ['category' => 'price', 'order' => 'desc', 'income' => null]);
+        $category = $validated['category'] ?? $current['category'];
+        $order = $validated['order'] ?? $current['order'];
+        $income = array_key_exists('income', $validated) ? $validated['income'] : $current['income'];
         session()->put('balance_cash_in', ['category' => $category, 'order' => $order, 'income' => $income]);
         return redirect()->route('good.balance', ['default_tab' => 1]);
     }
@@ -105,11 +110,17 @@ class BlaterianGoodBalanceController extends Controller
     /**
      * filter cash put balance.
      */
-    function filterCashOut(Request $request)
+    public function filterCashOut(Request $request)
     {
-        $category = !$request->input('expense') ? $request->input('category') : session('balance_cash_out')['category'];
-        $order = !$request->input('expense') ? $request->input('order') : session('balance_cash_out')['order'];
-        $expense = $request->input('expense') ? $request->input('expense') : session('balance_cash_out')['expense'];
+        $validated = $request->validate([
+            'category' => ['nullable', 'in:price,category,created_at'],
+            'order' => ['nullable', 'in:asc,desc'],
+            'expense' => ['nullable', 'in:expense'],
+        ]);
+        $current = session('balance_cash_out', ['category' => 'price', 'order' => 'desc', 'expense' => null]);
+        $category = $validated['category'] ?? $current['category'];
+        $order = $validated['order'] ?? $current['order'];
+        $expense = array_key_exists('expense', $validated) ? $validated['expense'] : $current['expense'];
         session()->put('balance_cash_out', ['category' => $category, 'order' => $order, 'expense' => $expense]);
         return redirect()->route('good.balance', ['default_tab' => 2]);
     }
@@ -133,7 +144,7 @@ class BlaterianGoodBalanceController extends Controller
             $balance->balance = $goodsIncome - $goodsExpense;
             $balance->save();
         } else {
-            BlaterianBalance::create([
+            BlaterianGoodBalance::create([
                 'expense' => $goodsExpense,
                 'income' => $goodsIncome,
                 'balance' => $goodsIncome - $goodsExpense,
@@ -141,39 +152,39 @@ class BlaterianGoodBalanceController extends Controller
         }
     }
 
-    function withdrawBalance(Request $request)
+    public function withdrawBalance(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string',
-            'price' => 'required|numeric',
-            'receipt' => File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024),
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'price' => ['required', 'integer', 'min:1'],
+            'receipt' => ['required', File::types(['jpg', 'jpeg', 'png', 'heic', 'webp'])->max(5 * 1024)],
         ]);
 
-        $receipt = $request->file('receipt');
-        $receipt_name =  'cash_in_' . time() . '.' . $receipt->extension();
-        // store receipt file
-        $receipt->storePubliclyAs('images/receipt/cash_in', $receipt_name, 'google');
+        $receipt = $validated['receipt'];
+        $receipt_name = 'cash_in_goods_'.now()->format('YmdHis').'_'.str()->random(6).'.'.$receipt->extension();
+        $disk = app()->environment('production') ? 'google' : 'public';
+        $receipt->storePubliclyAs('images/receipt/cash_in', $receipt_name, $disk);
 
-        $seeo_cash_in = CashInItem::create([
-            'financial_id' => null,
-            'name' => $request->input('name'),
-            'price' => $request->input('price'),
-            'reciept' => $receipt_name,
-            'updated_at' => now(),
-            'created_at' => now()
-        ]);
+        DB::transaction(function () use ($validated, $receipt_name) {
+            $cashIn = CashInItem::create([
+                'financial_id' => null,
+                'name' => $validated['name'],
+                'price' => $validated['price'],
+                'reciept' => $receipt_name,
+            ]);
 
-        $good_cash_out = GoodsExpense::create([
-            'category_id' => $seeo_cash_in->id,
-            'category' => 'withdraw',
-            'price' => $request->input('price'),
-        ]);
+            GoodsExpense::create([
+                'category_id' => $cashIn->id,
+                'category' => 'withdraw',
+                'price' => $validated['price'],
+            ]);
+        });
 
         $this->refreshBalance();
-        if ($seeo_cash_in && $good_cash_out) {
-            return redirect()->route('good.balance', ['default_tab' => 2])->with('notif', ['type' => 'info', 'message' => 'Success send money to SEEO Cash Flow. Please ask Financial Officer to validate.']);
-        } else {
-            return redirect()->route('good.balance', ['default_tab' => 2])->with('notif', ['type' => 'warning', 'message' => 'Failed send money to SEEO Cash Flow. Please try again or ask admin.']);
-        }
+
+        return redirect()->route('good.balance', ['default_tab' => 2])->with('notif', [
+            'type' => 'info',
+            'message' => 'Dana berhasil dikirim ke kas SEEO dan menunggu validasi Financial Officer.',
+        ]);
     }
 }

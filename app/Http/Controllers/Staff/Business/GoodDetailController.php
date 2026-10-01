@@ -11,107 +11,115 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\File;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class GoodDetailController extends Controller
 {
     /**
      * Show detail page of product.
      */
-    function detail(Request $request, $id)
+    public function detail(Request $request, int $id): Response|\Illuminate\Http\RedirectResponse
     {
         $product = GoodsProduct::with(['image', 'variant', 'pic'])->find($id);
-        $cart_list = GoodsSales::where('transaction', '=', 0)->get();;
         if ($product == null) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Product is not exist, please select available product.']);
+            return redirect()->route('good.product')->with('notif', [
+                'type' => 'warning',
+                'message' => 'Produk tidak ditemukan. Silakan pilih produk yang tersedia.',
+            ]);
         }
-        $data = [
-            'sidebar' => 'blaterian',
+
+        return Inertia::render('Staff/Business/GoodDetail', [
             'product' => $product,
-            'cart_list' => $cart_list,
-        ];
-        return view('pages.staff.good.detail', $data);
+            'cart_count' => GoodsSales::where('transaction', 0)->count(),
+            'can_manage' => $request->user()->canPerform('goods.manage'),
+            'notif' => session('notif'),
+            'errors' => session('errors')?->getBag('default')?->getMessages() ?? (object) [],
+        ]);
     }
 
     /**
      * Insert new product image.
      */
-    function insertImage(Request $request, $id)
+    public function insertImage(Request $request, int $id)
     {
-        $request->validate([
-            'note' => [$request->input('note') ? 'string' : ''],
-            'image' => [File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024), 'required', 'dimensions:ratio=1/1'],
+        $validated = $request->validate([
+            'note' => ['nullable', 'string', 'max:255'],
+            'image' => ['required', File::image()->max(5 * 1024), 'dimensions:ratio=1/1'],
         ]);
 
-        $image = $request->file('image');
-        $product = GoodsProduct::with('image')->find($id);
-        $total = $product->image->count();
-        $image_name = 'PI_' . $id . $total + 1 . '.' . $image->extension();
-        // store image file
-        $image->storePubliclyAs('images/product/', $image_name, 'google');
+        $product = GoodsProduct::findOrFail($id);
+        $image = $validated['image'];
+        $imageName = 'PI_'.$id.'_'.now()->format('YmdHis').'_'.str()->random(6).'.'.$image->extension();
+        $disk = app()->environment('production') ? 'google' : 'public';
+        $image->storePubliclyAs('images/product', $imageName, $disk);
 
         $product_image = ProductImage::create([
-            'image' => $image_name,
-            'note' => $request->input('note'),
+            'image' => $imageName,
+            'note' => $validated['note'] ?? null,
             'product_id' => $id,
         ]);
-        if ($product_image) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success add new image to ' . $product->name . '.']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to add new image. Please try again or contact admin.']);
-        }
+
+        return redirect()->back()->with('notif', [
+            'type' => 'info',
+            'message' => 'Foto produk berhasil ditambahkan.',
+        ]);
     }
 
     /**
      * Move product image to trash folder.
      */
-    function deleteImage(Request $request, $id)
+    public function deleteImage(Request $request, int $id)
     {
-        $image = ProductImage::find($id);
+        $image = ProductImage::findOrFail($id);
         $product = $image->product;
-        // Moving files to delete folder
-        Storage::disk('public')->move('images/product/' . $image->image, 'trash/images/product/' . $image->image);
-
-        if ($image->delete()) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success delete image from ' . $product->name . '.']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to delete image from ' . $product->name . '. Please try again or contact admin.']);
+        $disk = Storage::disk(app()->environment('production') ? 'google' : 'public');
+        $path = 'images/product/' . $image->image;
+        if ($disk->exists($path)) {
+            $disk->move($path, 'trash/images/product/' . $image->image);
         }
+
+        $image->delete();
+
+        return redirect()->back()->with('notif', [
+            'type' => 'info',
+            'message' => "Foto produk '{$product->name}' berhasil dihapus.",
+        ]);
     }
 
     /**
      * Insert new product variant.
      */
-    function insertVariant(Request $request, $id)
+    public function insertVariant(Request $request, int $id)
     {
-        $request->validate([
-            'name' => ['required', 'string'],
-            'price' => ['required', 'numeric'],
-            'stock' => ['required', 'numeric'],
-            'description' => ['required', 'string'],
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'price' => ['required', 'integer', 'min:0'],
+            'stock' => ['required', 'integer', 'min:0'],
+            'description' => ['required', 'string', 'max:2000'],
         ]);
+        $product = GoodsProduct::findOrFail($id);
         $variant = ProductVariant::create([
             'product_id' => $id,
-            'name' => $request->input('name'),
-            'price' => $request->input('price'),
-            'stock' => $request->input('stock'),
-            'description' => $request->input('description'),
+            'name' => $validated['name'],
+            'price' => $validated['price'],
+            'stock' => $validated['stock'],
+            'description' => $validated['description'],
         ]);
 
-        $product = GoodsProduct::select('name')->find($id);
-
-        if ($variant) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success add new variant to ' . $product->name . '.']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to add new image. Please try again or contact admin.']);
-        }
+        return redirect()->back()->with('notif', [
+            'type' => 'info',
+            'message' => "Varian '{$variant->name}' berhasil ditambahkan ke {$product->name}.",
+        ]);
     }
 
     /**
      * Change the transaction status of the product.
      */
-    function productStatus(Request $request, $id)
+    public function productStatus(Request $request, int $id)
     {
-        $product = GoodsProduct::find($id);
+        $product = GoodsProduct::findOrFail($id);
         $product->operational_id = $product->operational_id == 0 ? Auth::user()->id : 0;
         if ($product->save()) {
             return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success ' . ($product->operational_id > 0 ? 'open' : 'close') . ' transaction for ' . $product->name . '.']);
@@ -123,34 +131,36 @@ class GoodDetailController extends Controller
     /**
      * Change the product variant description.
      */
-    function updateDescription(Request $request, $id)
+    public function updateDescription(Request $request, int $id)
     {
-        $variant = ProductVariant::find($id);
-        if (!is_super_admin(Auth::user()) && $variant->product->pic_id !== Auth::user()->id) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not authorized. Please contact the Person In Charge of this product.']);
-        }
-        $variant->description = $request->input('update_description');
-        if ($variant->save()) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update description for ' . $variant->product->name . ' : ' . $variant->name . '.']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to update description for ' . $variant->product->name . ' : ' . $variant->name . '. Please try again or contact admin.']);
-        }
+        $validated = $request->validate([
+            'update_description' => ['required', 'string', 'max:2000'],
+        ]);
+        $variant = ProductVariant::with('product')->findOrFail($id);
+        $variant->update(['description' => $validated['update_description']]);
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Deskripsi varian berhasil diperbarui.']);
     }
 
     /**
      * Change the product variant stock.
      */
-    function updateStock(Request $request, $id)
+    public function updateStock(Request $request, int $id)
     {
-        $variant = ProductVariant::find($id);
-        if (!is_super_admin(Auth::user()) && $variant->product->pic_id !== Auth::user()->id) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not authorized. Please contact the Person In Charge of this product.']);
+        $validated = $request->validate([
+            'update_stock' => ['required', 'integer', 'not_in:0'],
+        ]);
+        $variant = ProductVariant::with('product')->findOrFail($id);
+        $newStock = (int) $variant->stock + (int) $validated['update_stock'];
+
+        if ($newStock < 0) {
+            throw ValidationException::withMessages([
+                'update_stock' => 'Stok tidak boleh menjadi negatif.',
+            ]);
         }
-        $variant->stock += $request->input('update_stock');
-        if ($variant->save()) {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update stock for ' . $variant->product->name .  ' : ' . $variant->name . '.']);
-        } else {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Failed to update stock for ' . $variant->product->name . ' : ' . $variant->name . '. Please try again or contact admin.']);
-        }
+
+        $variant->update(['stock' => $newStock]);
+
+        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Stok varian berhasil diperbarui.']);
     }
 }

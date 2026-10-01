@@ -2,7 +2,6 @@
 import StaffLayout from "@/Layouts/StaffLayout.vue";
 import InputError from "@/Components/InputError.vue";
 import Notif from "@/Components/Notif.vue";
-import ModalConfirmation from "@/Components/ModalConfirmation.vue";
 import vSelect from "vue-select";
 import "vue-select/dist/vue-select.css";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
@@ -11,12 +10,11 @@ import {
     computed,
     watch,
     onMounted,
-    onUnmounted,
     defineProps,
-    defineExpose,
 } from "vue";
-import { formatDate, formatDateOnly } from "@/utils";
-// no Ziggy; use explicit endpoints
+import { formatDateOnly } from "@/utils";
+
+const route = (name, params = {}) => window.route(name, params);
 
 const props = defineProps({
     staff_list: Array,
@@ -30,11 +28,12 @@ const props = defineProps({
 });
 
 const auth_user = usePage().props.auth.user;
-const title = ref("Stand");
-const modalConfirmationRef = ref(null);
+const capabilities = computed(() => auth_user?.capabilities ?? []);
+const canManageStands = computed(() => capabilities.value.includes('*') || capabilities.value.includes('stands.manage'));
+const title = ref("Manajemen Stand");
 const toastNotifRef = ref(null);
-const placeholder = ref("placeholder");
 const modalNewStand = ref(null);
+const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
 const form_filter = useForm({
     category: props.filter.category,
@@ -46,7 +45,7 @@ const form_new_stand = useForm({
     name: null,
     pic_id: null,
     place: null,
-    date: null,
+    date: today,
     type: 0,
     year_id: props.selected_year_id,
 });
@@ -70,7 +69,7 @@ function handleSubmitFilter(category) {
         form_filter.category = category;
         form_filter.keyword = null;
     }
-    form_filter.post('/seeo/staff/food/stand/filter');
+    form_filter.post(route('food.stand.filter'), { preserveScroll: true });
 }
 
 function showNewStandModal(is_show) {
@@ -79,6 +78,7 @@ function showNewStandModal(is_show) {
         modalNewStand.value = bootstrap.Modal.getOrCreateInstance(modal);
     }
     if (is_show) {
+        form_new_stand.clearErrors();
         modalNewStand.value.show();
     } else {
         modalNewStand.value.hide();
@@ -86,7 +86,8 @@ function showNewStandModal(is_show) {
 }
 
 function handleNewStand() {
-    form_new_stand.post('/seeo/staff/food/stand/add/new', {
+    form_new_stand.post(route('food.stand.insert'), {
+        preserveScroll: true,
         onSuccess: () => {
             showNewStandModal(false);
             form_new_stand.reset();
@@ -103,39 +104,18 @@ function debugOpenStandDetail(stand) {
     });
 }
 
-function confirmation(route, message) {
-    if (modalConfirmationRef.value) {
-        modalConfirmationRef.value.showModal(route, message);
-    } else {
-        console.error("modalConfirmationRef is null");
-    }
-}
-
-function showImage(event) {
-    utils.showImage(event);
-}
-
-const isLargeScreen = ref(window.innerWidth >= 768);
-const handleResize = () => {
-    isLargeScreen.value = window.innerWidth >= 768;
-    window.addEventListener("resize", handleResize);
-};
+const standTypeLabel = (type) => ({ 0: 'Live', 1: 'Pre-order', 2: 'Live & Pre-order' }[Number(type)] ?? 'Tidak diketahui');
 
 onMounted(() => {
-    window.addEventListener("resize", handleResize);
     if (props.notif) {
-        toastNotifRef.value.showToast(props.notif.type, props.notif.message);
+        toastNotifRef.value?.showToast(props.notif.type, props.notif.message);
     }
-});
-onUnmounted(() => {
-    window.removeEventListener("resize", handleResize);
 });
 
 watch(
     () => props.notif,
     (newValue) => {
-        const notification = newValue;
-        toastNotifRef.value.showToast(notification.type, notification.message);
+        if (newValue) toastNotifRef.value?.showToast(newValue.type, newValue.message);
     }
 );
 </script>
@@ -146,286 +126,262 @@ watch(
     overflow-y: auto;
     text-wrap: nowrap;
 }
+
+.stand-hero {
+    background:
+        radial-gradient(circle at 90% 15%, rgba(59, 130, 246, 0.16), transparent 28%),
+        linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.stand-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stand-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 1rem 2rem rgba(15, 23, 42, 0.1) !important;
+}
+
+.stand-icon,
+.empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 1rem;
+    color: #2563eb;
+    background: #dbeafe;
+    font-size: 1.25rem;
+}
+
+.empty-icon {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.75rem;
+}
 </style>
 
 <template>
     <!-- Page Layout -->
     <StaffLayout>
         <Head :title="title" icon="/favicon.ico" />
-        <!-- Modal Box -->
-        <ModalConfirmation ref="modalConfirmationRef" />
         <template #header>
             {{ title }}
         </template>
 
-        <div class="container me-lg-0 mx-auto mb-5">
-            <!-- Year Tabs -->
-            <div class="row mt-3">
-                <div class="col-12">
-                    <ul class="nav nav-tabs border-0">
-                        <li v-for="year in governance_years" :key="year.id" class="nav-item">
-                            <a 
-                                :href="'/blaterian/foods/stand?year_id=' + year.id" 
-                                :class="['nav-link border-0 rounded-pill px-4 me-2', selected_year_id === year.id ? 'active bg-primary text-white shadow-sm' : 'text-secondary bg-white border border-secondary-subtle']"
-                                style="transition: all 0.2s;"
-                            >
-                                {{ year.year }}
-                                <span v-if="year.is_active" class="badge rounded-pill bg-info ms-1" style="font-size: 0.6rem;">Aktif</span>
-                            </a>
-                        </li>
-                    </ul>
+        <div class="container-fluid py-3 py-md-4">
+            <section class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 stand-hero">
+                <div class="card-body p-4 p-lg-5 d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                    <div>
+                        <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle mb-2">
+                            <i class="bi bi-shop me-1"></i> Operasional Penjualan
+                        </span>
+                        <h2 class="fw-bold mb-1">Manajemen Stand</h2>
+                        <p class="text-muted mb-0">Buat stand, tentukan penanggung jawab, lalu kelola menu, bahan, kasir, dan penjualannya.</p>
+                    </div>
+                    <button
+                        v-if="canManageStands"
+                        type="button"
+                        class="btn btn-primary btn-lg rounded-pill px-4 align-self-start align-self-lg-center"
+                        @click="showNewStandModal(true)"
+                    >
+                        <i class="bi bi-plus-circle-fill me-2"></i>Tambah Stand Baru
+                    </button>
+                    <div v-else class="alert alert-light border mb-0 py-2 px-3 small align-self-start align-self-lg-center">
+                        <i class="bi bi-lock me-1 text-primary"></i>Pembuatan stand hanya tersedia untuk COO dan Super Admin.
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- Filter -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card shadow-sm p-lg-3 p-2">
-                        <div class="d-flex">
-                            <div class="d-flex mx-auto">
-                                <span
-                                    class="text-primary pe-3 me-3 my-auto"
-                                    >{{ "Filter" }}</span
+            <section class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex flex-column flex-xl-row justify-content-between gap-3">
+                        <div>
+                            <label class="form-label small fw-bold text-secondary mb-2">Periode kepengurusan</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a
+                                    v-for="year in governance_years"
+                                    :key="year.id"
+                                    :href="route('food.stand', { year_id: year.id })"
+                                    :class="['btn btn-sm rounded-pill px-3', selected_year_id === year.id ? 'btn-primary' : 'btn-outline-secondary']"
                                 >
-                                <button
-                                    @click="handleSubmitFilter('name')"
-                                    class="btn text-nowrap btn-sm btn-outline-secondary border-1 rounded-2 border-secondary-subtle py-0"
-                                >
-                                    {{ "Name" }}
-                                    <i
-                                        :class="
-                                            'bi bi-arrow-' +
-                                            (filter.category == 'name'
-                                                ? filter.order == 'asc'
-                                                    ? 'up'
-                                                    : 'down'
-                                                : 'up')
-                                        "
-                                    ></i>
+                                    {{ year.year }}
+                                    <span v-if="year.is_active" class="badge rounded-pill bg-info text-dark ms-1">Aktif</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="form-label small fw-bold text-secondary mb-2">Urutkan dan tampilkan</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" @click="handleSubmitFilter('name')" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                    <i class="bi bi-sort-alpha-down me-1"></i>Nama
+                                    <i v-if="filter.category === 'name'" :class="filter.order === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
+                                </button>
+                                <button type="button" @click="handleSubmitFilter('date')" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                    <i class="bi bi-calendar3 me-1"></i>Tanggal
+                                    <i v-if="filter.category === 'date'" :class="filter.order === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
                                 </button>
                                 <button
-                                    @click="handleSubmitFilter('date')"
-                                    class="btn text-nowrap btn-sm btn-outline-secondary ms-2 border-1 rounded-2 border-secondary-subtle py-0"
+                                    type="button"
+                                    class="btn btn-sm rounded-pill px-3"
+                                    :class="filter.active ? 'btn-success' : 'btn-outline-success'"
+                                    @click="form_filter.active = !filter.active; handleSubmitFilter()"
                                 >
-                                    {{ "Date" }}
-                                    <i
-                                        :class="
-                                            'bi bi-arrow-' +
-                                            (filter.category == 'date'
-                                                ? filter.order == 'asc'
-                                                    ? 'up'
-                                                    : 'down'
-                                                : 'up')
-                                        "
-                                    ></i>
-                                </button>
-                                <button
-                                    @click="
-                                        () => {
-                                            form_filter.active = !filter.active;
-                                            handleSubmitFilter();
-                                        }
-                                    "
-                                    :class="
-                                        'btn text-nowrap btn-sm ms-2 border-1 rounded-2 border-secondary-subtle py-0 btn-outline-success ' +
-                                        (filter.active == true ? 'active' : '')
-                                    "
-                                >
-                                    {{
-                                        filter.active == true
-                                            ? "Active"
-                                            : "All Status"
-                                    }}
+                                    <i class="bi bi-toggle-on me-1"></i>{{ filter.active ? 'Hanya Stand Aktif' : 'Semua Status' }}
                                 </button>
                             </div>
-                            <!-- New Stand -->
-                            <button
-                                v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
-                                class="btn btn-sm btn-outline-primary border-0 py-0"
-                                @click="showNewStandModal(true)"
-                            >
-                                <i class="bi bi-plus-lg d-lg-none"></i>
-                                <span class="d-none d-lg-block">{{
-                                    "New Stand"
-                                }}</span>
-                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
-            <!-- Stand List -->
-            <div class="row gx-4 mt-4 mt-lg-5">
-                <div v-for="stand in stand_list" class="col-lg-4 col-12">
+            </section>
+
+            <div v-if="stand_list?.length" class="row g-3 g-lg-4">
+                <div v-for="stand in stand_list" :key="stand.id" class="col-12 col-md-6 col-xl-4">
                     <a
-                        :href="`/seeo/staff/blaterian/foods/stand_detail/${stand.id}`"
+                        :href="route('food.stand.detail', { id: stand.id })"
                         @click="debugOpenStandDetail(stand)"
                         class="text-decoration-none"
                     >
-                        <div class="card card-bg-hover p-3 mb-3 mb-lg-4">
-                            <div class="d-flex" style="font-size: 0.8rem">
-                                <span class="me-auto">{{
-                                    stand?.date ? formatDateOnly(stand.date) : '-'
-                                }}</span>
-                                <span
-                                    :class="
-                                        'd-block ' +
-                                        ((stand?.menu_lock || 0) > 0 &&
-                                        (stand?.sale_validation || 0) == 0
-                                            ? 'text-success'
-                                            : 'text-secondary')
-                                    "
-                                    >{{
-                                        (stand?.menu_lock || 0) > 0 &&
-                                        (stand?.sale_validation || 0) == 0
-                                            ? "active"
-                                            : "inactive"
-                                    }}</span
-                                >
+                        <article class="card stand-card border-0 shadow-sm h-100 rounded-4">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                    <div class="stand-icon"><i class="bi bi-shop-window"></i></div>
+                                    <span
+                                        class="badge rounded-pill"
+                                        :class="(stand?.menu_lock || 0) > 0 && (stand?.sale_validation || 0) == 0 ? 'text-bg-success' : 'text-bg-secondary'"
+                                    >
+                                        {{ (stand?.menu_lock || 0) > 0 && (stand?.sale_validation || 0) == 0 ? 'Aktif' : 'Belum aktif' }}
+                                    </span>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-2">{{ stand?.name || 'Stand tanpa nama' }}</h5>
+                                <div class="d-grid gap-2 small text-muted">
+                                    <span><i class="bi bi-geo-alt me-2 text-primary"></i>{{ stand?.place || 'Lokasi belum diisi' }}</span>
+                                    <span><i class="bi bi-person-badge me-2 text-primary"></i>PIC: {{ stand?.pic?.name || 'Belum ditentukan' }}</span>
+                                    <span><i class="bi bi-calendar-event me-2 text-primary"></i>{{ stand?.date ? formatDateOnly(stand.date) : 'Tanggal belum diisi' }}</span>
+                                    <span><i class="bi bi-bag-check me-2 text-primary"></i>{{ standTypeLabel(stand?.type) }}</span>
+                                </div>
                             </div>
-                            <span class="h5 text-primary-emphasis me-auto">
-                                {{ "Stand " + (stand?.name || 'Unknown') }}
-                            </span>
-                        </div>
+                            <div class="card-footer bg-transparent border-top px-4 py-3 d-flex justify-content-between align-items-center text-primary fw-semibold small">
+                                <span>Buka dan kelola stand</span><i class="bi bi-arrow-right"></i>
+                            </div>
+                        </article>
                     </a>
                 </div>
             </div>
+
+            <section v-else class="card border-0 shadow-sm rounded-4">
+                <div class="card-body text-center py-5 px-3">
+                    <div class="empty-icon mx-auto mb-3"><i class="bi bi-shop"></i></div>
+                    <h4 class="fw-bold">Belum ada stand pada periode ini</h4>
+                    <p class="text-muted mx-auto" style="max-width: 520px;">
+                        Stand adalah tempat utama untuk mengelola menu, bahan belanja, tim produksi, kasir, stok, dan transaksi.
+                    </p>
+                    <button v-if="canManageStands" type="button" class="btn btn-primary rounded-pill px-4" @click="showNewStandModal(true)">
+                        <i class="bi bi-plus-circle me-2"></i>Buat Stand Pertama
+                    </button>
+                    <div v-else class="alert alert-light border d-inline-flex align-items-center gap-2 mb-0 text-start">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Hanya COO atau Super Admin yang dapat membuat stand. Hubungi pengelola jika stand yang dibutuhkan belum tersedia.</span>
+                    </div>
+                </div>
+            </section>
         </div>
     </StaffLayout>
 
     <!-- Modal -->
     <!-- New Stand Modal -->
     <div
-        v-if="auth_user.roles_id == 3 || auth_user.roles_id == 99"
+        v-if="canManageStands"
         class="modal fade"
         id="newStandModal"
         tabindex="-1"
-        aria-labelledby="newStandModal"
+        aria-labelledby="newStandModalLabel"
+        aria-hidden="true"
     >
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow mx-3">
-                <div class="modal-header py-1 ps-3 pe-2">
-                    <span class="modal-title fs-5 text-primary-emphasis">
-                        <i class="bi bi-shop pe-2"></i>
-                        {{ "New Stand" }}
-                    </span>
+            <div class="modal-content border-0 shadow-lg mx-3 rounded-4 overflow-hidden">
+                <div class="modal-header border-0 bg-primary text-white p-4">
+                    <div>
+                        <h5 id="newStandModalLabel" class="modal-title fw-bold"><i class="bi bi-shop-window me-2"></i>Tambah Stand Baru</h5>
+                        <small class="text-white text-opacity-75">Lengkapi identitas dasar. Menu dan anggota tim dapat ditambahkan setelah stand dibuat.</small>
+                    </div>
                     <button
                         type="button"
-                        class="btn btn-sm ms-auto"
+                        class="btn-close btn-close-white ms-auto"
                         @click="showNewStandModal(false)"
-                    >
-                        <i class="bi bi-x-lg"></i>
-                    </button>
+                        aria-label="Tutup"
+                    ></button>
                 </div>
                 <form @submit.prevent="handleNewStand()">
-                    <div class="modal-body bg-light">
-                        <div class="row justify-content-center">
-                            <div class="col-4 col-lg-3">
-                                <label
-                                    for="stand_name"
-                                    class="form-label d-inline-block"
-                                    >{{ "Name" }}</label
-                                >
-                            </div>
-                            <div class="col-8 col-lg-7">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                                <label for="stand_name" class="form-label fw-semibold">Nama stand <span class="text-danger">*</span></label>
                                 <input
                                     type="text"
-                                    class="form-control form-control-sm"
+                                    class="form-control"
                                     id="stand_name"
                                     v-model="form_new_stand.name"
-                                    placeholder="Blaterian 1"
+                                    placeholder="Contoh: Blaterian Fakultas Ekonomi"
+                                    maxlength="255"
+                                    required
                                 />
-                                <InputError
-                                    :message="form_new_stand.errors.name"
-                                    class="mt-2"
-                                />
-                            </div>
+                                <InputError :message="form_new_stand.errors.name" class="mt-2" />
                         </div>
-                        <div class="row justify-content-center mt-2">
-                            <div class="col-4 col-lg-3">
-                                <label
-                                    for="stand_place"
-                                    class="form-label d-inline-block"
-                                    >{{ "Place" }}</label
-                                >
-                            </div>
-                            <div class="col-8 col-lg-7">
+                        <div class="mb-3">
+                                <label for="stand_place" class="form-label fw-semibold">Lokasi <span class="text-danger">*</span></label>
                                 <input
                                     type="text"
-                                    class="form-control form-control-sm"
+                                    class="form-control"
                                     id="stand_place"
                                     v-model="form_new_stand.place"
-                                    placeholder="Gedung F"
+                                    placeholder="Contoh: Lobi Gedung F"
+                                    maxlength="255"
+                                    required
                                 />
-                                <InputError
-                                    :message="form_new_stand.errors.place"
-                                    class="mt-2"
-                                />
-                            </div>
+                                <InputError :message="form_new_stand.errors.place" class="mt-2" />
                         </div>
-                        <div class="row justify-content-center mt-2">
-                            <div class="col-4 col-lg-3">
-                                <label
-                                    for="stand_date"
-                                    class="form-label d-inline-block"
-                                    >{{ "Date" }}</label
-                                >
-                            </div>
-                            <div class="col-8 col-lg-7">
+                        <div class="row g-3 mb-3">
+                            <div class="col-sm-6">
+                                <label for="stand_date" class="form-label fw-semibold">Tanggal mulai <span class="text-danger">*</span></label>
                                 <input
                                     type="date"
-                                    class="form-control form-control-sm"
+                                    class="form-control"
                                     id="stand_date"
                                     v-model="form_new_stand.date"
+                                    :min="today"
+                                    required
                                 />
-                                <InputError
-                                    :message="form_new_stand.errors.date"
-                                    class="mt-2"
-                                />
+                                <InputError :message="form_new_stand.errors.date" class="mt-2" />
                             </div>
-                        </div>
-                        <div class="row justify-content-center mt-2">
-                            <div class="col-4 col-lg-3">
-                                <label
-                                    for="stand_type"
-                                    class="form-label d-inline-block"
-                                    >{{ "Type" }}</label
-                                >
-                            </div>
-                            <div class="col-8 col-lg-7">
+                            <div class="col-sm-6">
+                                <label for="stand_type" class="form-label fw-semibold">Sistem penjualan <span class="text-danger">*</span></label>
                                 <select
                                     id="stand_type"
-                                    class="form-select form-select-sm"
+                                    class="form-select"
                                     v-model="form_new_stand.type"
+                                    required
                                 >
                                     <option
                                         :value="item.value"
                                         v-for="item in [
-                                            { value: 0, name: 'Live' },
-                                            { value: 1, name: 'Pre-Order' },
+                                            { value: 0, name: 'Penjualan langsung (Live)' },
+                                            { value: 1, name: 'Pre-order' },
                                             {
                                                 value: 2,
-                                                name: 'Live and Pre-Order',
+                                                name: 'Live dan Pre-order',
                                             },
                                         ]"
                                     >
                                         {{ item.name }}
                                     </option>
                                 </select>
-                                <InputError
-                                    :message="form_new_stand.errors.type"
-                                    class="mt-2"
-                                />
+                                <InputError :message="form_new_stand.errors.type" class="mt-2" />
                             </div>
                         </div>
-                        <div class="row justify-content-center mt-2">
-                            <div class="col-4 col-lg-3">
-                                <label
-                                    for="stand_pic"
-                                    class="form-label d-inline-block"
-                                    >{{ "In Charge" }}</label
-                                >
-                            </div>
-                            <div class="col-8 col-lg-7">
+                        <div>
+                                <label for="stand_pic" class="form-label fw-semibold">Penanggung jawab (PIC) <span class="text-danger">*</span></label>
                                 <v-select
                                     class="bg-white text-nowrap"
                                     :options="staff_list"
@@ -433,18 +389,18 @@ watch(
                                     label="name"
                                     :reduce="(staff) => staff?.id"
                                     v-model="form_new_stand.pic_id"
-                                    placeholder="Select staff"
+                                    placeholder="Pilih anggota staf"
+                                    input-id="stand_pic"
                                 />
-                                <InputError
-                                    :message="form_new_stand.errors.pic_id"
-                                    class="mt-2"
-                                />
-                            </div>
+                                <div v-if="!staff_list?.length" class="form-text text-warning">Belum ada staf pada periode ini. Tambahkan staf terlebih dahulu melalui Manajemen Staff.</div>
+                                <InputError :message="form_new_stand.errors.pic_id" class="mt-2" />
                         </div>
                     </div>
-                    <div class="modal-footer p-1">
-                        <button type="submit" class="btn btn-sm btn-primary">
-                            {{ "Create" }}
+                    <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                        <button type="button" class="btn btn-light" @click="showNewStandModal(false)">Batal</button>
+                        <button type="submit" class="btn btn-primary px-4" :disabled="form_new_stand.processing || !staff_list?.length">
+                            <span v-if="form_new_stand.processing" class="spinner-border spinner-border-sm me-2"></span>
+                            {{ form_new_stand.processing ? 'Membuat stand...' : 'Buat Stand' }}
                         </button>
                     </div>
                 </form>

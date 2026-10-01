@@ -33,6 +33,10 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         return [
             ...parent::share($request),
+            'app' => [
+                'name' => config('app.name'),
+                'version' => config('app.version'),
+            ],
             'selected_year' => fn() => (int) $request->session()->get('selected_year', now()->year),
             'available_years' => fn() => collect(range(now()->year, now()->year - 5))->values()->all(),
             'auth' => [

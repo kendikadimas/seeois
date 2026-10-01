@@ -15,6 +15,8 @@ return [
 
     'name' => env('APP_NAME', 'SEEO Information System'),
 
+    'version' => env('APP_VERSION', '6.0'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

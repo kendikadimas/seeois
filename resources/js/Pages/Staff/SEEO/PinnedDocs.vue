@@ -6,7 +6,7 @@
             <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Daftar Dokumen Penting</h5>
-                    <button class="btn btn-primary" @click="showAdd = !showAdd">Tambah Dokumen</button>
+                    <button type="button" class="btn btn-primary" @click="showAdd = !showAdd">Tambah Dokumen</button>
                 </div>
                 <div class="card-body">
                     <!-- Add Form -->
@@ -17,22 +17,27 @@
                                 <div class="col-md-6">
                                     <label class="form-label">Judul</label>
                                     <input v-model="form.title" class="form-control" required />
+                                    <InputError :message="form.errors.title" class="mt-1" />
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Tahun <small class="text-muted">(opsional)</small></label>
                                     <input v-model.number="form.pinned_year" type="number" class="form-control" placeholder="cth: 2025" min="2000" max="2099" />
+                                    <InputError :message="form.errors.pinned_year" class="mt-1" />
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">File Dokumen (PDF/DOC)</label>
                                     <input type="file" @change="onFile" accept=".pdf,.doc,.docx" class="form-control" />
+                                    <div class="form-text">PDF, DOC, atau DOCX; maksimal 10 MB.</div>
+                                    <InputError :message="form.errors.document" class="mt-1" />
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Link (opsional)</label>
                                     <input v-model="form.link" type="url" class="form-control" placeholder="https://..." />
+                                    <InputError :message="form.errors.link" class="mt-1" />
                                 </div>
                                 <div class="col-12 mt-2 text-end">
-                                    <button class="btn btn-secondary me-2" @click="showAdd = false">Batal</button>
-                                    <button class="btn btn-success" :disabled="processing">Simpan</button>
+                                    <button type="button" class="btn btn-secondary me-2" @click="showAdd = false">Batal</button>
+                                    <button type="submit" class="btn btn-success" :disabled="processing">{{ processing ? 'Menyimpan...' : 'Simpan' }}</button>
                                 </div>
                             </div>
                         </form>
@@ -67,8 +72,8 @@
                                     </td>
                                     <td><small>{{ doc.user?.name || 'N/A' }}</small></td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-primary" @click="startEdit(doc)">Edit</button>
-                                        <button class="btn btn-sm btn-outline-danger ms-1" @click="remove(doc.id)">Hapus</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" @click="startEdit(doc)">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger ms-1" @click="remove(doc.id)">Hapus</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -92,24 +97,28 @@
                             <div class="mb-3">
                                 <label class="form-label">Judul</label>
                                 <input v-model="editForm.title" class="form-control" required />
+                                <InputError :message="editForm.errors.title" class="mt-1" />
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Tahun <small class="text-muted">(opsional)</small></label>
                                 <input v-model.number="editForm.pinned_year" type="number" class="form-control" placeholder="cth: 2025" min="2000" max="2099" />
+                                <InputError :message="editForm.errors.pinned_year" class="mt-1" />
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">File Dokumen (PDF/DOC)</label>
                                 <input type="file" @change="onEditFile" accept=".pdf,.doc,.docx" class="form-control" />
                                 <small class="text-muted d-block mt-1">Kosongkan jika tidak ingin mengubah file</small>
+                                <InputError :message="editForm.errors.document" class="mt-1" />
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Link (opsional)</label>
                                 <input v-model="editForm.link" type="url" class="form-control" />
+                                <InputError :message="editForm.errors.link" class="mt-1" />
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                            <button class="btn btn-primary" :disabled="processing">Simpan Perubahan</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary" :disabled="processing">{{ processing ? 'Menyimpan...' : 'Simpan Perubahan' }}</button>
                         </div>
                     </form>
                 </div>
@@ -120,15 +129,17 @@
 
 <script setup>
 import StaffLayout from '@/Layouts/StaffLayout.vue';
-import { ref, onMounted } from 'vue';
+import InputError from '@/Components/InputError.vue';
+import { computed, ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     pinnedDocs: Array,
     defaultYear: Number,
 });
+const route = (name, params = {}) => window.route(name, params);
 
-const pinnedDocs = ref(props.pinnedDocs || []);
+const pinnedDocs = computed(() => props.pinnedDocs || []);
 const showAdd = ref(false);
 const processing = ref(false);
 
@@ -158,13 +169,20 @@ function onEditFile(e) {
 
 function submitAdd() {
     processing.value = true;
-    form.post('/seeo/staff/pinned-docs', {
-        onSuccess: () => location.reload(),
+    form.post(route('pinneddoc.store'), {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            form.reset();
+            showAdd.value = false;
+        },
         onFinish: () => processing.value = false,
     });
 }
 
 function startEdit(doc) {
+    editForm.reset();
+    editForm.clearErrors();
     editForm.id = doc.id;
     editForm.title = doc.title;
     editForm.link = doc.link || '';
@@ -175,8 +193,13 @@ function startEdit(doc) {
 
 function submitEdit() {
     processing.value = true;
-    editForm.transform(data => ({ ...data, _method: 'put' })).post('/seeo/staff/pinned-docs/' + editForm.id, {
-        onSuccess: () => location.reload(),
+    editForm.post(route('pinneddoc.update', editForm.id), {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            const modalEl = document.getElementById('editModal');
+            if (modalEl && window.bootstrap) window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        },
         onFinish: () => processing.value = false,
     });
 }
@@ -184,10 +207,8 @@ function submitEdit() {
 function remove(id) {
     if (!confirm('Hapus dokumen ini?')) return;
     const f = useForm();
-    f.delete('/seeo/staff/pinned-docs/' + id, { onSuccess: () => location.reload() });
+    f.delete(route('pinneddoc.destroy', id), { preserveScroll: true });
 }
-
-onMounted(() => {});
 </script>
 
 <style scoped>

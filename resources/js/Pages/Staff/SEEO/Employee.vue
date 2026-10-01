@@ -137,9 +137,9 @@ onUnmounted(() => {
 watch(
     () => props.notif,
     (newValue) => {
-        const notification = newValue;
-        toastNotifRef.value.showToast(notification.type, notification.message);
-        if (notification.type !== "warning" && notification.type !== "danger") {
+        if (!newValue) return;
+        toastNotifRef.value?.showToast(newValue.type, newValue.message);
+        if (newValue.type !== "warning" && newValue.type !== "danger") {
             selected_employee.value = default_selected_employee;
             selected_customer.value = default_selected_customer;
         }
@@ -491,7 +491,7 @@ watch(
                                                 class="form-control form-control-sm py-0"
                                                 placeholder="Search"
                                                 aria-label="Search"
-                                                aria-describedby="basic-addon1"
+                                                aria-describedby="employee-search-addon"
                                                 v-model="
                                                     form_employee_filter.keyword
                                                 "
@@ -499,7 +499,7 @@ watch(
                                             />
                                             <span
                                                 class="input-group-text py-0"
-                                                id="basic-addon1"
+                                                id="employee-search-addon"
                                                 ><i
                                                     class="bi bi-search"
                                                     :style="'font-size: 0.9rem'"
@@ -647,7 +647,7 @@ watch(
                                                 class="form-control form-control-sm py-0"
                                                 placeholder="Search"
                                                 aria-label="Search"
-                                                aria-describedby="basic-addon1"
+                                                aria-describedby="customer-search-addon"
                                                 v-model="
                                                     form_customer_filter.keyword
                                                 "
@@ -655,7 +655,7 @@ watch(
                                             />
                                             <span
                                                 class="input-group-text py-0"
-                                                id="basic-addon1"
+                                                id="customer-search-addon"
                                                 ><i
                                                     class="bi bi-search"
                                                     :style="'font-size: 0.9rem'"

@@ -25,6 +25,7 @@ class FoodsExpense extends Model
     protected $fillable = [
         'category',
         'category_id',
+        'price',
     ];
 
     /**

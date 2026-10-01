@@ -40,6 +40,27 @@ describe('Menu image upload (Sales Distribution)', function () {
         $disk = config('app.env') === 'production' ? 'google' : 'public';
         expect(Storage::disk($disk)->exists('images/shop/foods/menu/' . $menu->image))->toBeTrue();
     });
+
+    test('stand detail can create the first menu with an image', function () {
+        \App\Models\MenuItem::query()->delete();
+
+        $response = $this->post(STAFF_PREFIX . "/food/stand/menu/add/{$this->stand->id}", [
+            'name' => 'Menu Pertama',
+            'category' => 'Snack',
+            'food_tag' => [],
+            'price' => 9000,
+            'stock' => 0,
+            'image' => UploadedFile::fake()->image('first-menu.png', 200, 200),
+        ]);
+
+        $response->assertRedirect()->assertSessionHasNoErrors();
+        $menu = \App\Models\MenuItem::where('stand_id', $this->stand->id)
+            ->where('name', 'Menu Pertama')
+            ->firstOrFail();
+
+        expect($menu->image)->toMatch('/^M_\d+_\d+\.webp$/')
+            ->and(Storage::disk('public')->exists('images/shop/foods/menu/' . $menu->image))->toBeTrue();
+    });
 });
 
 describe('Marketing CMS image upload', function () {

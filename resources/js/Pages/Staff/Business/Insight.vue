@@ -174,7 +174,6 @@ function showImage(event) {
 const isLargeScreen = ref(window.innerWidth >= 768);
 const handleResize = () => {
     isLargeScreen.value = window.innerWidth >= 768;
-    window.addEventListener("resize", handleResize);
 };
 
 onMounted(() => {
@@ -187,8 +186,7 @@ onUnmounted(() => {
 watch(
     () => props.notif,
     (newValue) => {
-        const notification = newValue;
-        toastNotifRef.value.showToast(notification.type, notification.message);
+        if (newValue) toastNotifRef.value?.showToast(newValue.type, newValue.message);
     }
 );
 

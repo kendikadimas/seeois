@@ -220,3 +220,231 @@
     text-overflow: ellipsis;
     max-width: 100%;
 }
+
+/* =====================================================
+ * SEEOIS 6 — SHARED PRODUCT UI
+ * ===================================================== */
+:root {
+    --seeo-primary: #4f46e5;
+    --seeo-primary-dark: #3730a3;
+    --seeo-surface: #ffffff;
+    --seeo-border: #e2e8f0;
+    --seeo-text: #172033;
+    --seeo-muted: #64748b;
+    --seeo-radius: 1rem;
+    --seeo-shadow: 0 10px 30px rgba(30, 41, 59, 0.07);
+}
+
+.staff-app-root .content-stage > .container-fluid {
+    width: 100%;
+    max-width: 1600px;
+    margin-inline: auto;
+}
+
+.staff-app-root .card {
+    border: 1px solid rgba(226, 232, 240, 0.85) !important;
+    border-radius: var(--seeo-radius) !important;
+    box-shadow: var(--seeo-shadow) !important;
+}
+
+.staff-app-root .card-header {
+    border-color: rgba(226, 232, 240, 0.8) !important;
+    border-radius: var(--seeo-radius) var(--seeo-radius) 0 0 !important;
+}
+
+.staff-app-root .btn {
+    min-height: 40px;
+    border-radius: 0.72rem;
+    font-weight: 650;
+    transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.staff-app-root .btn-sm {
+    min-height: 34px;
+    border-radius: 0.58rem;
+}
+
+.staff-app-root .btn-primary,
+.auth-shell .btn-primary {
+    --bs-btn-bg: var(--seeo-primary);
+    --bs-btn-border-color: var(--seeo-primary);
+    --bs-btn-hover-bg: var(--seeo-primary-dark);
+    --bs-btn-hover-border-color: var(--seeo-primary-dark);
+    --bs-btn-active-bg: var(--seeo-primary-dark);
+    --bs-btn-active-border-color: var(--seeo-primary-dark);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.18);
+}
+
+.staff-app-root .btn:not(:disabled):hover,
+.auth-shell .btn:not(:disabled):hover {
+    transform: translateY(-1px);
+}
+
+.staff-app-root .form-control,
+.staff-app-root .form-select,
+.auth-shell .form-control,
+.auth-shell .form-select {
+    min-height: 44px;
+    border-color: #d8e0eb;
+    border-radius: 0.72rem;
+    background-color: #fff;
+}
+
+.staff-app-root textarea.form-control {
+    min-height: auto;
+}
+
+.staff-app-root .form-control:focus,
+.staff-app-root .form-select:focus,
+.auth-shell .form-control:focus,
+.auth-shell .form-select:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 0.22rem rgba(99, 102, 241, 0.14);
+}
+
+.staff-app-root :focus-visible,
+.auth-shell :focus-visible {
+    outline: 3px solid rgba(99, 102, 241, 0.28);
+    outline-offset: 2px;
+}
+
+.staff-app-root .table-responsive {
+    border-radius: 0.85rem;
+}
+
+.staff-app-root .table {
+    --bs-table-hover-bg: #f8faff;
+    margin-bottom: 0;
+}
+
+.staff-app-root .table > thead > tr > th {
+    padding-block: 0.85rem;
+    border-bottom-width: 1px;
+    color: #526078;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.staff-app-root .table > tbody > tr > td {
+    padding-block: 0.85rem;
+    border-color: #edf1f7;
+}
+
+.staff-app-root .modal-content {
+    overflow: hidden;
+    border: 0;
+    border-radius: 1.15rem;
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+}
+
+.staff-app-root .modal-header,
+.staff-app-root .modal-footer {
+    border-color: #e8edf4;
+}
+
+.staff-app-root .dropdown-menu {
+    padding: 0.5rem;
+    border: 1px solid rgba(226, 232, 240, 0.85) !important;
+    border-radius: 0.9rem !important;
+    box-shadow: 0 18px 45px rgba(30, 41, 59, 0.14) !important;
+}
+
+.staff-app-root .dropdown-item {
+    border-radius: 0.55rem;
+}
+
+.staff-app-root .badge {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+/* Authentication pages */
+.auth-shell {
+    min-height: 100dvh;
+    background: #f5f7fb;
+    font-family: 'Plus Jakarta Sans', 'Poppins', system-ui, sans-serif;
+}
+
+.auth-shell > .row {
+    min-height: 100dvh;
+}
+
+.auth-shell .bg-primary.bg-gradient {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 20% 15%, rgba(129, 140, 248, 0.72), transparent 28%),
+        radial-gradient(circle at 85% 85%, rgba(245, 158, 11, 0.3), transparent 30%),
+        linear-gradient(145deg, #17153f 0%, #4338ca 55%, #4f46e5 100%) !important;
+}
+
+.auth-shell .bg-primary.bg-gradient::before,
+.auth-shell .bg-primary.bg-gradient::after {
+    position: absolute;
+    z-index: -1;
+    width: 18rem;
+    height: 18rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 50%;
+    content: '';
+}
+
+.auth-shell .bg-primary.bg-gradient::before {
+    top: -7rem;
+    right: -5rem;
+}
+
+.auth-shell .bg-primary.bg-gradient::after {
+    bottom: -8rem;
+    left: -6rem;
+}
+
+.auth-shell .card {
+    border: 1px solid rgba(226, 232, 240, 0.82) !important;
+    border-radius: 1.4rem !important;
+    box-shadow: 0 24px 65px rgba(30, 41, 59, 0.12) !important;
+}
+
+.auth-shell .btn-lg {
+    min-height: 50px;
+    border-radius: 0.82rem;
+    font-weight: 700;
+}
+
+.auth-shell a {
+    text-underline-offset: 0.18em;
+}
+
+@media (max-width: 767.98px) {
+    .staff-app-root .content-stage > .container-fluid {
+        padding: 0.75rem !important;
+    }
+
+    .staff-app-root .card-body {
+        padding: 1rem;
+    }
+
+    .staff-app-root .modal-dialog {
+        margin: 0.75rem;
+    }
+
+    .auth-shell > .row > .bg-light {
+        background:
+            radial-gradient(circle at 100% 0%, rgba(99, 102, 241, 0.14), transparent 18rem),
+            #f5f7fb !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .staff-app-root *,
+    .auth-shell * {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

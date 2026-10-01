@@ -6,23 +6,25 @@ const form_confirmation = useForm({});
 
 // Define var
 const confirmation_modal = ref(null);
+const requestedMethod = ref('post');
 
 // Define function
-function showModal(route, message) {
-    document.getElementById("confirmation_message").innerHTML = message; // this is outside Vue reactivity scope. Because the bootstrap render the modal
+function showModal(route, message, method = 'POST') {
+    document.getElementById("confirmation_message").textContent = message;
+    requestedMethod.value = method.toLowerCase();
     const element = document.getElementById("confirmationModal");
-    confirmation_modal.value = bootstrap.Modal.getOrCreateInstance(element);
+    confirmation_modal.value = window.bootstrap.Modal.getOrCreateInstance(element);
     confirmation_modal.value.show();
 
     const form = document.getElementById("confirmationForm");
-    form.onsubmit = function () {
+    form.onsubmit = function (event) {
         event.preventDefault();
         handleSubmitConfirmation(route);
     };
 }
 
 function handleSubmitConfirmation(route) {
-    form_confirmation.post(route, {
+    form_confirmation.submit(requestedMethod.value, route, {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
