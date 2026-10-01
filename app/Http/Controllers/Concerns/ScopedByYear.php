@@ -30,16 +30,17 @@ trait ScopedByYear
 
     /**
      * Apply year scope to an Eloquent query builder.
-     * Strict: only records where year_id matches the active year.
-     * If no active year, returns nothing (empty result — no year = no data).
+     * Records matching the active year or unassigned (legacy/null year_id) are included.
+     * If no active year is set, unassigned records (year_id IS NULL) are returned.
      */
     protected function applyYearScope($query, ?int $yearId)
     {
         if ($yearId === null) {
-            // No active year → return no records
-            return $query->whereRaw('1 = 0');
+            return $query->whereNull('year_id');
         }
-        // Show only records belonging to this exact year
-        return $query->where('year_id', $yearId);
+
+        return $query->where(function ($q) use ($yearId) {
+            $q->where('year_id', $yearId)->orWhereNull('year_id');
+        });
     }
 }

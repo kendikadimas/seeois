@@ -129,6 +129,14 @@ class CeoPanelController extends Controller
                     ->whereNull('year_id')
                     ->update(['year_id' => $previousYear->id]);
             }
+        } else {
+            // First-time activation: associate existing unassigned records with this initial active year
+            $tables = ['stand', 'program', 'department', 'users', 'cash_in_item', 'contribution', 'contribution_configuration'];
+            foreach ($tables as $table) {
+                DB::table($table)
+                    ->whereNull('year_id')
+                    ->update(['year_id' => $governanceYear->id]);
+            }
         }
 
         // Deactivate all years, then activate the chosen one

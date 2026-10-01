@@ -56,10 +56,10 @@
                                 <td class="small text-muted">{{ new Date(item.created_at).toLocaleString('id-ID') }}</td>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-2">
-                                        <button @click="previewDoc(`/storage/images/receipt/contribution/${item.receipt}`, `/contribution/validation/${item.id}`, 'Validasi bukti iuran ini?')" class="btn btn-sm btn-light" title="Preview">
+                                        <button @click="previewDoc(`/storage/images/receipt/contribution/${item.receipt}`, `/seeo/staff/contribution/validation/${item.id}`, 'Validasi bukti iuran ini?')" class="btn btn-sm btn-light" title="Preview">
                                             <i class="bi bi-eye text-primary"></i>
                                         </button>
-                                        <button @click="validateDoc(`/contribution/validation/${item.id}`, 'Validasi bukti iuran ini?')" class="btn btn-sm btn-light" title="Validate">
+                                        <button @click="validateDoc(`/seeo/staff/contribution/validation/${item.id}`, 'Validasi bukti iuran ini?')" class="btn btn-sm btn-light" title="Validate">
                                             <i class="bi bi-check-circle text-success"></i>
                                         </button>
                                     </div>
@@ -99,10 +99,10 @@
                                 <td class="fw-bold">Rp {{ item.total_price?.toLocaleString('id-ID') }}</td>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-2">
-                                        <button @click="previewDoc(`/storage/images/receipt/expense/${item.receipt}`, `/program/expense/validate/${item.id}`, 'Validasi bukti belanja ini?')" class="btn btn-sm btn-light" title="Preview">
+                                        <button @click="previewDoc(`/storage/images/receipt/expense/${item.receipt}`, `/seeo/staff/program/expense/validate/${item.id}`, 'Validasi bukti belanja ini?')" class="btn btn-sm btn-light" title="Preview">
                                             <i class="bi bi-eye text-primary"></i>
                                         </button>
-                                        <button @click="validateDoc(`/program/expense/validate/${item.id}`, 'Validasi bukti belanja ini?')" class="btn btn-sm btn-light" title="Validate">
+                                        <button @click="validateDoc(`/seeo/staff/program/expense/validate/${item.id}`, 'Validasi bukti belanja ini?')" class="btn btn-sm btn-light" title="Validate">
                                             <i class="bi bi-check-circle text-success"></i>
                                         </button>
                                     </div>

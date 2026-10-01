@@ -104,6 +104,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect($path);
     })->whereNumber('id');
 
+    // Backward-compatible validation endpoints for legacy/unprefixed calls
+    Route::middleware(['auth', 'verified', 'staff', 'capability:finance.manage'])->group(function () {
+        Route::post('/contribution/validation/{id}', [\App\Http\Controllers\Staff\SEEO\ContributionController::class, 'validation']);
+        Route::post('/program/expense/validate/{id?}', [\App\Http\Controllers\Staff\SEEO\ExpenseItemController::class, 'validateReceipt']);
+    });
+
 // Authenticated staff - Unified Group
 Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(function () {
 

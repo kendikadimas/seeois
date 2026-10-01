@@ -24,6 +24,7 @@ class ContributionReceipt extends Model
     protected $fillable = [
         'contribution_id',
         'financial_id',
+        'months',
         'receipt',
     ];
 
