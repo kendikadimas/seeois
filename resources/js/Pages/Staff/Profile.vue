@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import StaffLayout from "@/Layouts/StaffLayout.vue";
 import InputError from "@/Components/InputError.vue";
 import Notif from "@/Components/Notif.vue";
@@ -14,7 +14,7 @@ import {
     defineProps,
     defineExpose,
 } from "vue";
-import { formatIDR, getMonthName, showImage } from "@/utils";
+import { formatIDR, getMonthName, showImage, formatDateOnly } from "@/utils";
 import { getMonth } from "date-fns";
 
 const props = defineProps({
@@ -41,6 +41,18 @@ const modalUpdatePasswordRef = ref(null);
 const modalUpdatePassword = ref(null);
 const inputProfileImageRef = ref(null);
 const logbookImageRef = ref(null);
+const modalLogbookImageRef = ref(null);
+const selectedLogbookImage = ref(null);
+const isLogbookOpen = ref(false);
+
+function openLogbookImage(src) {
+    selectedLogbookImage.value = src;
+    if (typeof bootstrap !== "undefined" && modalLogbookImageRef.value) {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalLogbookImageRef.value);
+        modal.show();
+    }
+}
+
 const contributionReceiptRef = ref(null);
 const activeTab = ref(1);
 const targetTab = ref(0);
@@ -1056,63 +1068,178 @@ watch(
                                             </button>
                                         </div>
                                     </form>
-                                    <div class="mt-2">
-                                        <div class="d-flex">
+                                    <div class="mt-2 pt-2 border-top">
+                                        <div class="d-flex align-items-center justify-content-between">
                                             <button
-                                                class="btn btn-sm border-0 ms-auto text-primary text-decoration-none p-0"
-                                                style="font-size: 0.7rem"
-                                                data-bs-toggle="collapse"
-                                                data-bs-target="#programListCollapse"
+                                                type="button"
+                                                class="btn btn-sm border-0 text-primary text-decoration-none p-0 d-flex align-items-center gap-1"
+                                                style="font-size: 0.78rem"
+                                                @click="isLogbookOpen = !isLogbookOpen"
                                             >
-                                                {{ auth_user.id == profile.id ? "check my logbook" : "check logbook" }}
-                                            </button>
-                                        </div>
-                                        <div
-                                            class="collapse"
-                                            id="programListCollapse"
-                                        >
-                                            <a
-                                                v-for="program in program_list"
-                                                :href="
-                                                    `/seeo/staff/program/${program.program_id}/logbook/${profile.id}`
-                                                "
-                                                :class="'text-decoration-none '"
-                                            >
-                                                <div
-                                                    :class="
-                                                        'd-flex ' +
-                                                        (program_list.indexOf(
-                                                            program
-                                                        ) > 0
-                                                            ? 'mt-2'
-                                                            : '')
-                                                    "
-                                                    style="font-size: 0.8rem"
+                                                <i class="bi bi-journal-text fs-6"></i>
+                                                <span class="fw-semibold">
+                                                    {{ auth_user.id == profile.id ? "check my logbook" : "check logbook" }}
+                                                </span>
+                                                <span
+                                                    v-if="logbook_list && logbook_list.length > 0"
+                                                    class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle ms-1"
+                                                    style="font-size: 0.68rem"
                                                 >
-                                                    <span
-                                                        class="text-secondary"
-                                                        >{{
-                                                            program.program
-                                                                ?.name ??
-                                                            program.program_id
-                                                        }}</span
-                                                    >
-                                                    <span
-                                                        class="fw-light text-secondary mx-2"
-                                                        >{{ "as" }}</span
-                                                    >
-                                                    <span
-                                                        class="fw-light text-primary"
-                                                        >{{
-                                                            program.title
-                                                        }}</span
-                                                    >
-                                                    <i
-                                                        class="bi bi-box-arrow-up-right ms-1 text-primary"
-                                                    ></i>
-                                                </div>
-                                            </a>
+                                                    {{ logbook_list.length }}
+                                                </span>
+                                                <i
+                                                    class="bi ms-1"
+                                                    :class="isLogbookOpen ? 'bi-chevron-up' : 'bi-chevron-down'"
+                                                    style="font-size: 0.75rem"
+                                                ></i>
+                                            </button>
+                                            <span
+                                                v-if="program_list && program_list.length > 0"
+                                                class="text-muted"
+                                                style="font-size: 0.72rem"
+                                            >
+                                                {{ program_list.length }} Program
+                                            </span>
                                         </div>
+
+                                        <!-- Logbook Details Panel -->
+                                        <transition name="fade">
+                                            <div
+                                                v-show="isLogbookOpen"
+                                                class="mt-2 pt-2 border-top"
+                                            >
+                                                <!-- 1. Akses Halaman Logbook per Program -->
+                                                <div class="mb-3">
+                                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                                        <span
+                                                            class="text-secondary fw-semibold"
+                                                            style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;"
+                                                        >
+                                                            <i class="bi bi-folder2-open me-1"></i>Halaman Logbook Program
+                                                        </span>
+                                                    </div>
+                                                    <div
+                                                        v-if="program_list && program_list.length > 0"
+                                                        class="d-flex flex-column gap-1"
+                                                    >
+                                                        <a
+                                                            v-for="program in program_list"
+                                                            :key="program.id"
+                                                            :href="`/seeo/staff/program/${program.program_id}/logbook/${profile.id}`"
+                                                            class="d-flex align-items-center justify-content-between p-2 rounded-2 border bg-light text-decoration-none text-body"
+                                                            style="font-size: 0.78rem;"
+                                                        >
+                                                            <div class="d-flex align-items-center text-truncate me-2">
+                                                                <i class="bi bi-kanban text-primary me-2 flex-shrink-0"></i>
+                                                                <span class="fw-medium text-dark text-truncate">{{ program.program?.name ?? ('Program #' + program.program_id) }}</span>
+                                                                <span class="text-secondary mx-1 fw-light">as</span>
+                                                                <span class="text-primary fw-medium text-truncate">{{ program.title }}</span>
+                                                            </div>
+                                                            <i class="bi bi-box-arrow-up-right text-primary flex-shrink-0" style="font-size: 0.72rem"></i>
+                                                        </a>
+                                                    </div>
+                                                    <div v-else class="text-muted fst-italic py-1" style="font-size: 0.75rem">
+                                                        Belum terdaftar pada program apapun.
+                                                    </div>
+                                                </div>
+
+                                                <!-- 2. Riwayat Logbook Terbaru -->
+                                                <div>
+                                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                                        <span
+                                                            class="text-secondary fw-semibold"
+                                                            style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;"
+                                                        >
+                                                            <i class="bi bi-clock-history me-1"></i>Riwayat Logbook
+                                                        </span>
+                                                        <span
+                                                            v-if="logbook_list && logbook_list.length > 0"
+                                                            class="text-muted"
+                                                            style="font-size: 0.7rem"
+                                                        >
+                                                            (5 Terakhir)
+                                                        </span>
+                                                    </div>
+
+                                                    <div
+                                                        v-if="logbook_list && logbook_list.length > 0"
+                                                        class="d-flex flex-column gap-2"
+                                                        style="max-height: 380px; overflow-y: auto;"
+                                                    >
+                                                        <div
+                                                            v-for="log in logbook_list"
+                                                            :key="log.id"
+                                                            class="card border border-light-subtle bg-white p-2 rounded-2 shadow-xs"
+                                                        >
+                                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                                <div class="d-flex align-items-center gap-1 flex-wrap">
+                                                                    <span
+                                                                        class="badge bg-primary-subtle text-primary border border-primary-subtle"
+                                                                        style="font-size: 0.68rem"
+                                                                    >
+                                                                        {{ log.program?.name ?? 'Program' }}
+                                                                    </span>
+                                                                    <span
+                                                                        v-if="log.validated == 1"
+                                                                        class="badge bg-success-subtle text-success border border-success-subtle"
+                                                                        style="font-size: 0.65rem"
+                                                                    >
+                                                                        <i class="bi bi-check-circle-fill me-1"></i>Tervalidasi
+                                                                    </span>
+                                                                    <span
+                                                                        v-else
+                                                                        class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"
+                                                                        style="font-size: 0.65rem"
+                                                                    >
+                                                                        <i class="bi bi-clock me-1"></i>Pending
+                                                                    </span>
+                                                                </div>
+                                                                <small class="text-muted flex-shrink-0 ms-1" style="font-size: 0.7rem">
+                                                                    <i class="bi bi-calendar3 me-1"></i>{{ formatDateOnly(log.date_time) }}
+                                                                </small>
+                                                            </div>
+
+                                                            <div class="d-flex gap-2 align-items-start mt-1">
+                                                                <!-- Thumbnail with click to preview modal -->
+                                                                <div v-if="log.image" class="flex-shrink-0">
+                                                                    <img
+                                                                        :src="`/storage/images/log/${log.program_id}/${log.image}`"
+                                                                        alt="Foto Logbook"
+                                                                        class="rounded border border-secondary-subtle object-fit-cover"
+                                                                        style="width: 52px; height: 52px; cursor: pointer"
+                                                                        @click="openLogbookImage(`/storage/images/log/${log.program_id}/${log.image}`)"
+                                                                        title="Klik untuk melihat foto lebih besar"
+                                                                    />
+                                                                </div>
+                                                                <div class="flex-grow-1 text-wrap" style="min-width: 0;">
+                                                                    <p class="mb-1 text-dark" style="font-size: 0.78rem; line-height: 1.35; white-space: pre-line">
+                                                                        {{ log.title || '(Tanpa keterangan kegiatan)' }}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="d-flex justify-content-end mt-1 pt-1 border-top border-light">
+                                                                <a
+                                                                    :href="`/seeo/staff/program/${log.program_id}/logbook/${profile.id}`"
+                                                                    class="text-primary text-decoration-none fw-medium d-inline-flex align-items-center"
+                                                                    style="font-size: 0.7rem"
+                                                                >
+                                                                    <span>Buka halaman program</span>
+                                                                    <i class="bi bi-arrow-right-short fs-6"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div v-else class="alert alert-light border text-center py-3 my-1 rounded-2">
+                                                        <i class="bi bi-journal-x text-muted fs-3 d-block mb-1"></i>
+                                                        <p class="mb-0 text-muted" style="font-size: 0.78rem">
+                                                            Belum ada catatan logbook yang diunggah.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </transition>
                                     </div>
                                 </div>
                             </transition>
@@ -1360,6 +1487,57 @@ watch(
                 </div>
             </div>
         </div>
+    <!-- Modal Preview Foto Logbook -->
+    <div
+        class="modal fade"
+        ref="modalLogbookImageRef"
+        tabindex="-1"
+        aria-hidden="true"
+    >
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow border-0">
+                <div class="modal-header py-2 ps-3 pe-2 bg-light">
+                    <span class="modal-title fs-6 fw-semibold text-primary-emphasis">
+                        <i class="bi bi-image me-2 text-primary"></i>Foto Dokumentasi Logbook
+                    </span>
+                    <button
+                        type="button"
+                        class="btn btn-sm ms-auto"
+                        data-bs-dismiss="modal"
+                    >
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="modal-body bg-light text-center p-3">
+                    <img
+                        v-if="selectedLogbookImage"
+                        :src="selectedLogbookImage"
+                        class="img-fluid rounded shadow-sm border"
+                        style="max-height: 70vh; object-fit: contain"
+                        alt="Foto Logbook"
+                    />
+                </div>
+                <div class="modal-footer py-2 px-3 d-flex justify-content-between">
+                    <a
+                        v-if="selectedLogbookImage"
+                        :href="selectedLogbookImage"
+                        target="_blank"
+                        download
+                        class="btn btn-sm btn-outline-primary"
+                    >
+                        <i class="bi bi-download me-1"></i>Download Foto
+                    </a>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     </StaffLayout>
 
     <!-- Notif Toast -->

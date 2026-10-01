@@ -21,6 +21,7 @@ const props = defineProps({
     errors: Object,
     program: Object,
     default_logbook_id: Number,
+    default: Object,
     filter: Object,
     budget_list: Array,
     staff_list: Array,
@@ -59,7 +60,9 @@ const active_logbook = computed(() => {
         (logbook) => Number(logbook.user_id) === Number(selectedUser.value.id)
     );
 });
-const active_tab = ref(1);
+const active_tab = ref(
+    Number(props.default_logbook_id) > 0 ? 4 : (props.default?.tab ?? 1)
+);
 const next_tab = ref(0);
 const prev_tab = ref(0);
 const staffLogbookContainerRef = ref(null);

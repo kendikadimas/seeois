@@ -229,3 +229,57 @@ describe('Program Budget Validation', function () {
         $this->assertEquals(0, $program->fresh()->financial_id);
     });
 });
+
+describe('Program Check Logbook Route', function () {
+    test('registered staff can access their logbook route and gets redirected to program with tab 4', function () {
+        $user = User::factory()->create(['roles_id' => 3]);
+        $department = Department::create([
+            'name' => 'Tech',
+            'manager_id' => $user->id,
+            'budget' => 1000000,
+        ]);
+        $program = Program::create([
+            'name' => 'Tech Workshop',
+            'department_id' => $department->id,
+            'pic_id' => $user->id,
+            'budget' => 0,
+            'expense' => 0,
+            'disbursement' => 0,
+        ]);
+        ProgramStaff::create([
+            'program_id' => $program->id,
+            'user_id' => $user->id,
+            'title' => 'Trainer',
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->get("/seeo/staff/program/{$program->id}/logbook/{$user->id}");
+
+        $response->assertRedirect("/seeo/staff/program/{$program->id}");
+        $this->assertEquals($user->id, session('defaultLogbookId'));
+        $this->assertEquals(['tab' => 4, 'collapse' => 1], session('default'));
+    });
+
+    test('unregistered staff is redirected back to profile with warning', function () {
+        $user = User::factory()->create(['roles_id' => 3]);
+        $department = Department::create([
+            'name' => 'Design',
+            'manager_id' => $user->id,
+            'budget' => 1000000,
+        ]);
+        $program = Program::create([
+            'name' => 'Design Sprint',
+            'department_id' => $department->id,
+            'pic_id' => $user->id,
+            'budget' => 0,
+            'expense' => 0,
+            'disbursement' => 0,
+        ]);
+
+        $this->actingAs($user);
+        $response = $this->get("/seeo/staff/program/{$program->id}/logbook/{$user->id}");
+
+        $response->assertRedirect('/seeo/staff/profile');
+        $response->assertSessionHas('notif.type', 'warning');
+    });
+});

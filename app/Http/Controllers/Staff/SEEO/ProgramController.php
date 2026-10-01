@@ -67,6 +67,7 @@ class ProgramController extends Controller
         $data = [
             'available_users' => User::select(['id', 'name'])->where('roles_id', '!=', null)->get(),
             'default_logbook_id' => $default_logbook_id ?? 0,
+            'default' => $default_session,
             'program' => $program,
             'budget_list' => $budget_list,
             'disbursement_list' => $disbursement_list,
@@ -149,18 +150,24 @@ class ProgramController extends Controller
 
     function showMyLogbook(int $program_id, int $logbook_id)
     {
-        $user_id =  Auth::user()->id;
+        $user_id = Auth::user()->id;
+        $authUser = Auth::user();
+        $isPrivileged = in_array((int)$authUser->roles_id, [1, 2, 99]);
+
         // The second route parameter represents the requested staff user ID.
-        // Only allow a user to open their own logbook and only for a program
-        // where they are registered as staff.
-        if ($logbook_id === $user_id && ProgramStaff::where('program_id', $program_id)
-            ->where('user_id', $user_id)
+        // Allow a user to open their own logbook for a program where they are registered,
+        // or a privileged user (CEO/Admin) to view the staff's logbook.
+        $targetUserId = ($isPrivileged && $logbook_id > 0) ? $logbook_id : $user_id;
+
+        if (ProgramStaff::where('program_id', $program_id)
+            ->where('user_id', $targetUserId)
             ->exists()) {
-            session()->put('defaultLogbookId', $user_id);
+            session()->put('defaultLogbookId', $targetUserId);
+            session()->put('default', ['tab' => 4, 'collapse' => 1]);
         } else {
             return redirect()->route('profile.edit')->with('notif', [
                 'type' => 'warning',
-                'message' => 'Anda belum terdaftar pada program ini.',
+                'message' => 'Staff belum terdaftar pada program ini.',
             ]);
         }
 
