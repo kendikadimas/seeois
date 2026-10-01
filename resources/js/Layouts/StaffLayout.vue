@@ -1,6 +1,7 @@
 <script setup>
 import ModalConfirmation from "@/Components/ModalConfirmation.vue";
 import RoleWorkflowGuideModal from "@/Components/RoleWorkflowGuideModal.vue";
+import WelcomeBanner from "@/Components/WelcomeBanner.vue";
 import { getRoleWorkflow } from "@/utils/roleWorkflows";
 import { Head, usePage, router } from "@inertiajs/vue3";
 import { ref, watch, computed, onMounted, nextTick } from "vue";
@@ -504,21 +505,7 @@ const search_results = computed(() => {
     });
 });
 
-// Section accordion state (default open all)
-const openedSections = ref({
-    pribadi: true,
-    organisasi: true,
-    keuangan: true,
-    bisnis_foods: true,
-    bisnis_goods: true,
-    sdm: true,
-    marketing: true,
-    sistem: true
-});
-
-function toggleSection(key) {
-    openedSections.value[key] = !openedSections.value[key];
-}
+// Sections are always open — no accordion behavior needed
 
 function updateTime() {
     currentTime.value = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -568,11 +555,9 @@ watch(() => page.component, () => {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    </Head>
-
-    <div class="d-flex vh-100 overflow-x-hidden staff-app-root">
+    </Head>    <div class="d-flex vh-100 overflow-x-hidden staff-app-root">
         <!-- ================= DESKTOP SIDEBAR ================= -->
-        <aside class="sidebar-desktop d-none d-lg-flex flex-column shrink-0 bg-sidebar text-white shadow">
+        <aside class="sidebar-desktop d-none d-lg-flex flex-column shrink-0 bg-sidebar text-white shadow" style="width: 310px;">
             <!-- Brand & App Identity -->
             <div class="sidebar-header p-3 border-bottom border-white border-opacity-10">
                 <a :href="route('dashboard')" class="text-decoration-none">
@@ -580,8 +565,8 @@ watch(() => page.component, () => {
                         <img :src="logoSrc" alt="SEEO Logo" class="brand-logo me-2 shadow-sm rounded-circle" @error="$event.target.src=logoSrc"/>
                         <div class="lh-sm">
                             <div class="d-flex align-items-center gap-2">
-                                <h5 class="brand-title mb-0 fw-bold text-white tracking-wide">SEEOIS</h5>
-                                <span class="badge bg-warning text-dark fw-bold text-2xs px-1 py-0 rounded">v5.0</span>
+                                <h5 class="brand-title mb-0 fw-bold text-white tracking-wide">SEEOOIS</h5>
+                                <span class="badge bg-warning text-dark fw-bold px-2 py-1 rounded" style="font-size:0.7rem;">v5.0</span>
                             </div>
                             <span class="brand-subtitle text-white text-opacity-75 d-block">Information System</span>
                         </div>
@@ -589,47 +574,44 @@ watch(() => page.component, () => {
                 </a>
 
                 <!-- User Role Indicator Card -->
-                <div class="role-identity-card mt-3 p-2 px-3 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-2xs text-uppercase tracking-wider text-warning fw-bold">
-                            <i class="bi bi-person-badge me-1"></i> Peran Aktif
-                        </span>
+                <div class="role-identity-card mt-3 p-3 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="role-icon-pill" :style="{ backgroundColor: currentRoleWorkflow.theme?.accentColor || '#4f46e5' }">
+                            <i :class="['bi', currentRoleWorkflow.icon || 'bi-person-check']" style="font-size:1.1rem;"></i>
+                        </div>
+                        <div class="text-truncate flex-grow-1">
+                            <div class="fw-bold text-white text-truncate" style="font-size:0.85rem;">{{ currentRoleWorkflow.title }}</div>
+                            <small class="text-white text-opacity-75 d-block text-truncate" style="font-size:0.75rem;">{{ currentRoleWorkflow.alias }}</small>
+                        </div>
                         <button
                             type="button"
-                            class="btn btn-link p-0 text-white text-opacity-75 text-decoration-none text-2xs hover-white"
+                            class="btn btn-sm btn-outline-warning rounded-pill px-2 py-0 hover-white flex-shrink-0"
+                            style="font-size:0.7rem;"
                             @click="openGuideModal(userRole)"
-                            title="Buka panduan alur kerja untuk peran ini"
+                            title="Lihat panduan alur kerja untuk peran ini"
                         >
                             <i class="bi bi-question-circle me-1"></i> SOP
                         </button>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="role-icon-pill" :style="{ backgroundColor: currentRoleWorkflow.theme?.accentColor || '#4f46e5' }">
-                            <i :class="['bi', currentRoleWorkflow.icon || 'bi-person-check']"></i>
-                        </div>
-                        <div class="text-truncate">
-                            <div class="fw-bold small text-white text-truncate">{{ currentRoleWorkflow.title }}</div>
-                            <small class="text-white text-opacity-75 text-2xs d-block text-truncate">{{ currentRoleWorkflow.alias }}</small>
-                        </div>
                     </div>
                 </div>
 
                 <!-- Live Search Box -->
                 <div class="menu-search-wrapper mt-3">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-white bg-opacity-10 border-0 text-white text-opacity-50">
-                            <i class="bi bi-search"></i>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white bg-opacity-10 border-0 text-white text-opacity-60">
+                            <i class="bi bi-search" style="font-size:0.9rem;"></i>
                         </span>
                         <input
                             type="text"
                             v-model="searchKeyword"
                             class="form-control bg-white bg-opacity-10 border-0 text-white placeholder-white-50"
-                            placeholder="Cari fitur atau aksi..."
+                            style="font-size:0.85rem;"
+                            placeholder="Cari fitur atau menu..."
                             aria-label="Cari fitur"
                         />
                         <button
                             v-if="searchKeyword"
-                            class="btn btn-sm bg-white bg-opacity-10 text-white border-0"
+                            class="btn bg-white bg-opacity-10 text-white border-0"
                             type="button"
                             @click="searchKeyword = ''"
                         >
@@ -643,93 +625,91 @@ watch(() => page.component, () => {
             <div class="sidebar-scrollable-content grow p-3">
                 <!-- IF SEARCH ACTIVE: DISPLAY INSTANT SEARCH RESULTS -->
                 <div v-if="searchKeyword.trim()" class="search-results-box">
-                    <div class="small text-white text-opacity-75 mb-2 fw-semibold px-2">
+                    <div class="text-white text-opacity-75 mb-2 fw-semibold px-2" style="font-size:0.8rem;">
                         Hasil Pencarian ({{ search_results.length }}):
                     </div>
-                    <div v-if="search_results.length === 0" class="text-center py-4 text-white text-opacity-50 small">
+                    <div v-if="search_results.length === 0" class="text-center py-4 text-white text-opacity-50">
                         <i class="bi bi-search display-6 d-block mb-2 opacity-50"></i>
-                        Tidak ada menu yang cocok dengan "{{ searchKeyword }}"
+                        <div style="font-size:0.85rem;">Tidak ditemukan: "{{ searchKeyword }}"</div>
                     </div>
                     <div v-else class="d-flex flex-column gap-1">
                         <a
                             v-for="(res, idx) in search_results"
                             :key="idx"
                             :href="res.route"
-                            class="search-item d-flex align-items-center gap-2 p-2 rounded-3 text-white text-decoration-none transition-all"
+                            :title="res.sub || res.title"
+                            class="search-item d-flex align-items-center gap-3 p-2 rounded-3 text-white text-decoration-none transition-all"
                             :class="{ active: res.active }"
                         >
-                            <i :class="['bi', res.icon || 'bi-arrow-right', 'text-warning fs-6']"></i>
+                            <i :class="['bi', res.icon || 'bi-arrow-right', 'text-warning']" style="font-size:1.1rem; flex-shrink:0;"></i>
                             <div class="text-truncate">
-                                <div class="fw-medium small text-truncate">{{ res.title }}</div>
-                                <small class="text-white text-opacity-50 text-2xs d-block text-truncate">{{ res.sectionName }} • {{ res.sub || '' }}</small>
+                                <div class="fw-semibold text-truncate" style="font-size:0.85rem;">{{ res.title }}</div>
+                                <div class="text-white text-opacity-50 text-truncate" style="font-size:0.75rem;">{{ res.sectionName }}</div>
                             </div>
                         </a>
                     </div>
                 </div>
 
-                <!-- NORMAL NAVIGATION MENU -->
+                <!-- NORMAL NAVIGATION MENU — No Accordion, Always Visible -->
                 <div v-else class="standard-menu-tree">
-                    <!-- 🌟 RUANG KERJA UTAMA (Highlighted Role Workspace) -->
-                    <div class="primary-workspace-section mb-4 p-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15 shadow-2xs">
-                        <div class="d-flex justify-content-between align-items-center px-2 py-1 mb-2">
-                            <span class="text-2xs fw-bold text-uppercase tracking-wider text-warning">
-                                <i class="bi bi-star-fill me-1"></i> Ruang Kerja Utama
-                            </span>
-                            <span class="badge rounded-pill bg-warning text-dark text-3xs px-2 py-0">Prioritas</span>
+                    <!-- ⭐ RUANG KERJA UTAMA -->
+                    <div class="primary-workspace-section mb-4 p-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
+                        <div class="d-flex align-items-center gap-2 px-2 py-1 mb-2">
+                            <i class="bi bi-star-fill text-warning" style="font-size:0.85rem;"></i>
+                            <span class="fw-bold text-warning text-uppercase" style="font-size:0.78rem; letter-spacing:0.05em;">Ruang Kerja Utama</span>
+                            <span class="badge rounded-pill bg-warning text-dark ms-auto" style="font-size:0.68rem;">Prioritas</span>
                         </div>
                         <div class="d-flex flex-column gap-1">
                             <a
                                 v-for="(item, idx) in primary_workspace_items"
                                 :key="'prim-' + idx"
                                 :href="item.route"
-                                class="primary-nav-link d-flex align-items-center justify-content-between p-2 rounded-2 text-white text-decoration-none transition-all"
+                                :title="item.title"
+                                class="primary-nav-link d-flex align-items-center justify-content-between p-2 px-3 rounded-2 text-white text-decoration-none transition-all"
                                 :class="{ active: item.active }"
                             >
-                                <div class="d-flex align-items-center gap-2 text-truncate">
-                                    <i :class="['bi', item.icon, 'text-warning']"></i>
-                                    <span class="fw-medium small text-truncate">{{ item.title }}</span>
+                                <div class="d-flex align-items-center gap-3 text-truncate">
+                                    <i :class="['bi', item.icon, 'text-warning']" style="font-size:1.25rem; flex-shrink:0;"></i>
+                                    <span class="fw-semibold text-truncate" style="font-size:0.95rem;">{{ item.title }}</span>
                                 </div>
-                                <span v-if="item.tag" class="badge rounded-pill bg-white bg-opacity-20 text-white text-3xs px-2">
+                                <span v-if="item.tag" class="badge rounded-pill bg-white bg-opacity-25 text-white ms-2 flex-shrink-0" style="font-size:0.7rem;">
                                     {{ item.tag }}
                                 </span>
                             </a>
                         </div>
                     </div>
 
-                    <!-- CATEGORIZED ACCORDIONS -->
+                    <!-- SEKSI MENU SELALU TERLIHAT (Non-Collapsible) -->
                     <div
                         v-for="section in nav_sections"
                         :key="section.key"
-                        class="nav-section-group mb-3"
+                        class="nav-section-group mb-4"
                     >
-                        <button
-                            type="button"
-                            class="section-toggle-btn w-100 d-flex justify-content-between align-items-center text-start border-0 bg-transparent text-white text-opacity-80 p-2 rounded-2 transition-all"
-                            @click="toggleSection(section.key)"
-                        >
-                            <div class="d-flex align-items-center gap-2">
-                                <i :class="['bi', section.icon, 'text-warning text-opacity-80 small']"></i>
-                                <span class="fw-bold text-uppercase tracking-wider text-2xs">{{ section.title }}</span>
-                            </div>
-                            <i :class="['bi', openedSections[section.key] ? 'bi-chevron-up' : 'bi-chevron-down', 'text-2xs opacity-50']"></i>
-                        </button>
+                        <!-- Section Header (label only, no toggle button) -->
+                        <div class="section-header d-flex align-items-center gap-2 px-2 mb-2">
+                            <i :class="['bi', section.icon, 'text-warning text-opacity-80']" style="font-size:0.85rem;"></i>
+                            <span class="fw-bold text-white text-opacity-70 text-uppercase" style="font-size:0.75rem; letter-spacing:0.06em;">{{ section.title }}</span>
+                            <div class="section-divider flex-grow-1 ms-1"></div>
+                        </div>
 
-                        <div v-show="openedSections[section.key]" class="section-links-container pt-1 ps-2">
+                        <!-- Section Items — always visible -->
+                        <div class="section-links-container ps-1">
                             <a
                                 v-for="(item, iIdx) in section.items"
                                 :key="section.key + '-' + iIdx"
                                 :href="item.route"
-                                class="standard-nav-link d-flex align-items-center justify-content-between p-2 rounded-2 text-white text-decoration-none transition-all mb-1"
+                                :title="item.sub || item.title"
+                                class="standard-nav-link d-flex align-items-center justify-content-between p-2 px-3 rounded-2 text-white text-decoration-none mb-1"
                                 :class="{ active: item.active }"
                             >
-                                <div class="d-flex align-items-center gap-2 text-truncate">
-                                    <i :class="['bi', item.icon || 'bi-circle', 'nav-icon']"></i>
-                                    <div class="lh-1 text-truncate">
-                                        <div class="fw-medium small text-truncate">{{ item.title }}</div>
-                                        <small v-if="item.sub" class="text-white text-opacity-50 text-3xs d-block text-truncate mt-1">{{ item.sub }}</small>
-                                    </div>
+                                <div class="d-flex align-items-center gap-3 text-truncate">
+                                    <i :class="['bi', item.icon || 'bi-circle', 'nav-icon']" style="flex-shrink:0;"></i>
+<div class="lh-sm text-truncate">
+                                                    <div class="fw-medium text-truncate" style="font-size:0.925rem;">{{ item.title }}</div>
+                                                    <div v-if="item.sub" class="text-white text-opacity-50 text-truncate" style="font-size:0.78rem;">{{ item.sub }}</div>
+                                                </div>
                                 </div>
-                                <span v-if="item.badge" class="badge bg-danger rounded-pill text-3xs px-2">
+                                <span v-if="item.badge" class="badge bg-danger rounded-pill ms-2 flex-shrink-0" style="font-size:0.7rem;">
                                     {{ item.badge }}
                                 </span>
                             </a>
@@ -738,15 +718,19 @@ watch(() => page.component, () => {
                 </div>
             </div>
 
-            <!-- Sidebar Footer (Quick Guide Button) -->
-            <div class="sidebar-footer p-3 border-top border-white border-opacity-10 bg-black bg-opacity-15">
+            <!-- Sidebar Footer — Butuh Bantuan? -->
+            <div class="sidebar-footer p-3 border-top border-white border-opacity-10">
                 <button
                     type="button"
-                    class="btn btn-warning w-100 fw-bold d-flex align-items-center justify-content-center gap-2 rounded-pill shadow-sm py-2"
+                    class="btn w-100 fw-bold d-flex align-items-center justify-center gap-2 rounded-3 py-3 shadow-sm border border-primary bg-primary bg-opacity-10 text-white"
                     @click="openGuideModal(userRole)"
                 >
-                    <i class="bi bi-lightbulb-fill"></i>
-                    <span>Panduan Alur Peran</span>
+                    <i class="bi bi-lightbulb-fill me-2" style="font-size:1.25rem;"></i>
+                    <div class="text-start lh-sm">
+                        <div style="font-size:1rem; font-weight:600;">Butuh Bantuan?</div>
+                        <div style="font-size:0.8rem; opacity:0.9;">Lihat panduan alur peranmu</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto" style="font-size:0.85rem; opacity:0.9;"></i>
                 </button>
             </div>
         </aside>
@@ -754,79 +738,88 @@ watch(() => page.component, () => {
         <!-- ================= MOBILE OFFCANVAS SIDEBAR ================= -->
         <div class="offcanvas offcanvas-start bg-sidebar text-white sidebar-mobile" tabindex="-1" id="sidebarOffcanvas" ref="sidebarRef">
             <div class="offcanvas-header border-bottom border-white border-opacity-10 p-3">
-                <div class="d-flex align-items-center p-1">
-                    <img :src="logoSrc" alt="SEEO Logo" class="brand-logo me-2 rounded-circle" @error="$event.target.src=logoSrc"/>
+                <div class="d-flex align-items-center gap-2">
+                    <img :src="logoSrc" alt="SEEO Logo" class="brand-logo rounded-circle" @error="$event.target.src=logoSrc"/>
                     <div>
-                        <h5 class="brand-title mb-0 fw-bold text-white">SEEOIS</h5>
-                        <small class="text-white text-opacity-75">Information System</small>
+                        <div class="fw-bold text-white" style="font-size:1rem;">SEEOOIS</div>
+                        <div class="text-white text-opacity-75" style="font-size:0.75rem;">Information System</div>
                     </div>
                 </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
 
             <div class="offcanvas-body p-3 overflow-y-auto">
                 <!-- Mobile Role Card -->
-                <div class="role-identity-card mb-3 p-2 px-3 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
-                    <div class="d-flex align-items-center gap-2">
+                <div class="role-identity-card mb-3 p-3 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
+                    <div class="d-flex align-items-center gap-3">
                         <div class="role-icon-pill" :style="{ backgroundColor: currentRoleWorkflow.theme?.accentColor || '#4f46e5' }">
-                            <i :class="['bi', currentRoleWorkflow.icon || 'bi-person-check']"></i>
+                            <i :class="['bi', currentRoleWorkflow.icon || 'bi-person-check']" style="font-size:1.1rem;"></i>
                         </div>
                         <div class="text-truncate">
-                            <div class="fw-bold small text-white text-truncate">{{ currentRoleWorkflow.title }}</div>
-                            <small class="text-white text-opacity-75 text-2xs d-block text-truncate">{{ currentRoleWorkflow.alias }}</small>
+                            <div class="fw-bold text-white text-truncate" style="font-size:0.9rem;">{{ currentRoleWorkflow.title }}</div>
+                            <div class="text-white text-opacity-75 text-truncate" style="font-size:0.78rem;">{{ currentRoleWorkflow.alias }}</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Primary Workspace for Mobile -->
-                <div class="primary-workspace-section mb-3 p-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
-                    <div class="px-2 py-1 text-2xs fw-bold text-uppercase tracking-wider text-warning mb-1">
-                        Ruang Kerja Utama ({{ currentRoleWorkflow.alias }})
+                <div class="primary-workspace-section mb-4 p-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
+                    <div class="d-flex align-items-center gap-2 px-2 py-1 mb-2">
+                        <i class="bi bi-star-fill text-warning" style="font-size:0.85rem;"></i>
+                        <span class="fw-bold text-warning text-uppercase" style="font-size:0.78rem;">Ruang Kerja Utama</span>
                     </div>
                     <div class="d-flex flex-column gap-1">
                         <a
                             v-for="(item, idx) in primary_workspace_items"
                             :key="'mob-prim-' + idx"
                             :href="item.route"
-                            class="primary-nav-link d-flex align-items-center gap-2 p-2 rounded-2 text-white text-decoration-none"
+                            :title="item.title"
+                            class="primary-nav-link d-flex align-items-center gap-3 p-2 px-3 rounded-2 text-white text-decoration-none"
                             :class="{ active: item.active }"
                         >
-                            <i :class="['bi', item.icon, 'text-warning']"></i>
-                            <span class="small fw-medium">{{ item.title }}</span>
+                            <i :class="['bi', item.icon, 'text-warning']" style="font-size:1.1rem; flex-shrink:0;"></i>
+                            <span class="fw-semibold" style="font-size:0.875rem;">{{ item.title }}</span>
                         </a>
                     </div>
                 </div>
 
-                <!-- Categorized Sections for Mobile -->
+                <!-- Categorized Sections for Mobile — always visible -->
                 <div
                     v-for="section in nav_sections"
                     :key="'mob-' + section.key"
-                    class="mb-3"
+                    class="mb-4"
                 >
-                    <div class="text-2xs fw-bold text-uppercase tracking-wider text-white text-opacity-60 px-2 mb-1">
-                        {{ section.title }}
+                    <div class="d-flex align-items-center gap-2 px-2 mb-2">
+                        <i :class="['bi', section.icon, 'text-warning text-opacity-80']" style="font-size:0.85rem;"></i>
+                        <span class="fw-bold text-white text-opacity-70 text-uppercase" style="font-size:0.75rem; letter-spacing:0.05em;">{{ section.title }}</span>
                     </div>
-                    <div class="d-flex flex-column gap-1 ps-2">
+                    <div class="d-flex flex-column gap-1 ps-1">
                         <a
                             v-for="(item, iIdx) in section.items"
                             :key="'mob-link-' + iIdx"
                             :href="item.route"
-                            class="standard-nav-link d-flex align-items-center gap-2 p-2 rounded-2 text-white text-decoration-none"
+                            :title="item.sub || item.title"
+                            class="standard-nav-link d-flex align-items-center gap-3 p-2 px-3 rounded-2 text-white text-decoration-none"
                             :class="{ active: item.active }"
                         >
-                            <i :class="['bi', item.icon || 'bi-circle', 'nav-icon']"></i>
-                            <span class="small">{{ item.title }}</span>
+                            <i :class="['bi', item.icon || 'bi-circle', 'nav-icon']" style="flex-shrink:0;"></i>
+                            <div class="lh-sm text-truncate">
+                                <div class="fw-medium text-truncate" style="font-size:0.875rem;">{{ item.title }}</div>
+                                <div v-if="item.sub" class="text-white text-opacity-50 text-truncate" style="font-size:0.75rem;">{{ item.sub }}</div>
+                            </div>
                         </a>
                     </div>
                 </div>
 
+                <!-- Mobile Help Button -->
                 <div class="pt-3 border-top border-white border-opacity-15">
                     <button
                         type="button"
-                        class="btn btn-warning w-100 fw-bold rounded-pill"
+                        class="btn w-100 fw-bold d-flex align-items-center justify-center gap-2 rounded-3 py-3 border border-primary bg-primary bg-opacity-10 text-white"
                         @click="openGuideModal(userRole)"
                     >
-                        <i class="bi bi-lightbulb-fill me-1"></i> Panduan Alur Peran
+                        <i class="bi bi-lightbulb-fill" style="font-size:1.25rem;"></i>
+                        <span style="font-size:0.95rem;">Butuh Bantuan? Lihat Panduan</span>
                     </button>
                 </div>
             </div>
@@ -857,6 +850,9 @@ watch(() => page.component, () => {
                             <span>{{ date_header }}</span>
                             <span class="d-none d-md-inline">•</span>
                             <span class="d-none d-md-inline fw-medium text-dark"><i class="bi bi-clock me-1"></i>{{ currentTime }}</span>
+                        </div>
+                        <div class="text-white text-opacity-75 small fw-medium">
+                            <i class="bi bi-shield-check me-1"></i> {{ currentRoleWorkflow.title }}
                         </div>
                     </div>
                 </div>
@@ -947,6 +943,12 @@ watch(() => page.component, () => {
                 </div>
             </header>
 
+            <!-- Welcome Banner -->
+            <WelcomeBanner :steps="[
+                { icon: 'bi-journal-arrow-up', text: 'Upload logbook harian Anda', action: '#logbook-upload' },
+                { icon: 'bi-wallet2', text: 'Cek status pembayaran IWP', action: '#iwp-payment' }
+            ]" @openGuide="openGuideModal(userRole)" />
+
             <!-- Main Dynamic Page Content Container -->
             <main class="content-container grow overflow-auto p-2 p-md-3">
                 <slot />
@@ -960,145 +962,184 @@ watch(() => page.component, () => {
 </template>
 
 <style scoped>
-/* App Font */
+/* ===== APP FONT ===== */
 .staff-app-root {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
 
-/* Backgrounds & Palette */
+/* ===== BACKGROUNDS ===== */
 .bg-sidebar {
-    background: linear-gradient(180deg, #1e1b4b 0%, #2e266d 100%);
+    background: linear-gradient(180deg, #1a1740 0%, #251f6b 60%, #2e266d 100%);
 }
 .bg-surface {
-    background-color: #f8fafc;
+    background-color: #f1f5f9;
 }
 
-/* Sidebar Desktop */
+/* ===== SIDEBAR DIMENSIONS ===== */
 .sidebar-desktop {
-    width: 275px;
+    width: 310px;
     height: 100vh;
 }
 .sidebar-mobile {
-    width: 280px;
+    width: 310px;
 }
 
+/* ===== BRAND AREA ===== */
 .brand-logo {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     object-fit: cover;
 }
 .brand-title {
-    font-size: 1.15rem;
-    letter-spacing: 0.05em;
+    font-size: 1.1rem;
+    letter-spacing: 0.04em;
 }
 .brand-subtitle {
-    font-size: 0.72rem;
+    font-size: 0.74rem;
 }
 .brand-box:hover {
-    background-color: rgba(255, 255, 255, 0.15) !important;
+    background-color: rgba(255, 255, 255, 0.18) !important;
 }
 
-/* Role Indicator Card */
+/* ===== ROLE INDICATOR ===== */
 .role-icon-pill {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #ffffff;
-    font-size: 0.9rem;
     flex-shrink: 0;
 }
 
-/* Scrollable Menu Area */
+/* ===== SCROLLABLE SIDEBAR CONTENT ===== */
 .sidebar-scrollable-content {
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 .sidebar-scrollable-content::-webkit-scrollbar {
-    width: 5px;
+    width: 4px;
 }
 .sidebar-scrollable-content::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.25);
     border-radius: 4px;
 }
 
-/* Primary Workspace Links */
-.primary-nav-link {
-    background: rgba(255, 255, 255, 0.08);
+/* ===== SECTION HEADER DIVIDER ===== */
+.section-header {
+    margin-bottom: 4px;
 }
-.primary-nav-link:hover {
-    background: rgba(255, 255, 255, 0.18);
-    transform: translateX(3px);
-}
-.primary-nav-link.active {
-    background: #4f46e5;
-    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
+.section-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 1px;
 }
 
-/* Standard Accordion Links */
-.section-toggle-btn:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+/* ===== PRIMARY WORKSPACE LINKS ===== */
+.primary-nav-link {
+    background: rgba(255, 255, 255, 0.07);
+    transition: background 0.18s ease, transform 0.15s ease;
 }
+.primary-nav-link:hover {
+    background: rgba(255, 255, 255, 0.16);
+    transform: translateX(4px);
+}
+.primary-nav-link.active {
+    background: linear-gradient(90deg, #4f46e5, #6d63f5);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.45);
+    border-left: 3px solid #fbbf24;
+}
+.primary-nav-link.active .bi {
+    color: #fde68a !important;
+}
+
+/* ===== STANDARD NAV LINKS ===== */
 .standard-nav-link {
-    color: rgba(255, 255, 255, 0.85);
-    border-left: 2px solid transparent;
+    color: rgba(255, 255, 255, 0.82);
+    border-left: 3px solid transparent;
+    transition: background 0.18s ease, transform 0.15s ease, border-color 0.15s ease;
 }
 .standard-nav-link:hover {
     color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.12);
-    transform: translateX(3px);
+    background-color: rgba(255, 255, 255, 0.10);
+    transform: translateX(4px);
 }
 .standard-nav-link.active {
     color: #ffffff;
-    background: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.15));
     border-left-color: #fbbf24;
-    font-weight: 600;
+    font-weight: 700;
+    box-shadow: inset 0 0 8px rgba(251, 191, 36, 0.12);
 }
-.standard-nav-link .nav-icon {
-    font-size: 0.9rem;
-    opacity: 0.8;
+.standard-nav-link.active .nav-icon {
+    color: #fde68a;
+    opacity: 1;
+}
+.nav-icon {
+    font-size: 1.1rem;
+    opacity: 0.78;
+    transition: opacity 0.15s;
+}
+.standard-nav-link:hover .nav-icon,
+.standard-nav-link.active .nav-icon {
+    opacity: 1;
 }
 
-/* Search results */
+/* ===== SEARCH RESULTS ===== */
+.search-item {
+    transition: background 0.15s;
+}
 .search-item:hover {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.13);
 }
 .search-item.active {
-    background-color: #4f46e5;
+    background: #4f46e5;
+    border-left: 3px solid #fbbf24;
 }
 
-/* Header */
+/* ===== HELP BUTTON (Footer) ===== */
+.btn-help {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #1a1740;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+.btn-help:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5);
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #1a1740;
+}
+
+/* ===== TOP HEADER ===== */
 .top-header {
     background-color: #ffffff;
-    height: 65px;
+    height: 66px;
     flex-shrink: 0;
+    border-bottom: 1px solid #e2e8f0 !important;
 }
 .profile-img {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     object-fit: cover;
 }
 .header-guide-btn {
     border-width: 1.5px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 .header-guide-btn:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
 }
 
-/* Utility font sizes */
-.text-2xs {
-    font-size: 0.75rem;
-}
-.text-3xs {
-    font-size: 0.68rem;
-}
-.shadow-2xs {
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-.hover-white:hover {
-    color: #ffffff !important;
-}
+/* ===== UTILITY ===== */
+.text-2xs { font-size: 0.75rem; }
+.text-3xs { font-size: 0.68rem; }
+.shadow-2xs { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07); }
+.hover-white:hover { color: #ffffff !important; }
+.transition-all { transition: all 0.18s ease; }
 </style>

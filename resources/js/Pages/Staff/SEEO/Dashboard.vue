@@ -225,13 +225,13 @@ onMounted(async () => {
                     <div class="row align-items-center g-3">
                         <div class="col-12 col-lg-8">
                             <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                                <span class="badge rounded-pill bg-white bg-opacity-20 text-white px-3 py-1 fw-medium">
+                                <span class="badge rounded-pill hero-meta-badge text-white px-3 py-1 fw-medium">
                                     <i class="bi bi-person-circle me-1"></i> {{ auth_user.name }}
                                 </span>
                                 <span class="badge rounded-pill bg-warning text-dark px-3 py-1 fw-bold">
                                     <i :class="['bi', currentWorkflow.icon || 'bi-stars', 'me-1']"></i> {{ currentWorkflow.title }}
                                 </span>
-                                <span class="badge rounded-pill bg-white bg-opacity-20 text-white px-3 py-1">
+                                <span class="badge rounded-pill hero-meta-badge text-white px-3 py-1">
                                     Tahun Periode: {{ selectedYear }}
                                 </span>
                             </div>
@@ -393,12 +393,12 @@ onMounted(async () => {
                             </button>
                         </div>
                         <div class="card-body p-0 position-relative">
-                            <div v-if="!billboard_list || billboard_list.length === 0" class="empty-billboard d-flex flex-column align-items-center justify-content-center p-5 text-center bg-light" style="min-height: 220px;">
+                            <div v-if="!billboard_list || billboard_list.length === 0" class="empty-billboard d-flex flex-column align-items-center justify-content-center p-5 text-center bg-light">
                                 <i class="bi bi-images display-5 text-muted opacity-50 mb-2"></i>
                                 <h6 class="text-secondary mb-1">Belum Ada Banner Pengumuman</h6>
                                 <p class="small text-muted mb-0">Informasi dan agenda penting kepengurusan akan ditampilkan di sini.</p>
                             </div>
-                            <div v-else id="billboardCarousel" class="carousel slide" data-bs-ride="carousel" style="max-height: 380px;">
+                            <div v-else id="billboardCarousel" class="carousel slide" data-bs-ride="carousel">
                                 <div class="carousel-inner">
                                     <div
                                         v-for="(billboard, index) in billboard_list"
@@ -420,11 +420,11 @@ onMounted(async () => {
                                                 :src="billboard.full_image_url"
                                                 alt="Billboard"
                                                 class="w-100 object-fit-cover"
-                                                style="max-height: 380px;"
+                                                style="max-height: 280px;"
                                                 @error="$event.target.style.display='none'"
                                             />
-                                            <div v-else class="d-flex flex-column justify-content-center align-items-center text-center p-5 bg-light w-100" style="min-height: 240px;">
-                                                <h4 class="fw-bold text-dark mb-2">{{ billboard.title }}</h4>
+                                            <div v-else class="d-flex flex-column justify-content-center align-items-center text-center p-4 bg-light w-100">
+                                                <h5 class="fw-bold text-dark mb-2">{{ billboard.title }}</h5>
                                                 <p class="text-secondary mb-0 small" style="max-width: 500px;">{{ billboard.text }}</p>
                                             </div>
                                         </div>
@@ -746,6 +746,10 @@ onMounted(async () => {
 .hero-title {
     font-size: 1.5rem;
     letter-spacing: -0.02em;
+}
+.hero-meta-badge {
+    background-color: #251f6b;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Stepper Card */

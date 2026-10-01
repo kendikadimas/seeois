@@ -417,7 +417,8 @@ class StandController extends Controller
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'You are not cashier in Stand (' . $stand->pic->name . '). Only cashier can add transaction.']);
         }
         $last = StandExpense::orderBy('id', 'desc')->first();
-        $last_id = $last->id;
+        // A stand may not have any previous expenses yet. Start receipt numbering at 1.
+        $last_id = $last?->id ?? 0;
         if (!$request->input('same_receipt_check')) {
             // Format receipt file
             $receipt = $request->file('reciept');
