@@ -820,16 +820,9 @@ watch(() => page.component, () => {
                 </div>
 
                 <!-- Primary Workspace for Mobile -->
-<<<<<<< HEAD
-                <div class="primary-workspace-section mb-4 p-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
-                    <div class="d-flex align-items-center gap-2 px-2 py-1 mb-2">
-                        <i class="bi bi-star-fill text-warning" style="font-size:0.85rem;"></i>
-                        <span class="fw-bold text-warning text-uppercase" style="font-size:0.78rem;">Ruang Kerja Utama</span>
-=======
                 <div v-show="!searchKeyword.trim()" class="primary-workspace-section mb-3 p-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
                     <div class="px-2 py-1 text-2xs fw-bold text-uppercase tracking-wider text-warning mb-1">
                         Ruang Kerja Utama ({{ currentRoleWorkflow.alias }})
->>>>>>> 8a2f44a3b00ce84a54758cf8c44d25409476883f
                     </div>
                     <div class="d-flex flex-column gap-1">
                         <a
@@ -850,12 +843,8 @@ watch(() => page.component, () => {
                 <div
                     v-for="section in nav_sections"
                     :key="'mob-' + section.key"
-<<<<<<< HEAD
-                    class="mb-4"
-=======
                     v-show="!searchKeyword.trim()"
                     class="mb-3"
->>>>>>> 8a2f44a3b00ce84a54758cf8c44d25409476883f
                 >
                     <div class="d-flex align-items-center gap-2 px-2 mb-2">
                         <i :class="['bi', section.icon, 'text-warning text-opacity-80']" style="font-size:0.85rem;"></i>
@@ -1063,12 +1052,6 @@ watch(() => page.component, () => {
 
 /* ===== BACKGROUNDS ===== */
 .bg-sidebar {
-<<<<<<< HEAD
-    background: linear-gradient(180deg, #1a1740 0%, #251f6b 60%, #2e266d 100%);
-}
-.bg-surface {
-    background-color: #f1f5f9;
-=======
     background:
         radial-gradient(circle at 15% 0%, rgba(99, 102, 241, 0.42), transparent 32%),
         linear-gradient(180deg, #17153f 0%, #27205f 55%, #17153f 100%);
@@ -1077,7 +1060,6 @@ watch(() => page.component, () => {
     background:
         radial-gradient(circle at 95% 0%, rgba(99, 102, 241, 0.08), transparent 28rem),
         #f6f8fc;
->>>>>>> 8a2f44a3b00ce84a54758cf8c44d25409476883f
 }
 
 /* ===== SIDEBAR DIMENSIONS ===== */
@@ -1235,19 +1217,12 @@ watch(() => page.component, () => {
 
 /* ===== TOP HEADER ===== */
 .top-header {
-<<<<<<< HEAD
-    background-color: #ffffff;
-    height: 66px;
-    flex-shrink: 0;
-    border-bottom: 1px solid #e2e8f0 !important;
-=======
     background-color: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(14px);
     height: 72px;
     flex-shrink: 0;
     position: relative;
     z-index: 1030;
->>>>>>> 8a2f44a3b00ce84a54758cf8c44d25409476883f
 }
 .profile-img {
     width: 40px;
@@ -1263,14 +1238,6 @@ watch(() => page.component, () => {
     box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
 }
 
-<<<<<<< HEAD
-/* ===== UTILITY ===== */
-.text-2xs { font-size: 0.75rem; }
-.text-3xs { font-size: 0.68rem; }
-.shadow-2xs { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07); }
-.hover-white:hover { color: #ffffff !important; }
-.transition-all { transition: all 0.18s ease; }
-=======
 .content-stage {
     min-height: 100%;
     animation: content-enter 220ms ease-out;
@@ -1391,5 +1358,4 @@ watch(() => page.component, () => {
 .hover-white:hover {
     color: #ffffff !important;
 }
->>>>>>> 8a2f44a3b00ce84a54758cf8c44d25409476883f
 </style>
