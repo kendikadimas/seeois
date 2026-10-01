@@ -34,7 +34,16 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('APP_URL') . '/google/auth/callback',
+        'redirect' => env('APP_URL').'/google/auth/callback',
+    ],
+
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+        'model' => env('GROQ_MODEL', 'openai/gpt-oss-120b'),
+        'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com'),
+        'timeout' => (int) env('GROQ_TIMEOUT', 30),
+        'max_completion_tokens' => (int) env('GROQ_MAX_COMPLETION_TOKENS', 1600),
+        'reasoning_effort' => env('GROQ_REASONING_EFFORT', 'low'),
     ],
 
 ];

@@ -3,6 +3,7 @@
 use App\Models\Activity;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -53,6 +54,23 @@ describe('Activity Store', function () {
         $this->assertStringContainsString('seminar-bisnis', $activity->slug);
     });
 
+    test('title is limited and long slugs are shortened', function () {
+        $this->post('/seeo/staff/marketing/activities', [
+            'title' => str_repeat('a', 151),
+            'description' => 'Deskripsi berita',
+        ])->assertSessionHasErrors('title');
+
+        $this->post('/seeo/staff/marketing/activities', [
+            'title' => str_repeat('Judul panjang ', 10),
+            'description' => 'Deskripsi berita',
+            'is_published' => false,
+        ])->assertSessionDoesntHaveErrors();
+
+        $activity = Activity::latest('id')->first();
+
+        $this->assertLessThanOrEqual(114, strlen($activity->slug));
+    });
+
     test('staff can upload image when creating activity', function () {
         $image = UploadedFile::fake()->image('activity.jpg', 800, 600);
 
@@ -88,6 +106,120 @@ describe('Activity Store', function () {
             'description' => 'Test',
             'image_path'  => $largeImage,
         ])->assertSessionHasErrors('image_path');
+    });
+});
+
+describe('Activity AI Writer', function () {
+    beforeEach(function () {
+        $this->user = User::factory()->create(['roles_id' => 100]);
+        $this->actingAs($this->user);
+        config([
+            'services.groq.api_key' => 'test-key',
+            'services.groq.base_url' => 'https://api.groq.com',
+            'services.groq.model' => 'openai/gpt-oss-120b',
+            'services.groq.max_completion_tokens' => 1600,
+            'services.groq.reasoning_effort' => 'low',
+        ]);
+    });
+
+    test('marketing staff can generate activity content with groq', function () {
+        Http::fake([
+            'api.groq.com/*' => Http::response([
+                'choices' => [[
+                    'message' => ['content' => 'SEEO menyelenggarakan kegiatan yang memberi manfaat bagi para peserta.'],
+                ]],
+            ]),
+        ]);
+
+        $this->postJson(route('marketing.activities.generate-content'), [
+            'title' => 'Workshop Kewirausahaan',
+            'category' => 'Workshop',
+            'date' => '2026-10-01',
+            'current_content' => 'Workshop diikuti mahasiswa dan membahas penyusunan model bisnis.',
+        ])->assertOk()->assertJson([
+            'content' => 'SEEO menyelenggarakan kegiatan yang memberi manfaat bagi para peserta.',
+        ]);
+
+        Http::assertSent(fn ($request) =>
+            $request->url() === 'https://api.groq.com/openai/v1/chat/completions'
+            && $request['model'] === 'openai/gpt-oss-120b'
+            && $request['reasoning_effort'] === 'low'
+            && $request['reasoning_format'] === 'hidden'
+            && $request['max_completion_tokens'] === 1600
+            && str_contains($request['messages'][0]['content'], 'Workshop Kewirausahaan')
+            && str_contains($request['messages'][0]['content'], 'struktur piramida terbalik')
+            && str_contains($request['messages'][0]['content'], 'merupakan wujud nyata')
+        );
+    });
+
+    test('ai writer retries once when groq returns empty content', function () {
+        Http::fakeSequence()
+            ->push([
+                'choices' => [[
+                    'message' => ['content' => null, 'reasoning' => 'Internal reasoning'],
+                ]],
+            ])
+            ->push([
+                'choices' => [[
+                    'message' => ['content' => 'Konten berhasil dibuat pada percobaan kedua.'],
+                ]],
+            ]);
+
+        $this->postJson(route('marketing.activities.generate-content'), [
+            'title' => 'Pelatihan Bisnis SEEO',
+            'current_content' => 'Pelatihan diikuti mahasiswa Fakultas Teknik dan membahas ide bisnis.',
+        ])->assertOk()->assertJson([
+            'content' => 'Konten berhasil dibuat pada percobaan kedua.',
+        ]);
+
+        Http::assertSentCount(2);
+    });
+
+    test('ai writer requires a title', function () {
+        Http::fake();
+
+        $this->postJson(route('marketing.activities.generate-content'), [])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('title');
+
+        Http::assertNothingSent();
+    });
+
+    test('ai writer requires enough factual source material', function () {
+        Http::fake();
+
+        $this->postJson(route('marketing.activities.generate-content'), [
+            'title' => 'Workshop SEEO',
+            'current_content' => 'Workshop mahasiswa.',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('current_content');
+
+        Http::assertNothingSent();
+    });
+
+    test('ai writer reports missing api configuration', function () {
+        config(['services.groq.api_key' => null]);
+        Http::fake();
+
+        $this->postJson(route('marketing.activities.generate-content'), [
+            'title' => 'Kegiatan SEEO',
+            'current_content' => 'Kegiatan SEEO diikuti mahasiswa Fakultas Teknik pada awal Oktober.',
+        ])->assertStatus(503)
+            ->assertJsonPath('message', 'Groq API belum dikonfigurasi. Tambahkan GROQ_API_KEY pada file .env.');
+
+        Http::assertNothingSent();
+    });
+
+    test('guest cannot call the ai writer', function () {
+        auth()->logout();
+        Http::fake();
+
+        $this->postJson(route('marketing.activities.generate-content'), [
+            'title' => 'Kegiatan SEEO',
+            'current_content' => 'Kegiatan SEEO diikuti mahasiswa Fakultas Teknik pada awal Oktober.',
+        ])->assertUnauthorized();
+
+        Http::assertNothingSent();
     });
 });
 
@@ -195,4 +327,3 @@ describe('Activity Delete', function () {
         }
     });
 });
-

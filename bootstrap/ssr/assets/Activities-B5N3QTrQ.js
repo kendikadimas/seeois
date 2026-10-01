@@ -22,6 +22,8 @@ const _sfc_main = {
     const imagePreviewUrl = ref(null);
     const fileError = ref("");
     const fileInputKey = ref(0);
+    const isGeneratingContent = ref(false);
+    const aiError = ref("");
     const form = useForm({
       id: null,
       title: "",
@@ -69,6 +71,7 @@ const _sfc_main = {
       clearImagePreview();
       fileError.value = "";
       fileInputKey.value += 1;
+      aiError.value = "";
       if (activity) {
         isEdit.value = true;
         form.id = activity.id;
@@ -91,8 +94,42 @@ const _sfc_main = {
       form.clearErrors();
       currentImageUrl.value = null;
       fileError.value = "";
+      aiError.value = "";
       clearImagePreview();
       fileInputKey.value += 1;
+    }
+    async function generateContent() {
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
+      aiError.value = "";
+      if (!form.title.trim()) {
+        aiError.value = "Isi judul terlebih dahulu agar AI memiliki konteks.";
+        return;
+      }
+      if (form.description.trim().length < 40) {
+        aiError.value = "Tuliskan bahan berita minimal 40 karakter (5W+1H, rangkaian, atau hasil kegiatan) sebelum menggunakan AI.";
+        return;
+      }
+      if (form.description.trim() && !confirm("Konten yang ada akan diganti dengan hasil AI. Lanjutkan?")) {
+        return;
+      }
+      isGeneratingContent.value = true;
+      try {
+        const response = await window.axios.post(
+          route("marketing.activities.generate-content"),
+          {
+            title: form.title,
+            category: form.category || null,
+            date: form.date || null,
+            current_content: form.description || null
+          }
+        );
+        form.description = response.data.content;
+        (_a = notifRef.value) == null ? void 0 : _a.showToast("success", "Draf konten berhasil dibuat oleh AI. Silakan periksa sebelum diterbitkan.");
+      } catch (error) {
+        aiError.value = ((_c = (_b = error.response) == null ? void 0 : _b.data) == null ? void 0 : _c.message) || ((_g = (_f = (_e = (_d = error.response) == null ? void 0 : _d.data) == null ? void 0 : _e.errors) == null ? void 0 : _f.title) == null ? void 0 : _g[0]) || ((_k = (_j = (_i = (_h = error.response) == null ? void 0 : _h.data) == null ? void 0 : _i.errors) == null ? void 0 : _j.current_content) == null ? void 0 : _k[0]) || "Konten AI gagal dibuat. Silakan coba lagi.";
+      } finally {
+        isGeneratingContent.value = false;
+      }
     }
     function submitForm() {
       if (fileError.value) return;
@@ -164,12 +201,23 @@ const _sfc_main = {
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</tbody></table></div></div></div></div><div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true"${_scopeId}><div class="modal-dialog modal-lg"${_scopeId}><div class="modal-content"${_scopeId}><form${_scopeId}><div class="modal-header"${_scopeId}><h5 class="modal-title" id="activityModalLabel"${_scopeId}>${ssrInterpolate(isEdit.value ? "Edit Berita/Kegiatan" : "Tambah Berita/Kegiatan")}</h5><button type="button" class="btn-close"${_scopeId}></button></div><div class="modal-body"${_scopeId}><div class="mb-3"${_scopeId}><label class="form-label"${_scopeId}>Judul / Sorotan Utama <span class="text-danger"${_scopeId}>*</span></label><input type="text" class="form-control"${ssrRenderAttr("value", unref(form).title)} placeholder="Judul yang mudah dipahami pembaca" required autofocus${_scopeId}>`);
+            _push2(`</tbody></table></div></div></div></div><div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true"${_scopeId}><div class="modal-dialog modal-lg"${_scopeId}><div class="modal-content"${_scopeId}><form${_scopeId}><div class="modal-header"${_scopeId}><h5 class="modal-title" id="activityModalLabel"${_scopeId}>${ssrInterpolate(isEdit.value ? "Edit Berita/Kegiatan" : "Tambah Berita/Kegiatan")}</h5><button type="button" class="btn-close"${_scopeId}></button></div><div class="modal-body"${_scopeId}><div class="mb-3"${_scopeId}><label class="form-label"${_scopeId}>Judul / Sorotan Utama <span class="text-danger"${_scopeId}>*</span></label><input type="text" class="form-control"${ssrRenderAttr("value", unref(form).title)} maxlength="150" placeholder="Judul singkat, bukan bahan berita" required autofocus${_scopeId}><div class="form-text d-flex justify-content-between gap-3"${_scopeId}><span${_scopeId}>Maksimal 150 karakter. Masukkan fakta mentah pada kolom Bahan AI di bawah.</span><span${_scopeId}>${ssrInterpolate(unref(form).title.length)}/150</span></div>`);
             _push2(ssrRenderComponent(_sfc_main$1, {
               message: unref(form).errors.title,
               class: "mt-1"
             }, null, _parent2, _scopeId));
-            _push2(`</div><div class="mb-3"${_scopeId}><label class="form-label"${_scopeId}>Deskripsi Lengkap <span class="text-danger"${_scopeId}>*</span></label><textarea class="form-control" rows="4" placeholder="Jelaskan kegiatan, hasil, atau informasi pentingnya" required${_scopeId}>${ssrInterpolate(unref(form).description)}</textarea>`);
+            _push2(`</div><div class="mb-3"${_scopeId}><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2"${_scopeId}><label class="form-label mb-0"${_scopeId}>Deskripsi Lengkap / Bahan AI <span class="text-danger"${_scopeId}>*</span></label><button type="button" class="btn btn-sm btn-outline-primary"${ssrIncludeBooleanAttr(isGeneratingContent.value || !unref(form).title.trim()) ? " disabled" : ""}${_scopeId}>`);
+            if (isGeneratingContent.value) {
+              _push2(`<span class="spinner-border spinner-border-sm me-1"${_scopeId}></span>`);
+            } else {
+              _push2(`<i class="bi bi-stars me-1"${_scopeId}></i>`);
+            }
+            _push2(` ${ssrInterpolate(isGeneratingContent.value ? "AI sedang menulis..." : "Buat Konten dengan AI")}</button></div><textarea class="form-control" rows="6" placeholder="Tuliskan poin faktual: siapa yang terlibat, apa kegiatannya, kapan dan di mana, rangkaian acara, hasil, serta kutipan bila ada. Setelah itu klik Buat Konten dengan AI." required${_scopeId}>${ssrInterpolate(unref(form).description)}</textarea><div class="form-text"${_scopeId}>Semakin lengkap bahan 5W+1H yang ditulis, semakin natural hasil artikelnya. AI tidak akan menambahkan fakta yang tidak tersedia.</div>`);
+            if (aiError.value) {
+              _push2(`<div class="text-danger small mt-1"${_scopeId}>${ssrInterpolate(aiError.value)}</div>`);
+            } else {
+              _push2(`<!---->`);
+            }
             _push2(ssrRenderComponent(_sfc_main$1, {
               message: unref(form).errors.description,
               class: "mt-1"
@@ -344,7 +392,8 @@ const _sfc_main = {
                             type: "text",
                             class: "form-control",
                             "onUpdate:modelValue": ($event) => unref(form).title = $event,
-                            placeholder: "Judul yang mudah dipahami pembaca",
+                            maxlength: "150",
+                            placeholder: "Judul singkat, bukan bahan berita",
                             required: "",
                             autofocus: ""
                           }, null, 8, ["onUpdate:modelValue"]), [
@@ -355,21 +404,42 @@ const _sfc_main = {
                               { trim: true }
                             ]
                           ]),
+                          createVNode("div", { class: "form-text d-flex justify-content-between gap-3" }, [
+                            createVNode("span", null, "Maksimal 150 karakter. Masukkan fakta mentah pada kolom Bahan AI di bawah."),
+                            createVNode("span", null, toDisplayString(unref(form).title.length) + "/150", 1)
+                          ]),
                           createVNode(_sfc_main$1, {
                             message: unref(form).errors.title,
                             class: "mt-1"
                           }, null, 8, ["message"])
                         ]),
                         createVNode("div", { class: "mb-3" }, [
-                          createVNode("label", { class: "form-label" }, [
-                            createTextVNode("Deskripsi Lengkap "),
-                            createVNode("span", { class: "text-danger" }, "*")
+                          createVNode("div", { class: "d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2" }, [
+                            createVNode("label", { class: "form-label mb-0" }, [
+                              createTextVNode("Deskripsi Lengkap / Bahan AI "),
+                              createVNode("span", { class: "text-danger" }, "*")
+                            ]),
+                            createVNode("button", {
+                              type: "button",
+                              class: "btn btn-sm btn-outline-primary",
+                              disabled: isGeneratingContent.value || !unref(form).title.trim(),
+                              onClick: generateContent
+                            }, [
+                              isGeneratingContent.value ? (openBlock(), createBlock("span", {
+                                key: 0,
+                                class: "spinner-border spinner-border-sm me-1"
+                              })) : (openBlock(), createBlock("i", {
+                                key: 1,
+                                class: "bi bi-stars me-1"
+                              })),
+                              createTextVNode(" " + toDisplayString(isGeneratingContent.value ? "AI sedang menulis..." : "Buat Konten dengan AI"), 1)
+                            ], 8, ["disabled"])
                           ]),
                           withDirectives(createVNode("textarea", {
                             class: "form-control",
                             "onUpdate:modelValue": ($event) => unref(form).description = $event,
-                            rows: "4",
-                            placeholder: "Jelaskan kegiatan, hasil, atau informasi pentingnya",
+                            rows: "6",
+                            placeholder: "Tuliskan poin faktual: siapa yang terlibat, apa kegiatannya, kapan dan di mana, rangkaian acara, hasil, serta kutipan bila ada. Setelah itu klik Buat Konten dengan AI.",
                             required: ""
                           }, null, 8, ["onUpdate:modelValue"]), [
                             [
@@ -379,6 +449,11 @@ const _sfc_main = {
                               { trim: true }
                             ]
                           ]),
+                          createVNode("div", { class: "form-text" }, "Semakin lengkap bahan 5W+1H yang ditulis, semakin natural hasil artikelnya. AI tidak akan menambahkan fakta yang tidak tersedia."),
+                          aiError.value ? (openBlock(), createBlock("div", {
+                            key: 0,
+                            class: "text-danger small mt-1"
+                          }, toDisplayString(aiError.value), 1)) : createCommentVNode("", true),
                           createVNode(_sfc_main$1, {
                             message: unref(form).errors.description,
                             class: "mt-1"
@@ -507,4 +582,4 @@ _sfc_main.setup = (props, ctx) => {
 export {
   _sfc_main as default
 };
-//# sourceMappingURL=Activities-0JVidJDP.js.map
+//# sourceMappingURL=Activities-B5N3QTrQ.js.map

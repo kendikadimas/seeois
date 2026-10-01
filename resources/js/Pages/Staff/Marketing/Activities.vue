@@ -17,6 +17,8 @@ const currentImageUrl = ref(null);
 const imagePreviewUrl = ref(null);
 const fileError = ref('');
 const fileInputKey = ref(0);
+const isGeneratingContent = ref(false);
+const aiError = ref('');
 
 const form = useForm({
     id: null,
@@ -70,6 +72,7 @@ function showModal(activity = null) {
     clearImagePreview();
     fileError.value = '';
     fileInputKey.value += 1;
+    aiError.value = '';
 
     if (activity) {
         isEdit.value = true;
@@ -94,8 +97,51 @@ function hideModal() {
     form.clearErrors();
     currentImageUrl.value = null;
     fileError.value = '';
+    aiError.value = '';
     clearImagePreview();
     fileInputKey.value += 1;
+}
+
+async function generateContent() {
+    aiError.value = '';
+
+    if (!form.title.trim()) {
+        aiError.value = 'Isi judul terlebih dahulu agar AI memiliki konteks.';
+        return;
+    }
+
+    if (form.description.trim().length < 40) {
+        aiError.value = 'Tuliskan bahan berita minimal 40 karakter (5W+1H, rangkaian, atau hasil kegiatan) sebelum menggunakan AI.';
+        return;
+    }
+
+    if (form.description.trim() && !confirm('Konten yang ada akan diganti dengan hasil AI. Lanjutkan?')) {
+        return;
+    }
+
+    isGeneratingContent.value = true;
+
+    try {
+        const response = await window.axios.post(
+            route('marketing.activities.generate-content'),
+            {
+                title: form.title,
+                category: form.category || null,
+                date: form.date || null,
+                current_content: form.description || null,
+            },
+        );
+
+        form.description = response.data.content;
+        notifRef.value?.showToast('success', 'Draf konten berhasil dibuat oleh AI. Silakan periksa sebelum diterbitkan.');
+    } catch (error) {
+        aiError.value = error.response?.data?.message
+            || error.response?.data?.errors?.title?.[0]
+            || error.response?.data?.errors?.current_content?.[0]
+            || 'Konten AI gagal dibuat. Silakan coba lagi.';
+    } finally {
+        isGeneratingContent.value = false;
+    }
 }
 
 function submitForm() {
@@ -223,13 +269,31 @@ onBeforeUnmount(clearImagePreview);
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label class="form-label">Judul / Sorotan Utama <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" v-model.trim="form.title" placeholder="Judul yang mudah dipahami pembaca" required autofocus>
+                                <input type="text" class="form-control" v-model.trim="form.title" maxlength="150" placeholder="Judul singkat, bukan bahan berita" required autofocus>
+                                <div class="form-text d-flex justify-content-between gap-3">
+                                    <span>Maksimal 150 karakter. Masukkan fakta mentah pada kolom Bahan AI di bawah.</span>
+                                    <span>{{ form.title.length }}/150</span>
+                                </div>
                                 <InputError :message="form.errors.title" class="mt-1" />
                             </div>
                             
                             <div class="mb-3">
-                                <label class="form-label">Deskripsi Lengkap <span class="text-danger">*</span></label>
-                                <textarea class="form-control" v-model.trim="form.description" rows="4" placeholder="Jelaskan kegiatan, hasil, atau informasi pentingnya" required></textarea>
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                    <label class="form-label mb-0">Deskripsi Lengkap / Bahan AI <span class="text-danger">*</span></label>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        :disabled="isGeneratingContent || !form.title.trim()"
+                                        @click="generateContent"
+                                    >
+                                        <span v-if="isGeneratingContent" class="spinner-border spinner-border-sm me-1"></span>
+                                        <i v-else class="bi bi-stars me-1"></i>
+                                        {{ isGeneratingContent ? 'AI sedang menulis...' : 'Buat Konten dengan AI' }}
+                                    </button>
+                                </div>
+                                <textarea class="form-control" v-model.trim="form.description" rows="6" placeholder="Tuliskan poin faktual: siapa yang terlibat, apa kegiatannya, kapan dan di mana, rangkaian acara, hasil, serta kutipan bila ada. Setelah itu klik Buat Konten dengan AI." required></textarea>
+                                <div class="form-text">Semakin lengkap bahan 5W+1H yang ditulis, semakin natural hasil artikelnya. AI tidak akan menambahkan fakta yang tidak tersedia.</div>
+                                <div v-if="aiError" class="text-danger small mt-1">{{ aiError }}</div>
                                 <InputError :message="form.errors.description" class="mt-1" />
                             </div>
 

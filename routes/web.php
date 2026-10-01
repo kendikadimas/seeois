@@ -458,6 +458,9 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
 
         Route::get('/activities', [\App\Http\Controllers\ActivityController::class, 'index'])->name('marketing.activities.index');
         Route::post('/activities', [\App\Http\Controllers\ActivityController::class, 'store'])->name('marketing.activities.store');
+        Route::post('/activities/generate-content', [\App\Http\Controllers\ActivityController::class, 'generateContent'])
+            ->middleware('throttle:10,1')
+            ->name('marketing.activities.generate-content');
         Route::post('/activities/{activity}', [\App\Http\Controllers\ActivityController::class, 'update'])->name('marketing.activities.update');
         Route::delete('/activities/{activity}', [\App\Http\Controllers\ActivityController::class, 'destroy'])->name('marketing.activities.destroy');
 
