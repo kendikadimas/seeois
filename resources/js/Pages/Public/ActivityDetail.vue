@@ -1,10 +1,10 @@
 <template>
     <Head>
         <title>{{ activity.title }} - SEEO FT UNSOED</title>
-        <meta name="description" :content="activity.description.substring(0, 160).replace(/<[^>]*>?/gm, '')">
+        <meta name="description" :content="plainDescription.substring(0, 160)">
         <meta name="keywords" :content="'organisasi entrepreneur, ukm mahasiswa, website ukm, ukm kewirausahaan, kewirausahaan mahasiswa, organisasi kewirausahaan, ukm unsoed, ukm ft unsoed, ' + activity.category">
         <meta property="og:title" :content="activity.title">
-        <meta property="og:description" :content="activity.description.substring(0, 160).replace(/<[^>]*>?/gm, '')">
+        <meta property="og:description" :content="plainDescription.substring(0, 160)">
         <meta property="og:image" :content="activity.image_url">
     </Head>
     <PublicLayout>
@@ -24,7 +24,7 @@
                     {{ activity.category || 'NEWS' }}
                 </div>
                 
-                <h1 class="text-4xl md:text-6xl font-black text-[#004182] mb-8 leading-tight tracking-tight uppercase">
+                <h1 class="text-3xl md:text-5xl lg:text-6xl font-black text-[#004182] mb-8 leading-[1.12] tracking-tight break-words">
                     {{ activity.title }}
                 </h1>
 
@@ -58,14 +58,11 @@
 
         <!-- Article Content -->
         <article class="py-24 bg-white">
-            <div class="max-w-4xl mx-auto px-6">
-                <div class="prose prose-xl prose-slate max-w-none break-words
-                    prose-headings:text-[#004182] prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight
-                    prose-p:text-gray-600 prose-p:leading-[2] prose-p:font-medium
-                    prose-strong:text-[#004182] prose-strong:font-black
-                    prose-a:text-[#FFD700] prose-a:font-black prose-a:no-underline hover:prose-a:text-[#004182]
-                    prose-img:rounded-[2rem] prose-img:shadow-2xl" 
-                    v-html="activity.description">
+            <div class="max-w-3xl mx-auto px-6">
+                <div v-if="hasHtmlDescription" class="article-body" v-html="activity.description">
+                </div>
+                <div v-else class="article-body">
+                    <p v-for="(paragraph, index) in articleParagraphs" :key="index">{{ paragraph }}</p>
                 </div>
 
                 <!-- Gallery Grid -->
@@ -116,10 +113,23 @@
 <script setup>
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 const props = defineProps({
     activity: { type: Object, required: true }
 });
+
+const description = computed(() => props.activity.description || '');
+const hasHtmlDescription = computed(() => /<\/?[a-z][\s\S]*>/i.test(description.value));
+const plainDescription = computed(() => description.value
+    .replace(/<[^>]*>?/gm, ' ')
+    .replace(/\s+/g, ' ')
+    .trim());
+const articleParagraphs = computed(() => description.value
+    .replace(/\r/g, '')
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
+    .filter(Boolean));
 
 function formatDate(dateStr) {
     if (!dateStr) return '-';
@@ -136,7 +146,48 @@ function openImage(url) {
 </script>
 
 <style scoped>
-:deep(.prose) {
+.article-body {
+    color: #374151;
+    font-size: clamp(1rem, 1.5vw, 1.125rem);
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+}
+
+.article-body :deep(p) {
+    margin: 0 0 1.6rem;
+}
+
+.article-body :deep(p:first-child) {
+    color: #1f2937;
+    font-size: 1.08em;
+}
+
+.article-body :deep(h2),
+.article-body :deep(h3) {
+    color: #004182;
+    font-weight: 800;
+    line-height: 1.3;
+    margin: 2.25rem 0 1rem;
+}
+
+.article-body :deep(ul),
+.article-body :deep(ol) {
+    margin: 1rem 0 1.75rem;
+    padding-left: 1.5rem;
+}
+
+.article-body :deep(a) {
+    color: #004182;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: #ffd700;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.article-body :deep(img) {
+    border-radius: 1.5rem;
+    margin: 2rem auto;
     max-width: 100%;
 }
 </style>

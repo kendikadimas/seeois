@@ -188,12 +188,12 @@
     "/build/assets/Activity-CamSi-V1.js"
   ],
   "resources/js/Pages/Public/ActivityDetail.vue": [
-    "/build/assets/ActivityDetail-BikGwdqT.js",
-    "/build/assets/ActivityDetail-YPy1KVg4.css"
+    "/build/assets/ActivityDetail-DXVASekA.js",
+    "/build/assets/ActivityDetail-CmDWUC2E.css"
   ],
-  "resources/js/Pages/Public/ActivityDetail.vue?vue&type=style&index=0&scoped=c9f01e4a&lang.css": [
-    "/build/assets/ActivityDetail-BikGwdqT.js",
-    "/build/assets/ActivityDetail-YPy1KVg4.css"
+  "resources/js/Pages/Public/ActivityDetail.vue?vue&type=style&index=0&scoped=f9359c3c&lang.css": [
+    "/build/assets/ActivityDetail-DXVASekA.js",
+    "/build/assets/ActivityDetail-CmDWUC2E.css"
   ],
   "resources/js/Pages/Public/Contact.vue": [
     "/build/assets/Contact-gadw3ig3.js"
@@ -314,7 +314,7 @@
     "/build/assets/CertificatesManage-aIAMIy7f.css"
   ],
   "resources/js/Pages/Staff/Marketing/Activities.vue": [
-    "/build/assets/Activities-0JVidJDP.js"
+    "/build/assets/Activities-B5N3QTrQ.js"
   ],
   "resources/js/Pages/Staff/Marketing/Compro.vue": [
     "/build/assets/Compro-BEzdmk_C.js",
