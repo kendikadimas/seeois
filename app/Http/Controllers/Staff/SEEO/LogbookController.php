@@ -18,9 +18,9 @@ class LogbookController extends Controller
     {
         $request->flash();
         $request->validate([
-            'program_id' => ['numeric'],
-            'description' => ['string'],
-            'date_time' => ['date', 'before_or_equal:today'],
+            'program_id' => ['required', 'numeric', 'exists:programs,id'],
+            'description' => ['required', 'string'],
+            'date_time' => ['required', 'date', 'before_or_equal:today'],
             'image' => [File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024)],
         ]);
         $auth_user = Auth::user();
