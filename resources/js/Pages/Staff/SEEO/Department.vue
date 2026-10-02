@@ -25,7 +25,13 @@ const props = defineProps({
 });
 
 const auth_user = usePage().props.auth.user;
-const canManageDepartment = computed(() => auth_user?.roles_id == 99 || auth_user?.id == props.department?.manager_id);
+const capabilities = computed(() => auth_user?.capabilities ?? []);
+const canManageDepartment = computed(
+    () =>
+        Number(auth_user?.id) === Number(props.department?.manager_id) ||
+        capabilities.value.includes("*") ||
+        capabilities.value.includes("organization.manage")
+);
 const title = computed(() => `Departemen ${props.department?.name || ''}`.trim());
 const modalConfirmationRef = ref(null);
 const toastNotifRef = ref(null);
@@ -376,6 +382,7 @@ watch(
                                             ></i>
                                         </span>
                                         <button
+                                            v-if="canManageDepartment"
                                             class="btn btn-sm btn-outline-secondary border-0 ms-auto py-0"
                                             @click.stop="
                                                 confirmation(

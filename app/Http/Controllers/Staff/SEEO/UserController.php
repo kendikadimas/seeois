@@ -257,14 +257,17 @@ class UserController extends Controller
         if ($user->manager) {
             return redirect()->route('role')->with('notif', ['type' => 'danger', 'message' => 'Can not delete! ' . $user->name . ' is manager of ' . $user->manager->name . ' Department.']);
         }
-        if ($user->level !== null || $user->level > 0) {
+        if ($user->level !== null && $user->level > 0) {
             $payroll_level = PayrollLevel::where('level', '=', $user->level)->first();
-            $payroll_level->employee -= 1;
-            $payroll_level->save();
+            if ($payroll_level) {
+                $payroll_level->employee = max(0, $payroll_level->employee - 1);
+                $payroll_level->save();
+            }
         }
         $user->roles_id = NULL;
         $user->department_id = NULL;
         $user->year_id = NULL;
+        $user->level = NULL;
         if ($user->save() > 0) {
             return redirect()->route('role')->with('notif', ['type' => 'info', 'message' => $user->name . ' account has been removed from Employee List.']);
         } else {

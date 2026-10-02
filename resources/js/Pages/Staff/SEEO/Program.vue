@@ -748,7 +748,7 @@ watch(
                     <!-- Logbook -->
                     <div class="row mt-4">
                         <div class="col-12">
-                            <div class="card program-logbook-card p-2">
+                            <div class="card program-logbook-card p-2 p-md-3">
                                 <div
                                     class="d-flex border-bottom mx-2 border-primary py-1 align-items-center"
                                 >
@@ -822,9 +822,7 @@ watch(
                                             </span>
                                             <a
                                                 v-if="selectedUser.id"
-                                                :href="
-                                                    `/seeo/staff/program/disbursement/filter/${props.program.id}`
-                                                "
+                                                :href="`/seeo/staff/profile/${selectedUser.id}`"
                                                 class="text-decoration-none ms-auto d-flex"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -844,18 +842,18 @@ watch(
                                 </div>
                                 <div class="row">
                                     <div class="col-12 d-flex">
-                                        <div class="scroll-container-lg-2 scroll-container-2 mx-2 program-logbook-list">
+                                        <div class="scroll-container-lg-2 scroll-container-2 mx-1 mx-md-2 program-logbook-list">
                                             <ul
                                                 class="list-group list-group-flush"
                                             >
                                                 <li
                                                     class="list-group-item px-0 program-logbook-item"
                                                     v-for="logbook in active_logbook"
+                                                    :key="logbook.id"
                                                 >
-                                                    <div class="d-flex w-100">
+                                                    <div class="d-flex w-100 program-logbook-content">
                                                         <div
-                                                            class="card d-flex me-2"
-                                                            :style="'width: 25%; height: auto;'"
+                                                            class="card d-flex program-logbook-thumb"
                                                         >
                                                             <img
                                                                 :src="
@@ -952,9 +950,9 @@ watch(
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div class="w-100">
+                                                        <div class="w-100 program-logbook-detail">
                                                             <div
-                                                                class="d-flex w-100"
+                                                                class="d-flex w-100 program-logbook-meta"
                                                             >
                                                                 <span
                                                                     class="fw-light me-auto"
@@ -1041,7 +1039,7 @@ watch(
                                                                     ></i>
                                                                 </button>
                                                             </div>
-                                                            <span>{{
+                                                            <span class="program-logbook-description">{{
                                                                 logbook.title
                                                             }}</span>
                                                         </div>
@@ -1054,10 +1052,9 @@ watch(
                                                         0
                                                     "
                                                 >
-                                                    <div class="d-flex">
+                                                    <div class="d-flex program-logbook-content program-logbook-empty">
                                                         <div
-                                                            class="card d-flex me-2"
-                                                            :style="'width: 25%; height: auto;'"
+                                                            class="card d-flex program-logbook-thumb"
                                                         >
                                                             <img
                                                                 :src="'/favicon.ico'"
@@ -1065,8 +1062,8 @@ watch(
                                                                 class="rounded border-secondary-subtle"
                                                             />
                                                         </div>
-                                                        <div class="w-100">
-                                                            <div class="d-flex">
+                                                        <div class="w-100 program-logbook-detail">
+                                                            <div class="d-flex program-logbook-meta">
                                                                 <div
                                                                     class="fw-light card me-auto"
                                                                 >
@@ -4138,6 +4135,8 @@ watch(
 .program-logbook-card {
     border: 1px solid rgba(13, 110, 253, 0.12);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    min-width: 0;
+    overflow: hidden;
 }
 
 .staff-carousel-track {
@@ -4146,6 +4145,8 @@ watch(
     overflow-x: auto;
     scroll-snap-type: x proximity;
     scrollbar-width: thin;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .staff-carousel-track > .staff-carousel-item {
@@ -4193,6 +4194,9 @@ watch(
 .program-logbook-list {
     border-radius: 0.75rem;
     padding-top: 0.25rem;
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 .program-logbook-item {
@@ -4207,6 +4211,42 @@ watch(
     border-bottom: 0;
 }
 
+.program-logbook-content {
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.program-logbook-thumb {
+    flex: 0 0 7rem;
+    width: 7rem;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+}
+
+.program-logbook-thumb > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.program-logbook-detail {
+    min-width: 0;
+}
+
+.program-logbook-meta {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+}
+
+.program-logbook-description {
+    display: block;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
 .btn-outline-primary:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
@@ -4214,18 +4254,56 @@ watch(
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .d-flex.border-primary.border-bottom {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 0.5rem !important;
+    .program-logbook-card {
+        border-radius: 0.75rem;
     }
-    
-    .btn-outline-primary {
-        order: -1 !important;
-        margin-left: 0 !important;
+
+    .staff-carousel-track {
+        padding-inline: 0.25rem !important;
         margin-right: 0 !important;
-        margin-bottom: 0.5rem !important;
-        width: fit-content !important;
+    }
+
+    .logbook-selected-staff {
+        margin-inline: 0.25rem !important;
+    }
+
+    .program-logbook-item {
+        padding-block: 0.75rem;
+    }
+
+    .program-logbook-thumb {
+        flex-basis: 5.25rem;
+        width: 5.25rem;
+        aspect-ratio: 1;
+    }
+
+    .program-logbook-meta {
+        font-size: 0.75rem;
+    }
+
+    .program-logbook-meta > .fw-light {
+        flex: 1 1 100%;
+    }
+
+    .program-logbook-description {
+        font-size: 0.875rem;
+        line-height: 1.35;
+        margin-top: 0.35rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .program-logbook-content {
+        gap: 0.5rem;
+    }
+
+    .program-logbook-thumb {
+        flex-basis: 4.5rem;
+        width: 4.5rem;
+    }
+
+    .program-logbook-empty .program-logbook-thumb {
+        display: none !important;
     }
 }
 </style>

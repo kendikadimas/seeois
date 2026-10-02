@@ -213,11 +213,10 @@ class DepartmentController extends Controller
             $program->delete();
         }
 
-        // delete department
-        if ($department->manager) {
-            $department->manager->department_id = null;
-            $department->manager->save();
-        }
+        // Detach every member before soft-deleting the department. Leaving
+        // department_id populated would hide those users from the available
+        // staff list and leave them pointing at an inactive department.
+        User::where('department_id', $department->id)->update(['department_id' => null]);
 
         $department->delete();
 
@@ -244,10 +243,25 @@ class DepartmentController extends Controller
     {
         $request->validate(['staff_id' => 'numeric|required']);
 
+        $department = Department::find($id);
+        if (!$department) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Department not found.']);
+        }
+
+        $authUser = Auth::user();
+        if ((int) $authUser->id !== (int) $department->manager_id && !$authUser->canPerform('organization.manage')) {
+            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'You are not authorized to add department staff.']);
+        }
+
         $user = User::find($request->input('staff_id'));
         if (!$user) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'User not found.']);
         }
+
+        if ($user->department_id && (int) $user->department_id !== (int) $department->id) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => $user->name . ' is already assigned to another department.']);
+        }
+
         $user->department_id = $id;
 
         if ($user->save()) {
@@ -264,15 +278,20 @@ class DepartmentController extends Controller
         if (!$user) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'User not found.']);
         }
-        $department = Department::find($user->department_id)->load(['program']);
-        // Check authenticated user must be manager of the department.
-        if (Auth::user()->id !== $department->manager_id) {
-            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'You are not authorize! Only department manager can remove department staff.']);
+        $department = Department::find($user->department_id);
+        if (!$department) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => $user->name . ' is not assigned to an active department.']);
         }
-        // Check selected user if is a program PIC
-        if ($user->program) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => $user->name . ' is PIC of ' . $user->program->name . '. Please remove from the program.']);
+
+        $authUser = Auth::user();
+        if ((int) $authUser->id !== (int) $department->manager_id && !$authUser->canPerform('organization.manage')) {
+            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'You are not authorized to remove department staff.']);
         }
+
+        if ((int) $user->id === (int) $department->manager_id) {
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => $user->name . ' is the department manager. Change the manager first before removing them from the department.']);
+        }
+
         $user->department_id = null;
         if ($user->save()) {
             return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success remove ' . $user->name . ' from ' . $department->name . ' Department Staff.']);

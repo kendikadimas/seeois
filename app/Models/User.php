@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -124,7 +125,25 @@ class User extends Authenticatable
 
     public function capabilities(): array
     {
-        return config('permissions.roles.' . (int) $this->roles_id, []);
+        $roleCapabilities = config('permissions.roles.' . (int) $this->roles_id, []);
+        $departmentCapabilities = [];
+        $departmentName = $this->department?->name;
+
+        if ($departmentName) {
+            $departmentKey = Str::of($departmentName)
+                ->lower()
+                ->replace('&', 'and')
+                ->replaceMatches('/[^a-z0-9]+/', ' ')
+                ->squish()
+                ->toString();
+
+            $departmentCapabilities = config('permissions.departments.' . $departmentKey, []);
+        }
+
+        return array_values(array_unique([
+            ...$roleCapabilities,
+            ...$departmentCapabilities,
+        ]));
     }
 
     public function canPerform(string $capability): bool
