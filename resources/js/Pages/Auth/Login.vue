@@ -30,6 +30,11 @@
                             <p class="text-muted">Selamat datang kembali!</p>
                         </div>
 
+                        <div v-if="props.notif || props.status" class="alert alert-success d-flex align-items-center gap-2 mb-3 shadow-sm rounded-3 py-2 px-3 small">
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            <div>{{ props.notif?.message || props.status }}</div>
+                        </div>
+
                         <form @submit.prevent="submit_login">
                             <div class="mb-3 form-floating">
                                 <input
@@ -152,6 +157,17 @@ import InputError from "@/Components/InputError.vue";
 import Checkbox from "@/Components/Checkbox.vue";
 import { Head, useForm } from "@inertiajs/vue3";
 import { ref } from 'vue';
+
+const props = defineProps({
+    status: {
+        type: String,
+        default: null,
+    },
+    notif: {
+        type: Object,
+        default: null,
+    },
+});
 
 const showPassword = ref(false);
 

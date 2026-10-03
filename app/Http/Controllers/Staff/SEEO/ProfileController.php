@@ -162,31 +162,52 @@ class ProfileController extends Controller
     function changePassword(Request $request)
     {
         $attempt = session('password_attempt', 4);
-        if (($attempt - 1) == 0) {
+        if (($attempt - 1) <= 0) {
             session()->pull('password_attempt');
-            return redirect()->route('logout')->with('Because your password is wrong too many times, you are logged out. Please try again later.');
+            return redirect()->route('logout')->with('notif', [
+                'type' => 'warning',
+                'message' => 'Anda telah salah memasukkan kata sandi terlalu sering. Sesi Anda diakhiri demi keamanan.',
+            ]);
         }
         $request->flash();
         $request->validate([
             'old_password' => 'required',
             'password' => ['required', Password::min(8)->mixedCase()->numbers(), Password::defaults(), 'confirmed'],
+        ], [
+            'old_password.required' => 'Kata sandi saat ini wajib diisi.',
+            'password.required' => 'Kata sandi baru wajib diisi.',
+            'password.confirmed' => 'Konfirmasi kata sandi baru tidak cocok.',
+            'password.min' => 'Kata sandi baru minimal 8 karakter.',
         ]);
+
         $auth_user = Auth::user();
         if (!Hash::check($request->input('old_password'), $auth_user->password)) {
             session(['password_attempt' => ($attempt - 1)]);
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Your old password is wrong. You have ' . $attempt . ' more attempt.']);
+            return redirect()->back()->with('notif', [
+                'type' => 'warning',
+                'message' => 'Kata sandi lama Anda salah. Sisa kesempatan: ' . ($attempt - 1) . ' kali.',
+            ]);
         }
         if ($request->input('old_password') == $request->input('password')) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Your new password is same to your old password. Please create new different password.']);
+            return redirect()->back()->with('notif', [
+                'type' => 'warning',
+                'message' => 'Kata sandi baru tidak boleh sama dengan kata sandi lama.',
+            ]);
         }
 
         $user = User::find($auth_user->id);
         $user->password = Hash::make($request->input('password'));
         session()->pull('password_attempt');
         if ($user->save()) {
-            return redirect()->route('profile.edit')->with('notif', ['type' => 'info', 'message' => 'Your password is changed.']);
+            return redirect()->route('profile.edit')->with('notif', [
+                'type' => 'info',
+                'message' => 'Kata sandi Anda berhasil diperbarui.',
+            ]);
         } else {
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Failed to change password. Please try again or ask admin.']);
+            return redirect()->back()->with('notif', [
+                'type' => 'warning',
+                'message' => 'Gagal mengubah kata sandi. Silakan coba lagi atau hubungi administrator.',
+            ]);
         }
     }
 

@@ -14,8 +14,8 @@
     "/build/assets/BusinessBalance-Cfi8ddRz.js"
   ],
   "resources/js/Components/Checkbox.vue": [
-    "/build/assets/Login-B0PIJR59.js",
-    "/build/assets/Login-B0jPm9-f.css"
+    "/build/assets/Login-C1Rve09R.js",
+    "/build/assets/Login-D24ievPe.css"
   ],
   "resources/js/Components/IncomeReceiptTemplate.vue": [
     "/build/assets/StandDetail-CbEXU5LB.js",
@@ -104,20 +104,20 @@
     "/build/assets/ConfirmPassword-CRfywXTg.css"
   ],
   "resources/js/Pages/Auth/ForgotPassword.vue": [
-    "/build/assets/ForgotPassword-Bb7DmuRE.js",
-    "/build/assets/ForgotPassword-CEla1_aD.css"
+    "/build/assets/ForgotPassword-BDXcKYBC.js",
+    "/build/assets/ForgotPassword-CKD0v3rb.css"
   ],
-  "resources/js/Pages/Auth/ForgotPassword.vue?vue&type=style&index=0&scoped=593a9407&lang.css": [
-    "/build/assets/ForgotPassword-Bb7DmuRE.js",
-    "/build/assets/ForgotPassword-CEla1_aD.css"
+  "resources/js/Pages/Auth/ForgotPassword.vue?vue&type=style&index=0&scoped=a03df84a&lang.css": [
+    "/build/assets/ForgotPassword-BDXcKYBC.js",
+    "/build/assets/ForgotPassword-CKD0v3rb.css"
   ],
   "resources/js/Pages/Auth/Login.vue": [
-    "/build/assets/Login-B0PIJR59.js",
-    "/build/assets/Login-B0jPm9-f.css"
+    "/build/assets/Login-C1Rve09R.js",
+    "/build/assets/Login-D24ievPe.css"
   ],
-  "resources/js/Pages/Auth/Login.vue?vue&type=style&index=0&scoped=2c83ce1d&lang.css": [
-    "/build/assets/Login-B0PIJR59.js",
-    "/build/assets/Login-B0jPm9-f.css"
+  "resources/js/Pages/Auth/Login.vue?vue&type=style&index=0&scoped=64c145b4&lang.css": [
+    "/build/assets/Login-C1Rve09R.js",
+    "/build/assets/Login-D24ievPe.css"
   ],
   "resources/js/Pages/Auth/Register.vue": [
     "/build/assets/Register-CJFxIpzt.js",
@@ -136,12 +136,12 @@
     "/build/assets/RegisterGoogle-50iyGOth.css"
   ],
   "resources/js/Pages/Auth/ResetPassword.vue": [
-    "/build/assets/ResetPassword-H9SZTx-h.js",
-    "/build/assets/ResetPassword-dmChDYAD.css"
+    "/build/assets/ResetPassword-DUN7QUl8.js",
+    "/build/assets/ResetPassword-IiGtUvK3.css"
   ],
-  "resources/js/Pages/Auth/ResetPassword.vue?vue&type=style&index=0&scoped=fb8557ea&lang.css": [
-    "/build/assets/ResetPassword-H9SZTx-h.js",
-    "/build/assets/ResetPassword-dmChDYAD.css"
+  "resources/js/Pages/Auth/ResetPassword.vue?vue&type=style&index=0&scoped=b91e5fb6&lang.css": [
+    "/build/assets/ResetPassword-DUN7QUl8.js",
+    "/build/assets/ResetPassword-IiGtUvK3.css"
   ],
   "resources/js/Pages/Auth/VerifyEmail.vue": [
     "/build/assets/VerifyEmail-By6_91Xo.js",
@@ -336,12 +336,12 @@
     "/build/assets/Structures-CCYoOfix.js"
   ],
   "resources/js/Pages/Staff/Profile.vue": [
-    "/build/assets/Profile-Dw_OPLJ_.js",
-    "/build/assets/Profile-Crbhoz5v.css"
+    "/build/assets/Profile-0hu5B2Q6.js",
+    "/build/assets/Profile-BEfEJ_xS.css"
   ],
-  "resources/js/Pages/Staff/Profile.vue?vue&type=style&index=0&scoped=2fe23bb6&lang.css": [
-    "/build/assets/Profile-Dw_OPLJ_.js",
-    "/build/assets/Profile-Crbhoz5v.css"
+  "resources/js/Pages/Staff/Profile.vue?vue&type=style&index=0&scoped=1889a6ad&lang.css": [
+    "/build/assets/Profile-0hu5B2Q6.js",
+    "/build/assets/Profile-BEfEJ_xS.css"
   ],
   "resources/js/Pages/Staff/SEEO/Birthdays.vue": [
     "/build/assets/Birthdays-C_rKuy02.js",

@@ -450,228 +450,150 @@ watch(
                                     class="modal fade"
                                     ref="modalUpdatePasswordRef"
                                     tabindex="-1"
+                                    aria-labelledby="modalUpdatePasswordTitle"
+                                    aria-hidden="true"
                                 >
-                                    <div
-                                        class="modal-dialog modal-dialog-centered px-3 px-lg-0"
-                                    >
-                                        <div class="modal-content shadow mt-5">
-                                            <div
-                                                class="modal-header py-1 ps-3 pe-2"
-                                            >
-                                                <span
-                                                    class="modal-title fs-5 text-primary-emphasis"
-                                                >
-                                                    <i
-                                                        class="bi bi-key border-secondary-subtle border-2 border-end pe-2"
-                                                    ></i>
-                                                    {{ "Update Password" }}
-                                                </span>
+                                    <div class="modal-dialog modal-dialog-centered px-3 px-lg-0">
+                                        <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+                                            <div class="modal-header bg-light border-bottom py-2.5 px-3">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="rounded-circle bg-warning-subtle text-warning d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                        <i class="bi bi-key-fill"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="modal-title fw-bold text-dark mb-0" id="modalUpdatePasswordTitle">
+                                                            Ganti Kata Sandi
+                                                        </h6>
+                                                        <small class="text-secondary" style="font-size: 0.75rem;">
+                                                            Perbarui kata sandi akun Anda
+                                                        </small>
+                                                    </div>
+                                                </div>
                                                 <button
                                                     type="button"
-                                                    class="btn btn-sm ms-auto"
-                                                    @click="
-                                                        showUpdateProfileModal(
-                                                            false
-                                                        )
-                                                    "
-                                                >
-                                                    <i class="bi bi-x-lg"></i>
-                                                </button>
+                                                    class="btn-close"
+                                                    aria-label="Close"
+                                                    @click="showUpdatePasswordModal(false)"
+                                                ></button>
                                             </div>
                                             <form
                                                 method="post"
-                                                @submit.prevent="
-                                                    handleSubmitUpdatePassword()
-                                                "
+                                                @submit.prevent="handleSubmitUpdatePassword()"
                                             >
-                                                <div
-                                                    class="modal-body bg-light"
-                                                >
-                                                    <div
-                                                        class="row justify-content-center"
-                                                    >
-                                                        <div class="col-10">
-                                                            <span
-                                                                class="text-secondary d-block"
-                                                                style="
-                                                                    text-align: justify;
-                                                                "
-                                                                >{{
-                                                                    "Be caution, you will update your password account. If you are forget, you can choose 'forget password' in the login or register page."
-                                                                }}</span
-                                                            >
-                                                        </div>
+                                                <div class="modal-body p-3 p-md-4">
+                                                    <div class="alert alert-info py-2 px-3 small d-flex align-items-start gap-2 mb-3 rounded-2">
+                                                        <i class="bi bi-info-circle-fill text-info mt-0.5"></i>
+                                                        <span>Pastikan kata sandi baru Anda minimal 8 karakter dan belum pernah digunakan sebelumnya.</span>
                                                     </div>
+
                                                     <!-- Old Password -->
-                                                    <div
-                                                        class="row justify-content-center mt-3"
-                                                    >
-                                                        <div
-                                                            class="col-5 col-lg-4"
-                                                        >
-                                                            <label
-                                                                for="old_password"
-                                                                class="form-label my-1"
-                                                                >Old
-                                                                Password</label
-                                                            >
-                                                        </div>
-                                                        <div
-                                                            class="col-7 col-lg-6"
-                                                        >
-                                                            <div
-                                                                class="input-group input-group-sm"
-                                                            >
-                                                                <input
-                                                                    type="password"
-                                                                    class="form-control form-control-sm"
-                                                                    id="old_password"
-                                                                    v-model="
-                                                                        formUpdatePassword.old_password
-                                                                    "
-                                                                    autocomplete="password"
-                                                                    required
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    class="btn bg-light text-secondary"
-                                                                    @click="
-                                                                        show_password(
-                                                                            'old_password',
-                                                                            'old_password_icon'
-                                                                        )
-                                                                    "
-                                                                >
-                                                                    <i
-                                                                        class="bi bi-eye-slash-fill"
-                                                                        id="old_password_icon"
-                                                                    ></i>
-                                                                </button>
-                                                            </div>
-                                                            <InputError
-                                                                :message="
-                                                                    formUpdatePassword
-                                                                        .errors
-                                                                        .old_password
-                                                                "
+                                                    <div class="mb-3">
+                                                        <label for="old_password" class="form-label small fw-semibold text-secondary mb-1">
+                                                            Kata Sandi Saat Ini <span class="text-danger">*</span>
+                                                        </label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light text-secondary border-end-0">
+                                                                <i class="bi bi-lock"></i>
+                                                            </span>
+                                                            <input
+                                                                type="password"
+                                                                class="form-control border-start-0 border-end-0"
+                                                                id="old_password"
+                                                                v-model="formUpdatePassword.old_password"
+                                                                placeholder="Masukkan kata sandi saat ini"
+                                                                autocomplete="current-password"
+                                                                required
                                                             />
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-outline-secondary border-start-0"
+                                                                @click="show_password('old_password', 'old_password_icon')"
+                                                            >
+                                                                <i class="bi bi-eye-slash-fill" id="old_password_icon"></i>
+                                                            </button>
                                                         </div>
+                                                        <InputError :message="formUpdatePassword.errors.old_password" class="mt-1" />
                                                     </div>
+
                                                     <!-- New Password -->
-                                                    <div
-                                                        class="row justify-content-center mt-3"
-                                                    >
-                                                        <div
-                                                            class="col-5 col-lg-4"
-                                                        >
-                                                            <label
-                                                                for="password"
-                                                                class="form-label my-1"
-                                                                >New
-                                                                Password</label
-                                                            >
-                                                        </div>
-                                                        <div
-                                                            class="col-7 col-lg-6"
-                                                        >
-                                                            <div
-                                                                class="input-group input-group-sm"
-                                                            >
-                                                                <input
-                                                                    type="password"
-                                                                    class="form-control form-control-sm"
-                                                                    id="password"
-                                                                    v-model="
-                                                                        formUpdatePassword.password
-                                                                    "
-                                                                    required
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    class="btn bg-light text-secondary"
-                                                                    @click="
-                                                                        show_password(
-                                                                            'password',
-                                                                            'password_icon'
-                                                                        )
-                                                                    "
-                                                                >
-                                                                    <i
-                                                                        class="bi bi-eye-slash-fill"
-                                                                        id="password_icon"
-                                                                    ></i>
-                                                                </button>
-                                                            </div>
-                                                            <InputError
-                                                                :message="
-                                                                    formUpdatePassword
-                                                                        .errors
-                                                                        .password
-                                                                "
+                                                    <div class="mb-3">
+                                                        <label for="password" class="form-label small fw-semibold text-secondary mb-1">
+                                                            Kata Sandi Baru <span class="text-danger">*</span>
+                                                        </label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light text-secondary border-end-0">
+                                                                <i class="bi bi-shield-lock"></i>
+                                                            </span>
+                                                            <input
+                                                                type="password"
+                                                                class="form-control border-start-0 border-end-0"
+                                                                id="password"
+                                                                v-model="formUpdatePassword.password"
+                                                                placeholder="Minimal 8 karakter"
+                                                                autocomplete="new-password"
+                                                                required
                                                             />
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-outline-secondary border-start-0"
+                                                                @click="show_password('password', 'password_icon')"
+                                                            >
+                                                                <i class="bi bi-eye-slash-fill" id="password_icon"></i>
+                                                            </button>
                                                         </div>
+                                                        <InputError :message="formUpdatePassword.errors.password" class="mt-1" />
                                                     </div>
+
                                                     <!-- Confirm Password -->
-                                                    <div
-                                                        class="row justify-content-center mt-3"
-                                                    >
-                                                        <div
-                                                            class="col-5 col-lg-4"
-                                                        >
-                                                            <label
-                                                                for="password_confirmation"
-                                                                class="form-label my-1"
-                                                                >Confirm
-                                                                Password</label
-                                                            >
-                                                        </div>
-                                                        <div
-                                                            class="col-7 col-lg-6"
-                                                        >
-                                                            <div
-                                                                class="input-group input-group-sm"
-                                                            >
-                                                                <input
-                                                                    type="password"
-                                                                    class="form-control form-control-sm"
-                                                                    id="password_confirmation"
-                                                                    v-model="
-                                                                        formUpdatePassword.password_confirmation
-                                                                    "
-                                                                    required
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    class="btn bg-light text-secondary"
-                                                                    @click="
-                                                                        show_password(
-                                                                            'password_confirmation',
-                                                                            'password_confirmation_icon'
-                                                                        )
-                                                                    "
-                                                                >
-                                                                    <i
-                                                                        class="bi bi-eye-slash-fill"
-                                                                        id="password_confirmation_icon"
-                                                                    ></i>
-                                                                </button>
-                                                            </div>
-                                                            <InputError
-                                                                :message="
-                                                                    formUpdatePassword
-                                                                        .errors
-                                                                        .password_confirmation
-                                                                "
+                                                    <div class="mb-2">
+                                                        <label for="password_confirmation" class="form-label small fw-semibold text-secondary mb-1">
+                                                            Konfirmasi Kata Sandi Baru <span class="text-danger">*</span>
+                                                        </label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light text-secondary border-end-0">
+                                                                <i class="bi bi-check2-circle"></i>
+                                                            </span>
+                                                            <input
+                                                                type="password"
+                                                                class="form-control border-start-0 border-end-0"
+                                                                id="password_confirmation"
+                                                                v-model="formUpdatePassword.password_confirmation"
+                                                                placeholder="Ketik ulang kata sandi baru"
+                                                                autocomplete="new-password"
+                                                                required
                                                             />
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-outline-secondary border-start-0"
+                                                                @click="show_password('password_confirmation', 'password_confirmation_icon')"
+                                                            >
+                                                                <i class="bi bi-eye-slash-fill" id="password_confirmation_icon"></i>
+                                                            </button>
                                                         </div>
+                                                        <InputError :message="formUpdatePassword.errors.password_confirmation" class="mt-1" />
                                                     </div>
                                                 </div>
-                                                <div class="modal-footer p-1">
+                                                <div class="modal-footer bg-light py-2 px-3 border-top d-flex justify-content-end gap-2">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-sm btn-outline-secondary px-3"
+                                                        @click="showUpdatePasswordModal(false)"
+                                                    >
+                                                        Batal
+                                                    </button>
                                                     <button
                                                         type="submit"
-                                                        class="btn btn-sm btn-primary"
+                                                        class="btn btn-sm btn-primary px-3 d-inline-flex align-items-center gap-1.5"
+                                                        :disabled="formUpdatePassword.processing"
                                                     >
-                                                        {{ "Update" }}
+                                                        <span
+                                                            v-if="formUpdatePassword.processing"
+                                                            class="spinner-border spinner-border-sm"
+                                                            role="status"
+                                                            aria-hidden="true"
+                                                        ></span>
+                                                        <i v-else class="bi bi-check-lg"></i>
+                                                        <span>Simpan Kata Sandi</span>
                                                     </button>
                                                 </div>
                                             </form>
@@ -814,6 +736,57 @@ watch(
                                             <p class="text-muted small" v-else>Belum diatur</p>
                                         </div>
                                     </div>
+                                    <div v-if="auth_user.roles_id == 99 || auth_user.id == profile.id" class="d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1.5 px-3 py-1.5 rounded-2"
+                                            @click="showUpdateProfileModal(true)"
+                                        >
+                                            <i class="bi bi-pencil-square"></i>
+                                            <span>Edit Profil</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 px-3 py-1.5 rounded-2"
+                                            @click="showUpdatePasswordModal(true)"
+                                        >
+                                            <i class="bi bi-key-fill text-warning"></i>
+                                            <span>Ganti Password</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Keamanan Akun / Ganti Password -->
+                        <div
+                            v-if="auth_user.roles_id == 99 || auth_user.id == profile.id"
+                            class="card mt-3 border-0 shadow-sm rounded-3 p-3 p-md-4 bg-white"
+                        >
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                                    <i class="bi bi-shield-lock-fill text-primary"></i>
+                                    Keamanan Akun & Kata Sandi
+                                </h6>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small">
+                                    Keamanan
+                                </span>
+                            </div>
+                            <div class="row align-items-center g-3">
+                                <div class="col-12 col-md-8">
+                                    <p class="small text-secondary mb-0">
+                                        Ganti kata sandi secara berkala untuk menjaga akun Anda tetap aman. Kata sandi minimal 8 karakter dengan kombinasi huruf besar, huruf kecil, dan angka.
+                                    </p>
+                                </div>
+                                <div class="col-12 col-md-4 text-md-end">
+                                    <button
+                                        type="button"
+                                        class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2 px-3 py-2 rounded-2 fw-semibold shadow-2xs"
+                                        @click="showUpdatePasswordModal(true)"
+                                    >
+                                        <i class="bi bi-key-fill"></i>
+                                        <span>Ganti Password</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>

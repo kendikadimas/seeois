@@ -5,11 +5,16 @@ import { Head, Link, useForm } from "@inertiajs/vue3";
 defineProps({
     status: {
         type: String,
+        default: null,
+    },
+    reset_url: {
+        type: String,
+        default: null,
     },
 });
 
 const form_reset = useForm({
-    email: null,
+    email: "",
 });
 </script>
 
@@ -41,15 +46,28 @@ const form_reset = useForm({
                                 <img :src="$imageUrl('compro/logo.png')" alt="SEEO Logo" style="width: 70px; height: 70px;">
                             </div>
                             <h2 class="h3 fw-bold mb-2">Lupa Kata Sandi?</h2>
-                            <!-- <p class="text-muted">Jangan khawatir, kami akan kirimkan link reset.</p> -->
                         </div>
                         
                         <div class="mb-4 text-muted" style="text-align: justify; font-size: 0.95rem;">
-                            Masukkan alamat email Anda yang terdaftar. Kami akan mengirimkan link untuk mengatur ulang kata sandi Anda.
+                            Masukkan alamat email Anda yang terdaftar. Kami akan mengirimkan tautan untuk mengatur ulang kata sandi Anda.
                         </div>
 
-                        <div v-if="status" class="alert alert-success small">
-                            {{ status }}
+                        <div v-if="status" class="alert alert-success d-flex align-items-center gap-2 small mb-3">
+                            <i class="bi bi-check-circle-fill fs-5"></i>
+                            <div>{{ status }}</div>
+                        </div>
+
+                        <!-- Direct Reset Link helper for local development -->
+                        <div v-if="reset_url" class="alert alert-info border-info-subtle small mb-4">
+                            <div class="fw-bold mb-1 d-flex align-items-center gap-1 text-primary">
+                                <i class="bi bi-info-circle-fill"></i>
+                                <span>Mode Pengujian (Local):</span>
+                            </div>
+                            <p class="mb-2 text-secondary">Karena driver email menggunakan log lokal, Anda dapat langsung membuka tautan berikut:</p>
+                            <a :href="reset_url" class="btn btn-sm btn-primary w-100 text-white d-flex align-items-center justify-content-center gap-2">
+                                <span>Buka Halaman Reset Kata Sandi</span>
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
                         </div>
 
                         <form @submit.prevent="form_reset.post(route('password.email'))">
