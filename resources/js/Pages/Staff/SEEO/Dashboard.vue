@@ -219,98 +219,39 @@ onMounted(async () => {
         <template #header> {{ title }} </template>
 
         <div class="dashboard-command-center py-2">
-            <!-- ================= HERO ROLE COMMAND BANNER ================= -->
-            <div class="hero-role-card card border-0 shadow-sm rounded-4 mb-4 overflow-hidden text-white" :style="{ background: currentWorkflow.theme?.gradient || 'linear-gradient(135deg, #1e1b4b 0%, #3730a3 100%)' }">
-                <div class="card-body p-4 position-relative">
+            <!-- Ringkasan peran -->
+            <section class="hero-role-card card mb-4 overflow-hidden">
+                <div class="card-body p-3 p-md-4 position-relative">
                     <div class="row align-items-center g-3">
                         <div class="col-12 col-lg-8">
-                            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                                <span class="badge rounded-pill hero-meta-badge text-white px-3 py-1 fw-medium">
-                                    <i class="bi bi-person-circle me-1"></i> {{ auth_user.name }}
-                                </span>
-                                <span class="badge rounded-pill bg-warning text-dark px-3 py-1 fw-bold">
-                                    <i :class="['bi', currentWorkflow.icon || 'bi-stars', 'me-1']"></i> {{ currentWorkflow.title }}
-                                </span>
-                                <span class="badge rounded-pill hero-meta-badge text-white px-3 py-1">
-                                    Tahun Periode: {{ selectedYear }}
-                                </span>
+                            <div class="hero-eyebrow d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                <i :class="['bi', currentWorkflow.icon || 'bi-person-check']" aria-hidden="true"></i>
+                                <span>{{ currentWorkflow.title }}</span>
+                                <span aria-hidden="true">·</span>
+                                <span>Periode {{ selectedYear }}</span>
                             </div>
-                            <h2 class="hero-title fw-bold mb-2 text-white">
-                                Selamat Datang di Pusat Komando Peran Anda 👋
+                            <h2 class="hero-title fw-bold mb-2">
+                                Selamat bekerja, {{ auth_user.name }}
                             </h2>
-                            <p class="hero-mission text-white text-opacity-90 mb-0 small lh-base" style="max-width: 680px;">
+                            <p class="hero-mission text-secondary mb-0 small lh-base" style="max-width: 680px;">
                                 {{ currentWorkflow.mission }}
                             </p>
                         </div>
                         <div class="col-12 col-lg-4 d-flex justify-content-lg-end">
                             <button
                                 type="button"
-                                class="btn btn-warning text-dark fw-bold rounded-pill shadow-sm px-4 py-2 d-inline-flex align-items-center gap-2 hover-scale transition-all"
+                                class="btn btn-outline-primary px-3 d-inline-flex align-items-center gap-2"
                                 @click="openGuide"
                             >
-                                <i class="bi bi-lightbulb-fill fs-5"></i>
-                                <span>Buka Panduan & SOP Peran</span>
+                                <i class="bi bi-book"></i>
+                                <span>Lihat panduan kerja</span>
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- ================= DAILY WORKFLOW STEPPER CARDS ================= -->
-            <div class="daily-workflow-section mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                            <i class="bi bi-signpost-2-fill text-primary"></i>
-                            Alur Tugas Harian ({{ currentWorkflow.alias }})
-                        </h5>
-                        <small class="text-muted">Ikuti alur bertahap di bawah ini untuk menyelesaikan tugas pokok peran Anda.</small>
-                    </div>
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-link text-primary text-decoration-none fw-semibold p-0"
-                        @click="openGuide"
-                    >
-                        Lihat Kamus & FAQ <i class="bi bi-arrow-right"></i>
-                    </button>
-                </div>
 
-                <div class="row g-3">
-                    <div
-                        v-for="(st, idx) in currentWorkflow.steps"
-                        :key="idx"
-                        class="col-12 col-md-6 col-xl-3"
-                    >
-                        <div class="step-card card h-100 border-0 shadow-sm rounded-4 p-3 d-flex flex-column justify-content-between transition-all" :style="{ backgroundColor: currentWorkflow.theme?.lightBg || '#ffffff' }">
-                            <div>
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div
-                                        class="step-badge-num fw-bold text-white rounded-circle shadow-2xs"
-                                        :style="{ backgroundColor: currentWorkflow.theme?.accentColor || '#4f46e5' }"
-                                    >
-                                        {{ st.step }}
-                                    </div>
-                                    <span class="badge bg-white text-secondary border small">
-                                        Langkah {{ st.step }}
-                                    </span>
-                                </div>
-                                <h6 class="fw-bold text-dark mb-1">{{ st.title }}</h6>
-                                <p class="small text-secondary mb-3 lh-sm">{{ st.desc }}</p>
-                            </div>
-                            <div>
-                                <a
-                                    :href="route(st.route) + (st.hash || '')"
-                                    class="btn btn-sm w-100 text-white rounded-pill fw-medium d-flex align-items-center justify-content-center gap-2 shadow-2xs"
-                                    :style="{ backgroundColor: currentWorkflow.theme?.accentColor || '#4f46e5' }"
-                                >
-                                    <span>{{ st.btnText }}</span>
-                                    <i class="bi bi-arrow-right-short fs-6"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- ================= ATTENTION / MONITORING METRICS (IF ANY) ================= -->
             <div v-if="Object.keys(monitoring).length" class="monitoring-section mb-4">
@@ -351,7 +292,7 @@ onMounted(async () => {
                 <div class="mb-2">
                     <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                         <i class="bi bi-grid-fill text-primary"></i>
-                        Aksi Cepat Peran Anda
+                        Akses cepat
                     </h6>
                 </div>
                 <div class="row g-2">
@@ -362,7 +303,7 @@ onMounted(async () => {
                     >
                         <a
                             :href="route(qa.route) + (qa.hash || '')"
-                            class="quick-action-card card border-0 shadow-sm rounded-3 p-3 text-center text-decoration-none bg-white transition-all hover-lift h-100 d-flex flex-column align-items-center justify-content-center"
+                            class="quick-action-card card p-3 text-center text-decoration-none bg-white h-100 d-flex flex-column align-items-center justify-content-center"
                         >
                             <div class="qa-icon-wrapper rounded-circle p-3 mb-2 shadow-2xs" :class="'bg-' + (qa.color || 'primary') + '-subtle text-' + (qa.color || 'primary')">
                                 <i :class="['bi', qa.icon, 'fs-4']"></i>
@@ -741,33 +682,23 @@ onMounted(async () => {
 /* Hero Card */
 .hero-role-card {
     position: relative;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #4f46e5 !important;
+    background: #ffffff;
 }
 .hero-title {
-    font-size: 1.5rem;
+    color: #172033;
+    font-size: 1.35rem;
     letter-spacing: -0.02em;
 }
-.hero-meta-badge {
-    background-color: #251f6b;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+.hero-eyebrow {
+    color: #4f46e5;
+    font-size: 0.73rem;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
 }
 
-/* Stepper Card */
-.step-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.step-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08) !important;
-}
-.step-badge-num {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85rem;
-}
+
 
 /* Quick Action Cards */
 .qa-icon-wrapper {
@@ -778,8 +709,8 @@ onMounted(async () => {
     justify-content: center;
 }
 .quick-action-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.08) !important;
+    border-color: #a5b4fc !important;
+    background: #fafaff !important;
 }
 
 /* Post bubble */
@@ -795,9 +726,25 @@ onMounted(async () => {
     font-size: 0.68rem;
 }
 .hover-lift:hover {
-    transform: translateY(-2px);
+    border-color: #a5b4fc !important;
 }
 .hover-scale:hover {
-    transform: scale(1.03);
+    border-color: #a5b4fc !important;
+}
+
+@media (max-width: 575.98px) {
+    .dashboard-command-center {
+        padding-top: 0 !important;
+    }
+
+    .hero-role-card,
+    .monitoring-section,
+    .quick-shortcuts-section {
+        margin-bottom: 1rem !important;
+    }
+
+    .hero-title {
+        font-size: 1.15rem;
+    }
 }
 </style>

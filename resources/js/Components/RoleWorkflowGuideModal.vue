@@ -103,8 +103,8 @@ defineExpose({ open, close });
                         </div>
 
                         <!-- Role Mission Summary -->
-                        <div class="guide-mission-card mt-3 p-2 px-3 rounded-3 bg-white bg-opacity-15 small">
-                            <i class="bi bi-info-circle-fill me-2 text-warning"></i>
+                        <div class="guide-mission-card mt-3 p-2 px-3 small">
+                            <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>
                             <span>{{ currentWorkflow.mission }}</span>
                         </div>
 
@@ -365,6 +365,7 @@ defineExpose({ open, close });
 .guide-modal-header {
     padding: 1.5rem 1.5rem 0.75rem 1.5rem;
     flex-shrink: 0;
+    color: #ffffff;
 }
 
 .guide-role-icon {
@@ -376,6 +377,23 @@ defineExpose({ open, close });
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
+    color: #ffffff;
+}
+
+.guide-mission-card {
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 0.65rem;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    line-height: 1.5;
+}
+
+.guide-mission-card > i {
+    color: #fde68a;
+}
+
+.guide-mission-card > span {
+    color: #ffffff;
 }
 
 .btn-close-custom {
@@ -405,7 +423,7 @@ defineExpose({ open, close });
 .guide-tab-btn {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.86);
     padding: 0.4rem 0.8rem;
     border-radius: 0.5rem;
     font-size: 0.85rem;
@@ -420,7 +438,7 @@ defineExpose({ open, close });
 }
 
 .guide-tab-btn.active {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.2);
     color: #ffffff;
     font-weight: 600;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -429,6 +447,7 @@ defineExpose({ open, close });
 .guide-modal-body {
     overflow-y: auto;
     flex-grow: 1;
+    color: #172033;
 }
 
 /* Stepper Track */

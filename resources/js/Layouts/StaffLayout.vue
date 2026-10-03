@@ -4,7 +4,7 @@ import RoleWorkflowGuideModal from "@/Components/RoleWorkflowGuideModal.vue";
 import WelcomeBanner from "@/Components/WelcomeBanner.vue";
 import { getRoleWorkflow } from "@/utils/roleWorkflows";
 import { Head, usePage, router } from "@inertiajs/vue3";
-import { ref, watch, computed, onMounted, nextTick } from "vue";
+import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 
 const logoSrc = '/images/assets/logo.png';
 
@@ -93,6 +93,11 @@ const date_header = computed(() => {
     return now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 });
 
+const welcomeSteps = computed(() => [
+    { icon: 'bi-journal-arrow-up', text: 'Isi logbook', action: route('staff.logbook') },
+    { icon: 'bi-wallet2', text: 'Cek pembayaran IWP', action: route('staff.iwp-payment') },
+]);
+
 // Live Search Filter for Navigation Menu
 const searchKeyword = ref('');
 
@@ -157,7 +162,7 @@ const primary_workspace_items = computed(() => {
     // IWP PIC (13)
     else if (role === 13) {
         items.push({ route: route("iwp.receipts"), active: route.current("iwp.receipts"), title: "Validasi Pembayaran IWP", tag: "Verifikasi Struk", icon: "bi-receipt-cutoff" });
-        items.push({ route: route("profile.edit") + "#iwp-payment", active: false, title: "IWP Saya", tag: "Iuran Pribadi", icon: "bi-wallet2" });
+        items.push({ route: route("staff.iwp-payment"), active: route.current("staff.iwp-payment"), title: "IWP Saya", tag: "Iuran Pribadi", icon: "bi-wallet2" });
     }
     // Management Document / Sekretaris (8)
     else if (role === 8) {
@@ -166,8 +171,8 @@ const primary_workspace_items = computed(() => {
     }
     // Default: Staff & Interns (4, 5)
     else {
-        items.push({ route: route("profile.edit") + "#logbook-upload", active: false, title: "Upload Logbook Harian", tag: "Tugas Harian", icon: "bi-journal-arrow-up" });
-        items.push({ route: route("profile.edit") + "#iwp-payment", active: false, title: "Pembayaran IWP", tag: "Iuran Bulanan", icon: "bi-wallet2" });
+        items.push({ route: route("staff.logbook"), active: route.current("staff.logbook"), title: "Upload Logbook Harian", tag: "Tugas Harian", icon: "bi-journal-arrow-up" });
+        items.push({ route: route("staff.iwp-payment"), active: route.current("staff.iwp-payment"), title: "Pembayaran IWP", tag: "Iuran Bulanan", icon: "bi-wallet2" });
         if (can('organization.view')) {
             items.push({ route: route("structural"), active: route.current("structural"), title: "Struktur Departemen", tag: "Agenda Tim", icon: "bi-diagram-3" });
         }
@@ -184,8 +189,8 @@ const nav_sections = computed(() => {
     // --- SEKSI 1: PRIBADI & LOGBOOK ---
     const pribadiItems = [
         { route: route("dashboard"), active: route.current("dashboard"), title: "Dashboard Utama", sub: "Beranda & Pengumuman", icon: "bi-speedometer2" },
-        { route: route("profile.edit") + "#logbook-upload", active: false, title: "Upload Logbook", sub: "Laporan Aktivitas Harian", icon: "bi-journal-arrow-up" },
-        { route: route("profile.edit") + "#iwp-payment", active: false, title: "Pembayaran IWP", sub: "Iuran Wajib Pengurus", icon: "bi-wallet2" },
+        { route: route("staff.logbook"), active: route.current("staff.logbook"), title: "Logbook", sub: "Laporan Aktivitas Harian", icon: "bi-journal-arrow-up" },
+        { route: route("staff.iwp-payment"), active: route.current("staff.iwp-payment"), title: "Pembayaran IWP", sub: "Iuran Wajib Pengurus", icon: "bi-wallet2" },
         { route: route("profile.edit"), active: route.current("profile.edit"), title: "Profil Saya", sub: "Data Pribadi & Password", icon: "bi-person-circle" },
     ];
     sections.push({
@@ -533,6 +538,11 @@ function openGuideModal(roleId = null) {
 }
 
 let timeInterval = null;
+const handleViewportResize = () => {
+    if (window.innerWidth >= 992 && offcanvasInstance.value) {
+        offcanvasInstance.value.hide();
+    }
+};
 
 onMounted(async () => {
     updateTime();
@@ -542,15 +552,16 @@ onMounted(async () => {
     if (typeof window.bootstrap !== 'undefined' && sidebarRef.value) {
         try {
             offcanvasInstance.value = window.bootstrap.Offcanvas.getOrCreateInstance(sidebarRef.value);
-            window.addEventListener('resize', () => {
-                if (window.innerWidth >= 992 && offcanvasInstance.value) {
-                    offcanvasInstance.value.hide();
-                }
-            });
+            window.addEventListener('resize', handleViewportResize);
         } catch (e) {
             console.error("Error initializing Offcanvas:", e);
         }
     }
+});
+
+onBeforeUnmount(() => {
+    if (timeInterval) clearInterval(timeInterval);
+    window.removeEventListener('resize', handleViewportResize);
 });
 
 watch(() => page.component, () => {
@@ -566,14 +577,15 @@ watch(() => page.component, () => {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    </Head>    <div class="d-flex vh-100 overflow-x-hidden staff-app-root">
+    </Head>
+    <div class="d-flex overflow-x-hidden staff-app-root">
         <!-- ================= DESKTOP SIDEBAR ================= -->
-        <aside class="sidebar-desktop d-none d-lg-flex flex-column shrink-0 bg-sidebar text-white shadow" style="width: 310px;">
+        <aside class="sidebar-desktop d-none d-lg-flex flex-column shrink-0 bg-sidebar text-white">
             <!-- Brand & App Identity -->
             <div class="sidebar-header p-3 border-bottom border-white border-opacity-10">
                 <a :href="route('dashboard')" class="text-decoration-none">
-                    <div class="d-flex align-items-center p-2 rounded-3 bg-white bg-opacity-10 brand-box transition-all">
-                        <img :src="logoSrc" alt="SEEO Logo" class="brand-logo me-2 shadow-sm rounded-circle" @error="$event.target.src=logoSrc"/>
+                    <div class="d-flex align-items-center px-1 py-2 brand-box">
+                        <img :src="logoSrc" alt="SEEO Logo" class="brand-logo me-2 rounded-2" @error="$event.target.src=logoSrc"/>
                         <div class="lh-sm">
                             <div class="d-flex align-items-center gap-2">
                                 <h5 class="brand-title mb-0 fw-bold text-white tracking-wide">SEEOIS</h5>
@@ -585,7 +597,7 @@ watch(() => page.component, () => {
                 </a>
 
                 <!-- User Role Indicator Card -->
-                <div class="role-identity-card mt-3 p-3 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
+                <div class="role-identity-card mt-3 p-2">
                     <div class="d-flex align-items-center gap-2">
                         <div class="role-icon-pill" :style="{ backgroundColor: currentRoleWorkflow.theme?.accentColor || '#4f46e5' }">
                             <i :class="['bi', currentRoleWorkflow.icon || 'bi-person-check']" style="font-size:1.1rem;"></i>
@@ -596,7 +608,7 @@ watch(() => page.component, () => {
                         </div>
                         <button
                             type="button"
-                            class="btn btn-sm btn-outline-warning rounded-pill px-2 py-0 hover-white flex-shrink-0"
+                            class="btn btn-sm btn-outline-light px-2 py-0 hover-white flex-shrink-0"
                             style="font-size:0.7rem;"
                             @click="openGuideModal(userRole)"
                             title="Lihat panduan alur kerja untuk peran ini"
@@ -664,11 +676,10 @@ watch(() => page.component, () => {
                 <!-- NORMAL NAVIGATION MENU — No Accordion, Always Visible -->
                 <div v-else class="standard-menu-tree">
                     <!-- ⭐ RUANG KERJA UTAMA -->
-                    <div class="primary-workspace-section mb-4 p-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
+                    <div class="primary-workspace-section mb-4 pb-3">
                         <div class="d-flex align-items-center gap-2 px-2 py-1 mb-2">
-                            <i class="bi bi-star-fill text-warning" style="font-size:0.85rem;"></i>
-                            <span class="fw-bold text-warning text-uppercase" style="font-size:0.78rem; letter-spacing:0.05em;">Ruang Kerja Utama</span>
-                            <span class="badge rounded-pill bg-warning text-dark ms-auto" style="font-size:0.68rem;">Prioritas</span>
+                            <i class="bi bi-grid-1x2 text-white text-opacity-75" style="font-size:0.85rem;"></i>
+                            <span class="fw-bold text-white text-opacity-75 text-uppercase" style="font-size:0.72rem; letter-spacing:0.07em;">Ruang kerja</span>
                         </div>
                         <div class="d-flex flex-column gap-1">
                             <a
@@ -680,10 +691,10 @@ watch(() => page.component, () => {
                                 :class="{ active: item.active }"
                             >
                                 <div class="d-flex align-items-center gap-3 text-truncate">
-                                    <i :class="['bi', item.icon, 'text-warning']" style="font-size:1.25rem; flex-shrink:0;"></i>
+                                    <i :class="['bi', item.icon]" style="font-size:1.1rem; flex-shrink:0;"></i>
                                     <span class="fw-semibold text-truncate" style="font-size:0.95rem;">{{ item.title }}</span>
                                 </div>
-                                <span v-if="item.tag" class="badge rounded-pill bg-white bg-opacity-25 text-white ms-2 flex-shrink-0" style="font-size:0.7rem;">
+                                <span v-if="item.tag" class="nav-tag ms-2 flex-shrink-0">
                                     {{ item.tag }}
                                 </span>
                             </a>
@@ -733,13 +744,13 @@ watch(() => page.component, () => {
             <div class="sidebar-footer p-3 border-top border-white border-opacity-10">
                 <button
                     type="button"
-                    class="btn w-100 fw-bold d-flex align-items-center justify-center gap-2 rounded-3 py-3 shadow-sm border border-primary bg-primary bg-opacity-10 text-white"
+                    class="sidebar-help-btn btn w-100 d-flex align-items-center gap-2 px-3 py-2 text-white"
                     @click="openGuideModal(userRole)"
                 >
-                    <i class="bi bi-lightbulb-fill me-2" style="font-size:1.25rem;"></i>
+                    <i class="bi bi-question-circle" style="font-size:1.05rem;"></i>
                     <div class="text-start lh-sm">
-                        <div style="font-size:1rem; font-weight:600;">Butuh Bantuan?</div>
-                        <div style="font-size:0.8rem; opacity:0.9;">Lihat panduan alur peranmu</div>
+                        <div style="font-size:0.86rem; font-weight:650;">Panduan kerja</div>
+                        <div style="font-size:0.72rem; opacity:0.72;">Alur dan SOP peran</div>
                     </div>
                     <i class="bi bi-chevron-right ms-auto" style="font-size:0.85rem; opacity:0.9;"></i>
                 </button>
@@ -764,7 +775,7 @@ watch(() => page.component, () => {
 
             <div class="offcanvas-body p-3 overflow-y-auto">
                 <!-- Mobile Role Card -->
-                <div class="role-identity-card mb-3 p-3 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
+                <div class="role-identity-card mb-3 p-2">
                     <div class="d-flex align-items-center gap-3">
                         <div class="role-icon-pill" :style="{ backgroundColor: currentRoleWorkflow.theme?.accentColor || '#4f46e5' }">
                             <i :class="['bi', currentRoleWorkflow.icon || 'bi-person-check']" style="font-size:1.1rem;"></i>
@@ -774,6 +785,18 @@ watch(() => page.component, () => {
                             <div class="text-white text-opacity-75 text-truncate" style="font-size:0.78rem;">{{ currentRoleWorkflow.alias }}</div>
                         </div>
                     </div>
+                </div>
+
+                <div v-if="can_switch_year" class="mobile-year-switcher mb-3">
+                    <label for="mobile-governance-year" class="small text-white text-opacity-75 mb-1">Periode data</label>
+                    <select
+                        id="mobile-governance-year"
+                        class="form-select form-select-sm"
+                        v-model="selected_year"
+                        @change="submitYear"
+                    >
+                        <option v-for="y in available_years" :key="y" :value="y">{{ y }}</option>
+                    </select>
                 </div>
 
                 <div class="menu-search-wrapper mb-3">
@@ -820,9 +843,9 @@ watch(() => page.component, () => {
                 </div>
 
                 <!-- Primary Workspace for Mobile -->
-                <div v-show="!searchKeyword.trim()" class="primary-workspace-section mb-3 p-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-15">
+                <div v-show="!searchKeyword.trim()" class="primary-workspace-section mb-3 pb-3">
                     <div class="px-2 py-1 text-2xs fw-bold text-uppercase tracking-wider text-warning mb-1">
-                        Ruang Kerja Utama ({{ currentRoleWorkflow.alias }})
+                        Ruang kerja {{ currentRoleWorkflow.alias }}
                     </div>
                     <div class="d-flex flex-column gap-1">
                         <a
@@ -885,7 +908,7 @@ watch(() => page.component, () => {
         <!-- ================= MAIN CONTENT WRAPPER ================= -->
         <div class="main-content-wrapper grow d-flex flex-column overflow-hidden position-relative bg-surface">
             <!-- Modern Top Header -->
-            <header class="top-header border-bottom px-3 py-2 d-flex justify-content-between align-items-center shadow-2xs z-dropdown">
+            <header class="top-header border-bottom px-3 d-flex justify-content-between align-items-center z-dropdown">
                 <!-- Left: Mobile Toggle & Page Breadcrumbs -->
                 <div class="d-flex align-items-center gap-2 me-auto">
                     <button
@@ -908,8 +931,8 @@ watch(() => page.component, () => {
                             <span class="d-none d-md-inline">•</span>
                             <span class="d-none d-md-inline fw-medium text-dark"><i class="bi bi-clock me-1"></i>{{ currentTime }}</span>
                         </div>
-                        <div class="text-white text-opacity-75 small fw-medium">
-                            <i class="bi bi-shield-check me-1"></i> {{ currentRoleWorkflow.title }}
+                        <div class="page-role small fw-medium">
+                            {{ currentRoleWorkflow.title }}
                         </div>
                     </div>
                 </div>
@@ -919,19 +942,16 @@ watch(() => page.component, () => {
                     <!-- Interactive Role Workflow Guide Button -->
                     <button
                         type="button"
-                        class="btn btn-outline-primary header-guide-btn d-flex align-items-center gap-2 rounded-pill px-3 py-1 shadow-2xs transition-all"
+                        class="btn btn-outline-secondary header-guide-btn d-flex align-items-center gap-2 px-3 py-1"
                         @click="openGuideModal(userRole)"
                         title="Klik untuk panduan cara kerja peran Anda"
                     >
-                        <i class="bi bi-lightbulb-fill text-warning fs-6"></i>
-                        <span class="d-none d-sm-inline fw-semibold">Panduan Alur</span>
-                        <span class="badge rounded-pill bg-primary text-white d-none d-md-inline">
-                            {{ currentRoleWorkflow.alias }}
-                        </span>
+                        <i class="bi bi-question-circle fs-6"></i>
+                        <span class="d-none d-sm-inline fw-semibold">Panduan</span>
                     </button>
 
                     <!-- Governance Year Selector -->
-                    <div v-if="can_switch_year" class="d-none d-md-flex align-items-center gap-1 bg-white p-1 ps-2 rounded-pill border shadow-2xs">
+                    <div v-if="can_switch_year" class="d-none d-md-flex align-items-center gap-1 bg-white p-1 ps-2 rounded-2 border">
                         <i class="bi bi-calendar-event text-secondary small"></i>
                         <select
                             class="form-select form-select-sm border-0 bg-transparent fw-medium py-0 pe-4"
@@ -946,7 +966,7 @@ watch(() => page.component, () => {
                     <!-- User Profile Dropdown -->
                     <div class="user-profile dropdown">
                         <button
-                            class="profile-btn btn d-flex align-items-center gap-2 dropdown-toggle border-0 p-1 px-2 rounded-pill bg-white shadow-2xs"
+                            class="profile-btn btn d-flex align-items-center gap-2 dropdown-toggle border p-1 px-2 rounded-2 bg-white"
                             type="button"
                             id="profileDropdownMenu"
                             data-bs-toggle="dropdown"
@@ -1001,10 +1021,7 @@ watch(() => page.component, () => {
             </header>
 
             <!-- Welcome Banner -->
-            <WelcomeBanner :steps="[
-                { icon: 'bi-journal-arrow-up', text: 'Upload logbook harian Anda', action: '#logbook-upload' },
-                { icon: 'bi-wallet2', text: 'Cek status pembayaran IWP', action: '#iwp-payment' }
-            ]" @openGuide="openGuideModal(userRole)" />
+            <WelcomeBanner :steps="welcomeSteps" />
 
             <!-- Main Dynamic Page Content Container -->
             <main id="main-content" class="content-container grow overflow-auto p-2 p-md-3" tabindex="-1">
@@ -1048,33 +1065,51 @@ watch(() => page.component, () => {
 .staff-app-root {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     color: #172033;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
 }
 
 /* ===== BACKGROUNDS ===== */
 .bg-sidebar {
-    background:
-        radial-gradient(circle at 15% 0%, rgba(99, 102, 241, 0.42), transparent 32%),
-        linear-gradient(180deg, #17153f 0%, #27205f 55%, #17153f 100%);
+    background: #17223b;
 }
 .bg-surface {
-    background:
-        radial-gradient(circle at 95% 0%, rgba(99, 102, 241, 0.08), transparent 28rem),
-        #f6f8fc;
+    background: #f5f7fa;
+}
+
+.main-content-wrapper {
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+.content-container {
+    min-height: 0;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
 }
 
 /* ===== SIDEBAR DIMENSIONS ===== */
 .sidebar-desktop {
-    width: 310px;
+    width: 280px;
     height: 100vh;
+    height: 100dvh;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 .sidebar-mobile {
-    width: 310px;
+    width: min(340px, 88vw) !important;
 }
 
 /* ===== BRAND AREA ===== */
 .brand-logo {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     object-fit: cover;
 }
 .brand-title {
@@ -1085,7 +1120,7 @@ watch(() => page.component, () => {
     font-size: 0.74rem;
 }
 .brand-box:hover {
-    background-color: rgba(255, 255, 255, 0.18) !important;
+    opacity: 0.86;
 }
 .app-version-badge {
     display: inline-flex;
@@ -1105,12 +1140,17 @@ watch(() => page.component, () => {
 .role-icon-pill {
     width: 36px;
     height: 36px;
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #ffffff;
     flex-shrink: 0;
+}
+.role-identity-card {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.6rem;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* ===== SCROLLABLE SIDEBAR CONTENT ===== */
@@ -1139,39 +1179,54 @@ watch(() => page.component, () => {
 
 /* ===== PRIMARY WORKSPACE LINKS ===== */
 .primary-nav-link {
-    background: rgba(255, 255, 255, 0.07);
+    min-height: 42px;
+    background: transparent;
     transition: background 0.18s ease, transform 0.15s ease;
 }
 .primary-nav-link:hover {
-    background: rgba(255, 255, 255, 0.16);
-    transform: translateX(4px);
+    background: rgba(255, 255, 255, 0.08);
 }
 .primary-nav-link.active {
-    background: linear-gradient(90deg, #4f46e5, #6d63f5);
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.45);
-    border-left: 3px solid #fbbf24;
+    background: #4f46e5;
+    color: #ffffff !important;
+    box-shadow: none;
 }
 .primary-nav-link.active .bi {
-    color: #fde68a !important;
+    color: #ffffff !important;
+}
+.nav-tag {
+    padding: 0.15rem 0.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 0.35rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.65rem;
+    font-weight: 600;
+}
+.primary-nav-link.active .nav-tag {
+    border-color: rgba(255, 255, 255, 0.28);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* ===== STANDARD NAV LINKS ===== */
 .standard-nav-link {
+    min-height: 44px;
     color: rgba(255, 255, 255, 0.82);
-    border-left: 3px solid transparent;
-    transition: background 0.18s ease, transform 0.15s ease, border-color 0.15s ease;
+    border-left: 2px solid transparent;
+    transition: background 0.18s ease, border-color 0.15s ease;
 }
 .standard-nav-link:hover {
     color: #ffffff;
     background-color: rgba(255, 255, 255, 0.10);
-    transform: translateX(4px);
 }
 .standard-nav-link.active {
-    color: #ffffff;
-    background: linear-gradient(90deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.15));
-    border-left-color: #fbbf24;
+    color: #ffffff !important;
+    background: rgba(99, 102, 241, 0.34);
+    border-left-color: #a5b4fc;
     font-weight: 700;
-    box-shadow: inset 0 0 8px rgba(251, 191, 36, 0.12);
+    box-shadow: none;
+}
+.standard-nav-link.active * {
+    color: inherit !important;
 }
 .standard-nav-link.active .nav-icon {
     color: #fde68a;
@@ -1195,34 +1250,32 @@ watch(() => page.component, () => {
     background-color: rgba(255, 255, 255, 0.13);
 }
 .search-item.active {
-    background: #4f46e5;
-    border-left: 3px solid #fbbf24;
+    background: rgba(255, 255, 255, 0.12);
+    border-left: 2px solid #a5b4fc;
 }
 
 /* ===== HELP BUTTON (Footer) ===== */
-.btn-help {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: #1a1740;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+.sidebar-help-btn {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 0.6rem;
+    background: rgba(255, 255, 255, 0.05);
+    text-align: left;
 }
-.btn-help:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5);
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #1a1740;
+.sidebar-help-btn:hover {
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.09);
 }
 
 /* ===== TOP HEADER ===== */
 .top-header {
-    background-color: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(14px);
-    height: 72px;
+    background-color: #ffffff;
+    height: 68px;
     flex-shrink: 0;
     position: relative;
     z-index: 1030;
+}
+.page-role {
+    color: #64748b;
 }
 .profile-img {
     width: 40px;
@@ -1230,12 +1283,7 @@ watch(() => page.component, () => {
     object-fit: cover;
 }
 .header-guide-btn {
-    border-width: 1.5px;
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-.header-guide-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+    transition: color 0.18s ease, background-color 0.18s ease;
 }
 
 .content-stage {
@@ -1245,24 +1293,22 @@ watch(() => page.component, () => {
 
 .mobile-quick-nav {
     position: fixed;
-    right: 0.75rem;
-    bottom: calc(0.75rem + env(safe-area-inset-bottom));
-    left: 0.75rem;
+    right: 0;
+    bottom: 0;
+    left: 0;
     z-index: 1025;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
-    gap: 0.25rem;
-    padding: 0.45rem;
-    border: 1px solid rgba(226, 232, 240, 0.92);
-    border-radius: 1.1rem;
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 18px 45px rgba(30, 41, 59, 0.18);
-    backdrop-filter: blur(16px);
+    gap: 0;
+    padding: 0.25rem 0 max(0.25rem, env(safe-area-inset-bottom));
+    border-top: 1px solid #dfe5ee;
+    background: #ffffff;
+    box-shadow: 0 -4px 16px rgba(30, 41, 59, 0.06);
 }
 
 .mobile-quick-link {
     min-width: 0;
-    min-height: 52px;
+    min-height: 54px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1270,7 +1316,7 @@ watch(() => page.component, () => {
     gap: 0.2rem;
     padding: 0.35rem 0.2rem;
     border: 0;
-    border-radius: 0.8rem;
+    border-radius: 0;
     background: transparent;
     color: #64748b;
     text-decoration: none;
@@ -1291,7 +1337,7 @@ watch(() => page.component, () => {
 }
 
 .mobile-quick-link.active {
-    background: #eef2ff;
+    background: transparent;
     color: #4f46e5;
 }
 
@@ -1310,7 +1356,7 @@ watch(() => page.component, () => {
     }
 
     .top-header {
-        height: 64px;
+        height: 60px;
     }
 
     .page-main-title {
@@ -1331,6 +1377,19 @@ watch(() => page.component, () => {
 
     .page-meta {
         font-size: 0.68rem !important;
+    }
+
+    .page-role {
+        display: none;
+    }
+
+    .top-header {
+        padding-inline: 0.65rem !important;
+    }
+
+    .profile-img {
+        width: 36px;
+        height: 36px;
     }
 }
 

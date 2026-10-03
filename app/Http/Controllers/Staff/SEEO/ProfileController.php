@@ -28,6 +28,21 @@ class ProfileController extends Controller
      */
     public function edit(Request $request, $id = 0)
     {
+        return $this->renderSection($request, 'profile', $id);
+    }
+
+    public function logbook(Request $request)
+    {
+        return $this->renderSection($request, 'logbook');
+    }
+
+    public function iwpPayment(Request $request)
+    {
+        return $this->renderSection($request, 'iwp');
+    }
+
+    private function renderSection(Request $request, string $section, $id = 0)
+    {
         $profile = User::find($id) ?? Auth::user();
         $is_staff = $profile->roles_id > 0;
         if (!$is_staff) {
@@ -61,11 +76,18 @@ class ProfileController extends Controller
         // Removed strict check that blocks profile access if phone/password is missing
         // as users need to access profile to fill these details.
 
-        $program_list = ProgramStaff::with(['program'])->where('user_id', '=', $profile->id)->get();
-        $logbook_list = Logbook::with(['program', 'employee'])->where('user_id', '=', $profile->id)->orderBy('created_at', 'desc')->limit(5)->get();
-        $contribution = Contribution::with(['receipt' => ['financial']])->where('user_id', '=', $profile->id)->first();
-        $contribution_settings = ContributionConfig::first();
+        $program_list = $section === 'logbook'
+            ? ProgramStaff::with(['program'])->where('user_id', '=', $profile->id)->get()
+            : collect();
+        $logbook_list = $section === 'logbook'
+            ? Logbook::with(['program', 'employee'])->where('user_id', '=', $profile->id)->orderBy('created_at', 'desc')->limit(5)->get()
+            : collect();
+        $contribution = $section === 'iwp'
+            ? Contribution::with(['receipt' => ['financial']])->where('user_id', '=', $profile->id)->first()
+            : null;
+        $contribution_settings = $section === 'iwp' ? ContributionConfig::first() : null;
         $data = [
+            'section' => $section,
             'profile' => $profile,
             'logbook_list' => $logbook_list,
             'program_list' => $program_list,

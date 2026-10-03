@@ -34,10 +34,22 @@
             </div>
             
             <!-- Action Area (Right) -->
-            <div class="hidden lg:flex items-center gap-5 shrink-0">
+            <div class="hidden lg:flex items-center gap-4 shrink-0">
                 <Link v-if="auth_user" :href="authenticatedHomeUrl" class="font-black text-[10px] uppercase tracking-widest hover:text-[#FFD700] transition-all" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]'">{{ authenticatedHomeLabel }}</Link>
                 <Link v-else href="/login" class="font-black text-[10px] uppercase tracking-widest hover:text-[#FFD700] transition-all" :class="!showScrollTopButton && page.component === 'Public/Homepage' ? 'text-white' : 'text-[#004182]'">Login</Link>
-                <Link v-if="auth_user" :href="route('logout')" method="post" as="button" class="font-black text-[10px] uppercase tracking-widest text-red-500 hover:text-red-400 transition-all">Logout</Link>
+                <Link 
+                    v-if="auth_user" 
+                    :href="route('logout')" 
+                    method="post" 
+                    as="button" 
+                    class="logout-btn group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 cursor-pointer shadow-sm hover:scale-105 active:scale-95 outline-none"
+                    :class="!showScrollTopButton && page.component === 'Public/Homepage'
+                        ? 'bg-rose-500/20 hover:bg-rose-600 text-white border border-rose-400/40 hover:border-rose-600 backdrop-blur-sm hover:shadow-rose-600/30'
+                        : 'bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 hover:shadow-rose-600/20'"
+                >
+                    <i class="bi bi-box-arrow-right text-[11px] transition-transform duration-200 group-hover:translate-x-0.5"></i>
+                    <span>Logout</span>
+                </Link>
                 <Link href="/contact" class="bg-[#FFD700] text-[#004182] px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-white hover:scale-105 transition-all">Hubungi Kami</Link>
             </div>
 
@@ -64,7 +76,16 @@
                     <div class="pt-3 border-t border-gray-100 flex flex-col gap-2">
                         <Link v-if="auth_user" :href="authenticatedHomeUrl" class="text-center py-2.5 font-black text-[#004182] uppercase tracking-widest text-[10px]">{{ authenticatedHomeLabel }}</Link>
                         <Link v-else href="/login" class="text-center py-2.5 font-black text-[#004182] uppercase tracking-widest text-[10px]" :class="page.component === 'Auth/Login' ? 'text-[#FFD700]' : 'text-[#004182]'">Login</Link>
-                        <Link v-if="auth_user" :href="route('logout')" method="post" as="button" class="w-full text-center py-2.5 font-black text-red-500 uppercase tracking-widest text-[10px]">Logout</Link>
+                        <Link 
+                            v-if="auth_user" 
+                            :href="route('logout')" 
+                            method="post" 
+                            as="button" 
+                            class="logout-btn w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-black text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white border border-rose-200 uppercase tracking-widest text-[10px] transition-all cursor-pointer shadow-sm active:scale-95 outline-none"
+                        >
+                            <i class="bi bi-box-arrow-right text-xs"></i>
+                            <span>Logout</span>
+                        </Link>
                         <Link href="/contact" class="bg-[#004182] text-white text-center py-3 rounded-2xl font-black shadow-lg uppercase tracking-widest text-[10px]">Hubungi Kami</Link>
                     </div>
                 </div>
@@ -257,6 +278,14 @@ const scrollToTop = () => {
 </script>
 
 <style scoped>
+/* Reset khusus button logout agar tidak terkena style bawaan browser/user agent */
+.logout-btn {
+    background-image: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    text-decoration: none !important;
+}
+
 /* Utility classes untuk fallback */
 .max-w-7xl { max-width: 80rem; }
 .mx-auto { margin-left: auto; margin-right: auto; }

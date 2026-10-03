@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Inertia\Testing\AssertableInertia as Assert;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create([
@@ -14,6 +15,31 @@ test('profile page is displayed', function () {
         ->get('/seeo/staff/profile');
 
     $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('Staff/Profile')
+        ->where('section', 'profile'));
+});
+
+test('logbook and iwp use separate staff pages', function () {
+    $user = User::factory()->create([
+        'roles_id' => 1,
+        'phone' => '081234567890',
+        'password' => bcrypt('password'),
+    ]);
+
+    $this->actingAs($user)
+        ->get('/seeo/staff/logbook')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Staff/Profile')
+            ->where('section', 'logbook'));
+
+    $this->actingAs($user)
+        ->get('/seeo/staff/iwp-payment')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Staff/Profile')
+            ->where('section', 'iwp'));
 });
 
 test('profile information can be updated', function () {

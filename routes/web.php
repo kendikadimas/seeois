@@ -216,6 +216,8 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('seeo/staff')->group(fu
     });
 
     // SEEO Management
+    Route::get('/logbook', [ProfileController::class, 'logbook'])->name('staff.logbook');
+    Route::get('/iwp-payment', [ProfileController::class, 'iwpPayment'])->name('staff.iwp-payment');
     Route::get('/profile/{id?}', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/password', [ProfileController::class, 'changePassword'])->name('password.change');

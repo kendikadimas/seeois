@@ -543,7 +543,7 @@ export const ROLE_WORKFLOWS = {
         ],
         quickActions: [
             { title: 'Panel Validasi IWP', route: 'iwp.receipts', icon: 'bi-receipt', color: 'success' },
-            { title: 'Profil & IWP Saya', route: 'profile.edit', icon: 'bi-wallet2', color: 'primary' }
+            { title: 'Pembayaran IWP Saya', route: 'staff.iwp-payment', icon: 'bi-wallet2', color: 'primary' }
         ],
         glossary: [
             { term: 'IWP (Iuran Wajib Pengurus)', desc: 'Kewajiban kontribusi kas bulanan dari setiap staf aktif SEEOIS.' },
@@ -574,8 +574,7 @@ export const ROLE_WORKFLOWS = {
                 step: 1,
                 title: 'Unggah Logbook Aktivitas Harian',
                 desc: 'Laporkan kegiatan, rapat, atau progres program kerja yang Anda kerjakan hari ini agar dapat divalidasi oleh COO.',
-                route: 'profile.edit',
-                hash: '#logbook-upload',
+                route: 'staff.logbook',
                 btnText: 'Isi Logbook Hari Ini',
                 icon: 'bi-journal-arrow-up'
             },
@@ -583,8 +582,7 @@ export const ROLE_WORKFLOWS = {
                 step: 2,
                 title: 'Bayar Iuran Wajib Pengurus (IWP)',
                 desc: 'Unggah bukti transfer pembayaran iuran bulanan Anda untuk diverifikasi oleh PIC IWP.',
-                route: 'profile.edit',
-                hash: '#iwp-payment',
+                route: 'staff.iwp-payment',
                 btnText: 'Unggah Bukti IWP',
                 icon: 'bi-wallet2'
             },
@@ -598,8 +596,8 @@ export const ROLE_WORKFLOWS = {
             }
         ],
         quickActions: [
-            { title: 'Upload Logbook', route: 'profile.edit', hash: '#logbook-upload', icon: 'bi-journal-arrow-up', color: 'primary' },
-            { title: 'Pembayaran IWP', route: 'profile.edit', hash: '#iwp-payment', icon: 'bi-wallet2', color: 'success' },
+            { title: 'Upload Logbook', route: 'staff.logbook', icon: 'bi-journal-arrow-up', color: 'primary' },
+            { title: 'Pembayaran IWP', route: 'staff.iwp-payment', icon: 'bi-wallet2', color: 'success' },
             { title: 'Struktur Organisasi', route: 'structural', icon: 'bi-diagram-3', color: 'info' },
             { title: 'Edit Profil Saya', route: 'profile.edit', icon: 'bi-person-gear', color: 'secondary' }
         ],
@@ -633,8 +631,7 @@ export const ROLE_WORKFLOWS = {
                 step: 1,
                 title: 'Isi Logbook Magang Harian',
                 desc: 'Catat tugas yang diberikan pembimbing dan lampirkan bukti foto kegiatan di formulir logbook profil Anda.',
-                route: 'profile.edit',
-                hash: '#logbook-upload',
+                route: 'staff.logbook',
                 btnText: 'Isi Logbook Magang',
                 icon: 'bi-journal-check'
             },
@@ -656,7 +653,7 @@ export const ROLE_WORKFLOWS = {
             }
         ],
         quickActions: [
-            { title: 'Upload Logbook', route: 'profile.edit', hash: '#logbook-upload', icon: 'bi-journal-arrow-up', color: 'teal' },
+            { title: 'Upload Logbook', route: 'staff.logbook', icon: 'bi-journal-arrow-up', color: 'teal' },
             { title: 'Departemen Penugasan', route: 'structural', icon: 'bi-diagram-3', color: 'primary' },
             { title: 'Sertifikat Magang', route: 'certificate.index', icon: 'bi-award', color: 'success' },
             { title: 'Profil Saya', route: 'profile.edit', icon: 'bi-person-circle', color: 'secondary' }
@@ -749,8 +746,7 @@ export function getRoleWorkflow(rolesId, roleNameFallback = '') {
                 step: 1,
                 title: 'Laporkan Aktivitas di Logbook',
                 desc: 'Isi logbook harian setiap selesai bertugas.',
-                route: 'profile.edit',
-                hash: '#logbook-upload',
+                route: 'staff.logbook',
                 btnText: 'Isi Logbook',
                 icon: 'bi-journal-text'
             },
@@ -764,7 +760,7 @@ export function getRoleWorkflow(rolesId, roleNameFallback = '') {
             }
         ],
         quickActions: [
-            { title: 'Upload Logbook', route: 'profile.edit', hash: '#logbook-upload', icon: 'bi-journal-arrow-up', color: 'primary' },
+            { title: 'Upload Logbook', route: 'staff.logbook', icon: 'bi-journal-arrow-up', color: 'primary' },
             { title: 'Struktural', route: 'structural', icon: 'bi-diagram-3', color: 'info' }
         ],
         glossary: [],

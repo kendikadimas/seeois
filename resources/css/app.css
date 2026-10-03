@@ -158,6 +158,37 @@
   }
 }
 
+/* Bootstrap hanya menyediakan beberapa tingkat opacity. Nilai berikut dipakai
+ * oleh komponen staf dan harus didefinisikan agar warna latar tidak menjadi
+ * solid lalu menutupi teks dengan warna yang sama. */
+.bg-opacity-15 {
+    --bs-bg-opacity: 0.15;
+}
+
+.bg-opacity-20 {
+    --bs-bg-opacity: 0.2;
+}
+
+.text-opacity-60 {
+    --bs-text-opacity: 0.6;
+}
+
+.text-opacity-70 {
+    --bs-text-opacity: 0.7;
+}
+
+.text-opacity-80 {
+    --bs-text-opacity: 0.8;
+}
+
+.border-opacity-15 {
+    --bs-border-opacity: 0.15;
+}
+
+.border-opacity-20 {
+    --bs-border-opacity: 0.2;
+}
+
 /* Scrollbar global (tipis dan netral agar tidak mengganggu Bootstrap) */
 ::-webkit-scrollbar {
     width: 6px;
@@ -231,13 +262,36 @@
     --seeo-border: #e2e8f0;
     --seeo-text: #172033;
     --seeo-muted: #64748b;
-    --seeo-radius: 1rem;
-    --seeo-shadow: 0 10px 30px rgba(30, 41, 59, 0.07);
+    --seeo-radius: 0.75rem;
+    --seeo-shadow: 0 2px 8px rgba(30, 41, 59, 0.045);
 }
 
+.staff-app-root,
+.staff-app-root * {
+    box-sizing: border-box;
+}
+
+.staff-app-root .main-content-wrapper {
+    min-width: 0;
+    min-height: 0;
+}
+
+.staff-app-root .content-container {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.staff-app-root .content-stage {
+    width: 100%;
+    max-width: 1520px;
+    margin-inline: auto;
+}
+
+.staff-app-root .content-stage > .container,
 .staff-app-root .content-stage > .container-fluid {
     width: 100%;
-    max-width: 1600px;
+    max-width: 100%;
     margin-inline: auto;
 }
 
@@ -252,16 +306,26 @@
     border-radius: var(--seeo-radius) var(--seeo-radius) 0 0 !important;
 }
 
+.staff-app-root .card-title,
+.staff-app-root h1,
+.staff-app-root h2,
+.staff-app-root h3,
+.staff-app-root h4,
+.staff-app-root h5,
+.staff-app-root h6 {
+    letter-spacing: -0.015em;
+}
+
 .staff-app-root .btn {
-    min-height: 40px;
-    border-radius: 0.72rem;
-    font-weight: 650;
-    transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    min-height: 42px;
+    border-radius: 0.55rem;
+    font-weight: 600;
+    transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
 }
 
 .staff-app-root .btn-sm {
     min-height: 34px;
-    border-radius: 0.58rem;
+    border-radius: 0.48rem;
 }
 
 .staff-app-root .btn-primary,
@@ -272,12 +336,7 @@
     --bs-btn-hover-border-color: var(--seeo-primary-dark);
     --bs-btn-active-bg: var(--seeo-primary-dark);
     --bs-btn-active-border-color: var(--seeo-primary-dark);
-    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.18);
-}
-
-.staff-app-root .btn:not(:disabled):hover,
-.auth-shell .btn:not(:disabled):hover {
-    transform: translateY(-1px);
+    box-shadow: none;
 }
 
 .staff-app-root .form-control,
@@ -286,7 +345,7 @@
 .auth-shell .form-select {
     min-height: 44px;
     border-color: #d8e0eb;
-    border-radius: 0.72rem;
+    border-radius: 0.55rem;
     background-color: #fff;
 }
 
@@ -309,7 +368,11 @@
 }
 
 .staff-app-root .table-responsive {
-    border-radius: 0.85rem;
+    border: 1px solid #e5eaf1;
+    border-radius: 0.65rem;
+    scrollbar-color: #aab4c3 #eef1f5;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
 }
 
 .staff-app-root .table {
@@ -331,6 +394,11 @@
 .staff-app-root .table > tbody > tr > td {
     padding-block: 0.85rem;
     border-color: #edf1f7;
+    vertical-align: middle;
+}
+
+.staff-app-root .table > tbody > tr:last-child > td {
+    border-bottom-width: 0;
 }
 
 .staff-app-root .modal-content {
@@ -357,8 +425,46 @@
 }
 
 .staff-app-root .badge {
-    font-weight: 700;
+    border-radius: 0.4rem !important;
+    font-weight: 650;
     letter-spacing: 0.01em;
+}
+
+/* Bootstrap info/warning terlalu terang untuk teks putih berukuran kecil. */
+.staff-app-root .bg-info.text-white,
+.staff-app-root .bg-warning.text-white,
+.staff-app-root .badge.bg-info.text-white,
+.staff-app-root .badge.bg-warning.text-white {
+    color: #172033 !important;
+}
+
+.staff-app-root .nav-tabs,
+.staff-app-root .nav-pills {
+    max-width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.staff-app-root .nav-tabs::-webkit-scrollbar,
+.staff-app-root .nav-pills::-webkit-scrollbar {
+    display: none;
+}
+
+.staff-app-root .nav-link {
+    min-height: 42px;
+    white-space: nowrap;
+}
+
+.staff-app-root img {
+    max-width: 100%;
+}
+
+.staff-app-root .modal-body,
+.staff-app-root .card-body,
+.staff-app-root td,
+.staff-app-root p {
+    overflow-wrap: anywhere;
 }
 
 /* Authentication pages */
@@ -420,16 +526,71 @@
 }
 
 @media (max-width: 767.98px) {
+    .staff-app-root .content-container {
+        padding: 0.65rem !important;
+    }
+
+    .staff-app-root .content-stage > .container,
     .staff-app-root .content-stage > .container-fluid {
-        padding: 0.75rem !important;
+        padding: 0 !important;
     }
 
     .staff-app-root .card-body {
-        padding: 1rem;
+        padding: 0.9rem;
     }
 
     .staff-app-root .modal-dialog {
-        margin: 0.75rem;
+        margin: 0.5rem;
+    }
+
+    .staff-app-root .modal-dialog-centered {
+        min-height: calc(100% - 1rem);
+    }
+
+    .staff-app-root .modal-content {
+        max-height: calc(100dvh - 1rem);
+        border-radius: 0.85rem;
+    }
+
+    .staff-app-root .modal-body {
+        overflow-y: auto;
+    }
+
+    .staff-app-root .modal-footer {
+        gap: 0.5rem;
+    }
+
+    .staff-app-root .modal-footer > .btn {
+        flex: 1 1 auto;
+        margin: 0;
+    }
+
+    .staff-app-root .table-responsive {
+        margin-inline: -0.15rem;
+        border-radius: 0.5rem;
+    }
+
+    .staff-app-root .table-responsive > .table {
+        min-width: 640px;
+    }
+
+    .staff-app-root .table > thead > tr > th,
+    .staff-app-root .table > tbody > tr > td {
+        padding: 0.7rem 0.65rem;
+    }
+
+    .staff-app-root .btn-group {
+        max-width: 100%;
+    }
+
+    .staff-app-root .input-group > .btn {
+        min-width: 42px;
+    }
+
+    .staff-app-root input,
+    .staff-app-root select,
+    .staff-app-root textarea {
+        font-size: 16px !important;
     }
 
     .auth-shell > .row > .bg-light {

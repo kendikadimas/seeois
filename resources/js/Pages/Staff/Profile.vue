@@ -8,16 +8,12 @@ import {
     ref,
     computed,
     watch,
-    onMounted,
-    onUnmounted,
-    nextTick,
     defineProps,
-    defineExpose,
 } from "vue";
 import { formatIDR, getMonthName, showImage, formatDateOnly } from "@/utils";
-import { getMonth } from "date-fns";
 
 const props = defineProps({
+    section: { type: String, default: "profile" },
     profile: Object,
     logbook_list: Array,
     program_list: Array,
@@ -31,7 +27,9 @@ const auth_user = computed(() => {
     return usePage().props.auth.user;
 });
 const title = computed(() => {
-    return props.profile.name + " Profile";
+    if (props.section === "logbook") return "Logbook Saya";
+    if (props.section === "iwp") return "Pembayaran IWP";
+    return "Profil " + props.profile.name;
 });
 const modalConfirmationRef = ref(null);
 const toastNotifRef = ref(null);
@@ -54,8 +52,6 @@ function openLogbookImage(src) {
 }
 
 const contributionReceiptRef = ref(null);
-const activeTab = ref(1);
-const targetTab = ref(0);
 const thisMonth = computed(() => {
     return new Date().getMonth() + 1;
 });
@@ -168,16 +164,6 @@ function showUpdatePasswordModal(is_true) {
     }
 }
 
-function setActiveTab() {
-    activeTab.value = targetTab.value;
-}
-
-function setTargetTab(number) {
-    targetTab.value = number;
-    activeTab.value = 0;
-    console.log(targetTab.value, activeTab.value);
-}
-
 const show_password = (input_id, icon_id) => {
     var password = document.getElementById(input_id);
     var password_icon = document.getElementById(icon_id);
@@ -200,24 +186,6 @@ function confirmation(route, message) {
     }
 }
 
-const isLargeScreen = ref(window.innerWidth >= 768);
-const handleResize = () => {
-    isLargeScreen.value = window.innerWidth >= 768;
-};
-
-onMounted(() => {
-    window.addEventListener("resize", handleResize);
-    if (window.location.hash === "#logbook-upload") {
-        activeTab.value = 2;
-        nextTick(() => document.getElementById("logbook-upload")?.scrollIntoView({ behavior: "smooth", block: "start" }));
-    } else if (window.location.hash === "#iwp-payment") {
-        activeTab.value = 3;
-        nextTick(() => document.getElementById("iwp-payment")?.scrollIntoView({ behavior: "smooth", block: "start" }));
-    }
-});
-onUnmounted(() => {
-    window.removeEventListener("resize", handleResize);
-});
 watch(
     () => props.notif,
     (newValue) => {
@@ -236,20 +204,18 @@ watch(
             {{ title }}
         </template>
 
-        <div class="container me-lg-0 mx-auto mb-5">
-            <div class="row gx-4 mt-4">
-                <transition name="fade-slide-ltr" @after-leave="setActiveTab()">
+        <div
+            class="container profile-page mb-5"
+            :class="{ 'profile-feature-page': section !== 'profile' }"
+        >
+            <div class="row gx-3 gy-3 mt-1 mt-md-3 profile-grid">
+                <transition name="fade-slide-ltr">
                     <!-- Profile Card -->
                     <div
-                        v-if="activeTab == 1 || isLargeScreen"
-                        :class="
-                            'col-12 ' +
-                            (auth_user.roles_id == 99 || auth_user.id == profile.id
-                                ? 'col-lg-5'
-                                : 'col-lg-9')
-                        "
+                        v-if="section === 'profile'"
+                        class="col-12 col-xl-9 mx-auto"
                     >
-                        <div class="card position-relative shadow">
+                        <div id="profile-summary" class="card position-relative profile-summary-card">
                             <div class="dropdown">
                                 <button
                                     v-if="auth_user.roles_id == 99 || auth_user.id == profile.id"
@@ -714,9 +680,9 @@ watch(
                                 </div>
                             </div>
                             <div class="row gx-3 justify-content-center">
-                                <div class="col-5 col-lg-5 d-flex">
+                                <div class="col-12 col-sm-5 col-lg-5 d-flex">
                                     <div
-                                        class="card position-relative my-3 ms-3 w-100"
+                                        class="profile-photo-card position-relative mx-3 mt-3 mb-2 mx-sm-0 ms-sm-3 mb-sm-3 w-100"
                                     >
                                         <img
                                             :src="
@@ -770,7 +736,7 @@ watch(
                                         />
                                     </div>
                                 </div>
-                                <div class="col-10 col-lg-7">
+                                <div class="col-12 col-sm-7 col-lg-7 px-4 px-sm-3 pb-3 pb-sm-0">
                                     <div class="d-flex">
                                         <i
                                             class="bi bi-person text-secondary d-lg-none fs-5 me-3 mt-1"
@@ -851,64 +817,23 @@ watch(
                                 </div>
                             </div>
                         </div>
-                        <div class="card p-3 mt-4 d-lg-none">
-                            <div
-                                class="d-flex border-bottom border-secondary pb-1"
-                            >
-                                <span class="text-secondary">{{
-                                    "Duties and Obligations"
-                                }}</span>
-                            </div>
-                            <div class="d-flex mt-2">
-                                <!-- Logbook trigger -->
-                                <button
-                                    class="btn btn-sm"
-                                    @click="setTargetTab(2)"
-                                >
-                                    <div class="d-flex">
-                                        <i
-                                            class="bi bi-journal-bookmark rounded-4 fs-1 text-primary border-primary-subtle border shadow-sm py-1 px-2 d-block mx-auto"
-                                        ></i>
-                                    </div>
-                                    <span
-                                        class="fw-light d-block mt-1"
-                                        style="font-size: 0.8rem"
-                                        >{{ "Logbook" }}</span
-                                    >
-                                </button>
-                                <!-- Contribution trigger -->
-                                <button
-                                    class="ms-4 btn btn-sm"
-                                    @click="setTargetTab(3)"
-                                >
-                                    <div class="d-flex">
-                                        <i
-                                            class="bi bi-journal-text rounded-4 fs-1 text-primary border-primary-subtle border shadow-sm py-1 px-2 mx-auto"
-                                        ></i>
-                                    </div>
-                                    <span
-                                        class="fw-light d-block mt-1"
-                                        style="font-size: 0.8rem"
-                                        >{{ "Contribution" }}</span
-                                    >
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </transition>
                 <!-- Staff Obligations -->
-                <div class="col-lg-7 col-12" v-if="auth_user.roles_id == 99 || auth_user.id == profile.id">
-                    <div class="row gx-4">
-                        <div class="col-lg-6 col-12">
+                <div
+                    class="col-12 profile-obligations"
+                    v-if="section !== 'profile' && (auth_user.roles_id == 99 || auth_user.id == profile.id)"
+                >
+                    <div class="row gx-3 gy-3">
+                        <div class="col-12">
                             <transition
                                 name="fade-slide-rtl"
-                                @after-leave="setActiveTab()"
                             >
                                 <!-- Logbook -->
                                 <div
                                     id="logbook-upload"
-                                    class="card p-3"
-                                    v-if="activeTab == 2 || isLargeScreen"
+                                    class="card p-3 obligation-card"
+                                    v-if="section === 'logbook'"
                                 >
                                     <div
                                         class="d-flex "
@@ -921,13 +846,6 @@ watch(
                                             ></i
                                             >{{ "Logbook" }}
                                         </span>
-                                        <button
-                                            class="btn btn-sm text-primary fw-light ms-auto p-0 d-lg-none d-flex"
-                                            @click="setTargetTab(1)"
-                                        >
-                                            <i class="bi bi-chevron-left"></i>
-                                            {{ "Back" }}
-                                        </button>
                                     </div>
                                     <!-- Add Logbook -->
                                     <form
@@ -1244,16 +1162,15 @@ watch(
                                 </div>
                             </transition>
                         </div>
-                        <div class="col-lg-6 col-12">
+                        <div class="col-12">
                             <transition
                                 name="fade-slide-rtl"
-                                @after-leave="setActiveTab()"
                             >
                                 <!-- Contribution -->
                                 <div
                                     id="iwp-payment"
-                                    class="card p-3"
-                                    v-if="activeTab == 3 || isLargeScreen"
+                                    class="card p-3 obligation-card"
+                                    v-if="section === 'iwp'"
                                 >
                                     <div
                                         class="d-flex "
@@ -1266,15 +1183,6 @@ watch(
                                             ></i
                                             >{{ "Contribution" }}
                                         </span>
-                                        <button
-                                            class="btn btn-sm text-primary fw-light ms-auto p-0 d-lg-none d-flex"
-                                            @click="setTargetTab(1)"
-                                        >
-                                            <i
-                                                class="bi bi-chevron-left mb-0"
-                                            ></i>
-                                            {{ "Back" }}
-                                        </button>
                                     </div>
                                     <div class="mt-2">
                                         <span
@@ -1529,6 +1437,92 @@ watch(
     <!-- Notif Toast -->
     <Notif ref="toastNotifRef" />
 </template>
+
+<style scoped>
+.profile-page,
+.profile-grid,
+.profile-grid > * {
+    min-width: 0;
+}
+
+.profile-summary-card,
+.obligation-card {
+    box-shadow: 0 2px 8px rgba(30, 41, 59, 0.05) !important;
+}
+
+.profile-feature-page {
+    max-width: 760px !important;
+}
+
+.profile-feature-page .obligation-card {
+    width: 100%;
+}
+
+.profile-photo-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.65rem;
+    background: #f8fafc;
+}
+
+.profile-photo-card > img {
+    display: block;
+    aspect-ratio: 4 / 5;
+    min-height: 0 !important;
+    object-fit: cover;
+}
+
+.obligation-card {
+    scroll-margin-top: 0.75rem;
+}
+
+@media (max-width: 991.98px) {
+    .profile-obligations,
+    .profile-obligations > .row,
+    .profile-obligations > .row > div {
+        min-width: 0;
+    }
+
+    .obligation-card {
+        width: 100%;
+        margin: 0;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .profile-page {
+        margin-bottom: 0 !important;
+    }
+
+    .profile-page .form-floating > label {
+        max-width: calc(100% - 1rem);
+    }
+
+    .profile-photo-card {
+        max-width: 15rem;
+        margin-inline: auto !important;
+    }
+
+    .profile-photo-card > img {
+        max-height: 15rem;
+        aspect-ratio: 1 / 1;
+    }
+
+    .profile-mobile-actions .btn {
+        flex: 1;
+        margin-left: 0 !important;
+    }
+
+    .profile-mobile-actions .d-flex.mt-2 {
+        gap: 0.5rem;
+    }
+
+    .obligation-card {
+        padding: 0.9rem !important;
+    }
+}
+</style>
 
 
 
