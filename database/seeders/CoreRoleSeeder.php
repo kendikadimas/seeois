@@ -19,6 +19,7 @@ class CoreRoleSeeder extends Seeder
             4  => 'Staff',
             5  => 'Interns',
             6  => 'HR Manager',
+            7  => 'Co-CEO',
             8  => 'Management Document',
             9  => 'Marketing Medinfo',
             10 => 'Sales Distribution',

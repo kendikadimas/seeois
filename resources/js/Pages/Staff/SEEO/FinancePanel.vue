@@ -1,5 +1,6 @@
 <template>
     <StaffLayout>
+        <Head title="Finance Monitoring Panel" />
         <template #header>Finance Monitoring Panel</template>
 
         <div class="container-fluid p-4">
@@ -231,7 +232,7 @@
 <script setup>
 import StaffLayout from '@/Layouts/StaffLayout.vue';
 import ModalConfirmation from "@/Components/ModalConfirmation.vue";
-import { Link } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 
 defineProps({

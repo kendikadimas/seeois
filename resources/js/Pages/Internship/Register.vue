@@ -1,4 +1,5 @@
 <template>
+    <Head title="Pendaftaran Internship SEEO" />
     <!-- Hero Section -->
     <section class="hero-section text-white py-5">
         <div class="container">
@@ -455,7 +456,7 @@
 </template>
 
 <script setup>
-import { useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 

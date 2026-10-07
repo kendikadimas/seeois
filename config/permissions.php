@@ -8,6 +8,7 @@ return [
         4 => ['organization.view'],
         5 => ['organization.view', 'internship.review'],
         6 => ['employee.manage', 'hr.manage', 'internship.manage', 'internship.review'],
+        7 => ['employee.manage', 'organization.manage', 'dashboard.manage', 'documents.manage', 'internship.manage', 'internship.review', 'payroll.manage'],
         8 => ['documents.manage'],
         9 => ['marketing.manage'],
         10 => ['sales.manage', 'menu.manage', 'menu.publish', 'inventory.view'],
@@ -31,6 +32,8 @@ return [
     |
     */
     'departments' => [
+        'co ceo' => ['employee.manage', 'organization.manage'],
+        'ceo and co ceo' => ['employee.manage', 'organization.manage'],
         'operating' => ['stands.view', 'stands.manage', 'stand.assign', 'stand.validate', 'inventory.view', 'menu.manage', 'menu.create', 'goods.manage', 'operations.manage'],
         'operational' => ['stands.view', 'stands.manage', 'stand.assign', 'stand.validate', 'inventory.view', 'menu.manage', 'menu.create', 'goods.manage', 'operations.manage'],
         'human resource' => ['employee.manage', 'hr.manage', 'internship.manage', 'internship.review'],

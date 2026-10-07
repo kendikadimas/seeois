@@ -1,6 +1,7 @@
 <template>
   <div class="certificates-container">
     <StaffLayout>
+      <Head title="Sertifikat Internship Saya" />
       <!-- Header Section -->
       <!-- <div class="header-section">
         <div class="header-content">
@@ -119,6 +120,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { Head } from '@inertiajs/vue3'
 import StaffLayout from '@/Layouts/StaffLayout.vue'
 
 const props = defineProps({

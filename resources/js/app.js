@@ -8,11 +8,11 @@ import imageHelperPlugin from './plugins/imageHelper';
 // agar tidak crash dengan Tailwind di public pages
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
-const appName = import.meta.env.VITE_APP_NAME || "Laravel";
+const appName = import.meta.env.VITE_APP_NAME || "SEEO";
 window.bootstrap = bootstrap; // Make Bootstrap globally accessible
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => (title ? `${title} - ${appName}` : appName),
     resolve: async (name) => {
         const page = await resolvePageComponent(
             `./Pages/${name}.vue`,

@@ -1,5 +1,6 @@
 <template>
     <StaffLayout>
+        <Head title="HR Birthday Panel" />
         <template #header>HR Birthday Panel</template>
 
         <div class="container-fluid p-4">
@@ -96,7 +97,7 @@
 <script setup>
 import StaffLayout from '@/Layouts/StaffLayout.vue';
 import Notif from '@/Components/Notif.vue';
-import { useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 
 const props = defineProps({

@@ -1,5 +1,6 @@
 <template>
     <StaffLayout>
+        <Head title="Validasi IWP" />
         <template #header>IWP Receipt Panel</template>
 
         <div class="container-fluid p-4">
@@ -107,7 +108,7 @@
 
 <script setup>
 import StaffLayout from '@/Layouts/StaffLayout.vue';
-import { router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { ref, onMounted, watch } from 'vue';
 
 const props = defineProps({

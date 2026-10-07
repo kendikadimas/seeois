@@ -5,7 +5,7 @@ import Notif from "@/Components/Notif.vue";
 import ModalConfirmation from "@/Components/ModalConfirmation.vue";
 import RoleWorkflowGuideModal from "@/Components/RoleWorkflowGuideModal.vue";
 import { getRoleWorkflow } from "@/utils/roleWorkflows";
-import { useForm, usePage } from "@inertiajs/vue3";
+import { Head, useForm, usePage } from "@inertiajs/vue3";
 import { ref, computed, watch, onMounted, nextTick } from "vue";
 
 const props = defineProps({
@@ -214,6 +214,7 @@ onMounted(async () => {
 
 <template>
     <StaffLayout>
+        <Head :title="title" icon="/favicon.ico" />
         <ModalConfirmation ref="modalConfirmationRef" />
         <RoleWorkflowGuideModal ref="guideModalRef" />
         <template #header> {{ title }} </template>

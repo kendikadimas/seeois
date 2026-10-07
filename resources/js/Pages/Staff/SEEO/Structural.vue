@@ -24,9 +24,15 @@ const props = defineProps({
     errors: Object,
 });
 
-const auth_user = usePage().props.auth.user;
-const capabilities = computed(() => auth_user?.capabilities ?? []);
-const canManageOrganization = computed(() => capabilities.value.includes('*') || capabilities.value.includes('organization.manage'));
+const auth_user = computed(() => usePage().props.auth?.user);
+const capabilities = computed(() => auth_user.value?.capabilities ?? []);
+const canManageOrganization = computed(() => {
+    if (!auth_user.value) return false;
+    if (auth_user.value.is_super_admin || auth_user.value.is_ceo || auth_user.value.is_co_ceo || auth_user.value.can_manage_departments) {
+        return true;
+    }
+    return capabilities.value.includes('*') || capabilities.value.includes('organization.manage');
+});
 const title = ref("Manajemen Departemen");
 const modalConfirmationRef = ref(null);
 const toastNotifRef = ref(null);

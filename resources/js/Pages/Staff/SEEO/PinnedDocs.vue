@@ -1,5 +1,6 @@
 <template>
     <StaffLayout>
+        <Head title="Dokumen Penting" />
         <template #header>Dokumen Penting (Pinned Documents)</template>
 
         <div class="container-fluid p-4">
@@ -131,7 +132,7 @@
 import StaffLayout from '@/Layouts/StaffLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import { computed, ref } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     pinnedDocs: Array,

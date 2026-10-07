@@ -123,8 +123,59 @@ class User extends Authenticatable
         return false;
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return is_super_admin($this) || (int) $this->roles_id === 99 || $this->hasRole('Super Admin');
+    }
+
+    public function isCeo(): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return (int) $this->roles_id === 1 || $this->hasAnyRole(['Chief Executive Officer', 'CEO']);
+    }
+
+    public function isCoCeo(): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if ((int) $this->roles_id === 7) {
+            return true;
+        }
+
+        $roleName = $this->roles?->name ?? '';
+        if (preg_match('/co[-\s]?ceo/i', $roleName)) {
+            return true;
+        }
+
+        $departmentName = $this->department?->name ?? '';
+        if (preg_match('/co[-\s]?ceo/i', $departmentName)) {
+            return true;
+        }
+
+        // Support role 5 as Co-CEO when not an intern role
+        if ((int) $this->roles_id === 5 && stripos($roleName, 'intern') === false) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function canManageDepartments(): bool
+    {
+        return $this->isSuperAdmin() || $this->isCeo() || $this->isCoCeo();
+    }
+
     public function capabilities(): array
     {
+        if ($this->isSuperAdmin()) {
+            return ['*'];
+        }
+
         $roleCapabilities = config('permissions.roles.' . (int) $this->roles_id, []);
         $departmentCapabilities = [];
         $departmentName = $this->department?->name;
@@ -140,14 +191,30 @@ class User extends Authenticatable
             $departmentCapabilities = config('permissions.departments.' . $departmentKey, []);
         }
 
-        return array_values(array_unique([
+        $capabilities = array_values(array_unique([
             ...$roleCapabilities,
             ...$departmentCapabilities,
         ]));
+
+        if ($this->canManageDepartments()) {
+            if (!in_array('organization.manage', $capabilities, true)) {
+                $capabilities[] = 'organization.manage';
+            }
+        }
+
+        return $capabilities;
     }
 
     public function canPerform(string $capability): bool
     {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if ($capability === 'organization.manage' && $this->canManageDepartments()) {
+            return true;
+        }
+
         $capabilities = $this->capabilities();
 
         return in_array('*', $capabilities, true) || in_array($capability, $capabilities, true);

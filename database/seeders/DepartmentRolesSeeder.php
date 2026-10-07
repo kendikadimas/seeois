@@ -27,6 +27,7 @@ class DepartmentRolesSeeder extends Seeder
             // - Interns
 
             // New department/panel roles requested:
+            'Co-CEO',
             'Administration',
             'Marketing Medinfo',
             'Sales Distribution',

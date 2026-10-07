@@ -2,7 +2,7 @@
 import StaffLayout from '@/Layouts/StaffLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import { computed, ref } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({ items: Array });
 const route = (name, params = {}) => window.route(name, params);
@@ -96,6 +96,7 @@ function remove(id) {
 
 <template>
     <StaffLayout>
+        <Head title="Konten Company Profile" />
         <template #header>Konten Company Profile</template>
 
         <div class="container-fluid p-4">

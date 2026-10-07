@@ -1,5 +1,5 @@
 <script setup>
-import { useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
 import StaffLayout from '@/Layouts/StaffLayout.vue';
 import InputError from '@/Components/InputError.vue';
@@ -195,6 +195,7 @@ onBeforeUnmount(clearImagePreview);
 
 <template>
     <StaffLayout>
+        <Head title="Manajemen Berita & Kegiatan" />
         <template #header> Manajemen Berita & Kegiatan (Marketing) </template>
         
         <div class="container-fluid p-4">

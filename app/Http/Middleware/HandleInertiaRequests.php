@@ -51,6 +51,9 @@ class HandleInertiaRequests extends Middleware
                         ? 'Super Admin'
                         : ($user->roles?->name ?? 'Staff'),
                     'is_super_admin' => is_super_admin($user),
+                    'is_ceo' => $user->isCeo(),
+                    'is_co_ceo' => $user->isCoCeo(),
+                    'can_manage_departments' => $user->canManageDepartments(),
                     'capabilities' => $user->capabilities(),
                 ] : null,
             ],

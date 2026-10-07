@@ -1,5 +1,6 @@
 <script setup>
 import GuestLayout from "@/Layouts/GuestLayout.vue";
+import { Head } from "@inertiajs/vue3";
 import { format } from "date-fns";
 import html2canvas from "html2canvas";
 import { computed } from "vue";
@@ -46,6 +47,7 @@ const printReceipt = async () => {
 </script>
 <template>
     <GuestLayout>
+        <Head :title="title" />
         <!-- Page Layout -->
         <div class="container">
             <div class="row mt-5">

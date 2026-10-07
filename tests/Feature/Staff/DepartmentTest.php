@@ -48,6 +48,45 @@ describe('Department - Store', function () {
             'manager_id' => 1,
         ])->assertSessionHasErrors('name');
     });
+
+    test('Super Admin can create new department', function () {
+        $admin = User::factory()->create(['roles_id' => 99]);
+        $manager = User::factory()->create(['roles_id' => 2]);
+
+        $response = $this->actingAs($admin)->post('/seeo/staff/department/add', [
+            'name' => 'Admin Dept ' . uniqid(),
+            'manager_id' => $manager->id,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('notif.type', 'info');
+    });
+
+    test('Co-CEO can create new department', function () {
+        $coCeo = User::factory()->create(['roles_id' => 7]);
+        $manager = User::factory()->create(['roles_id' => 2]);
+
+        $response = $this->actingAs($coCeo)->post('/seeo/staff/department/add', [
+            'name' => 'Co-CEO Dept ' . uniqid(),
+            'manager_id' => $manager->id,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('notif.type', 'info');
+    });
+
+    test('Staff cannot create new department', function () {
+        $staff = User::factory()->create(['roles_id' => 4]);
+        $manager = User::factory()->create(['roles_id' => 2]);
+
+        $response = $this->actingAs($staff)->post('/seeo/staff/department/add', [
+            'name' => 'Staff Blocked Dept',
+            'manager_id' => $manager->id,
+        ]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseMissing('department', ['name' => 'Staff Blocked Dept']);
+    });
 });
 
 describe('Department - Update', function () {
@@ -88,6 +127,17 @@ describe('Department - Update', function () {
             'name' => 'Existing Dept', // Duplicate name
             'manager_id' => $this->manager2->id,
         ])->assertSessionHasErrors('name');
+    });
+
+    test('Staff cannot update department', function () {
+        $staff = User::factory()->create(['roles_id' => 4]);
+
+        $this->actingAs($staff)->post("/seeo/staff/department/update/{$this->department->id}", [
+            'name' => 'Hacked Dept Name',
+            'manager_id' => $this->manager2->id,
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('department', ['name' => 'Hacked Dept Name']);
     });
 });
 
@@ -141,6 +191,23 @@ describe('Department - Delete', function () {
         ])->assertRedirect('/seeo/staff/structural');
 
         expect($staff->fresh()->department_id)->toBeNull();
+    });
+
+    test('Staff cannot delete department', function () {
+        $staff = User::factory()->create(['roles_id' => 4, 'password' => bcrypt('password')]);
+        $dept = Department::create([
+            'name' => 'Staff Cannot Delete Dept',
+            'manager_id' => $this->ceo->id,
+            'budget' => 0,
+            'expense' => 0,
+        ]);
+
+        $response = $this->actingAs($staff)->post("/seeo/staff/department/delete/{$dept->id}", [
+            'password' => 'password',
+        ]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('department', ['id' => $dept->id, 'deleted_at' => null]);
     });
 });
 

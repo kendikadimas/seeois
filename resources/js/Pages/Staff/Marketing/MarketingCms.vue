@@ -1,5 +1,6 @@
 <template>
     <StaffLayout>
+        <Head title="Marketing CMS" />
         <template #header>Panel Konten Marketing</template>
 
         <div class="container-fluid p-4">
@@ -247,7 +248,7 @@ import Notif from '@/Components/Notif.vue';
 import InputError from '@/Components/InputError.vue';
 import RichTextEditor from '@/Components/RichTextEditor.vue';
 import ModalConfirmation from "@/Components/ModalConfirmation.vue";
-import { useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
 
 const props = defineProps({

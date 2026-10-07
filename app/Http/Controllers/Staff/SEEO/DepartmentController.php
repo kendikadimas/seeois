@@ -120,6 +120,11 @@ class DepartmentController extends Controller
      */
     public function insertDepartment(Request $request)
     {
+        $user = $request->user();
+        if (!$user || !$user->canManageDepartments()) {
+            abort(403, 'Hanya Super Admin, CEO, dan Co-CEO yang dapat menambah departemen.');
+        }
+
         // Validating data
         $request->validate([
             'name' => ['required', Rule::unique(Department::class)->whereNull('deleted_at')],
@@ -149,6 +154,11 @@ class DepartmentController extends Controller
      */
     public function updateDepartment(Request $request, $id)
     {
+        $user = $request->user();
+        if (!$user || !$user->canManageDepartments()) {
+            abort(403, 'Hanya Super Admin, CEO, dan Co-CEO yang dapat mengubah departemen.');
+        }
+
         // Validating data
         $request->validate([
             'name' => ['required', Rule::unique('department')->ignore($id)->whereNull('deleted_at')],
@@ -187,6 +197,11 @@ class DepartmentController extends Controller
      */
     public function deleteDepartment(Request $request, $id)
     {
+        $user = $request->user();
+        if (!$user || !$user->canManageDepartments()) {
+            abort(403, 'Hanya Super Admin, CEO, dan Co-CEO yang dapat menghapus departemen.');
+        }
+
         $department = Department::find($id);
         if (!$department) {
             return back()->with('notif', ['type' => 'warning', 'message' => 'Department not found.']);
