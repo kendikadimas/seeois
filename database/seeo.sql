@@ -50,7 +50,7 @@ CREATE TABLE `billboard` (
   `type` int(11) NOT NULL DEFAULT 1,
   `image` varchar(255) DEFAULT NULL,
   `title` varchar(255) DEFAULT NULL,
-  `text` varchar(255) DEFAULT NULL,
+  `text` text DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL

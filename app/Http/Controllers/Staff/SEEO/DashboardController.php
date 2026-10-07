@@ -36,7 +36,11 @@ class DashboardController extends Controller
 
         $billboard_list = Billboard::all()->map(function ($billboard) {
             if ($billboard->image) {
-                if (config('app.env') === 'production') {
+                if (file_exists(public_path('images/billboard/' . $billboard->image))) {
+                    $billboard->full_image_url = asset('images/billboard/' . $billboard->image);
+                } elseif (Storage::disk('public')->exists('images/billboard/' . $billboard->image)) {
+                    $billboard->full_image_url = '/storage/images/billboard/' . $billboard->image;
+                } elseif (config('app.env') === 'production') {
                     $billboard->full_image_url = url('/google-media/images/billboard/' . $billboard->image);
                 } else {
                     $billboard->full_image_url = '/storage/images/billboard/' . $billboard->image;
@@ -54,7 +58,11 @@ class DashboardController extends Controller
             $fallbackUrl = 'https://ui-avatars.com/api/?name=' . urlencode($post->user?->name ?? 'User') . '&color=7F9CF5&background=EBF4FF';
             
             if ($post->user && $post->user->profile_image) {
-                if (config('app.env') === 'production') {
+                if (file_exists(public_path('images/profile/' . $post->user->profile_image))) {
+                    $post->user->full_profile_image_url = asset('images/profile/' . $post->user->profile_image);
+                } elseif (Storage::disk('public')->exists('images/profile/' . $post->user->profile_image)) {
+                    $post->user->full_profile_image_url = '/storage/images/profile/' . $post->user->profile_image;
+                } elseif (config('app.env') === 'production') {
                     $post->user->full_profile_image_url = url('/google-media/images/profile/' . $post->user->profile_image);
                 } else {
                     $post->user->full_profile_image_url = '/storage/images/profile/' . $post->user->profile_image;
@@ -99,53 +107,131 @@ class DashboardController extends Controller
     }
 
 
+    /**
+     * Safely encode an uploaded image to WebP with multi-driver fallback.
+     */
+    private function encodeImageToWebp($file, int $quality = 60): string
+    {
+        try {
+            $driver = extension_loaded('imagick') ? new ImagickDriver() : new GdDriver();
+            $manager = new ImageManager($driver);
+            $image = $manager->read($file->getRealPath());
+            return (string) $image->toWebp($quality);
+        } catch (\Throwable $e) {
+            try {
+                $manager = new ImageManager(new GdDriver());
+                $image = $manager->read($file->getRealPath());
+                return (string) $image->toWebp($quality);
+            } catch (\Throwable $e2) {
+                return (string) file_get_contents($file->getRealPath());
+            }
+        }
+    }
+
+    /**
+     * Store file with multi-tier storage: local public disk, direct public path, and optional Google Drive.
+     */
+    private function storePublicFile(string $relativePath, string $content): void
+    {
+        // 1. Always store to local public disk so images are guaranteed to be served
+        try {
+            Storage::disk('public')->put($relativePath, $content);
+        } catch (\Throwable $e) {
+            Log::warning("Failed to write to public disk for [{$relativePath}]: " . $e->getMessage());
+        }
+
+        // 2. Also ensure direct public path has the file if directory is accessible
+        try {
+            $fullPublicPath = public_path($relativePath);
+            $dir = dirname($fullPublicPath);
+            if (!file_exists($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            @file_put_contents($fullPublicPath, $content);
+        } catch (\Throwable $e) {
+            // Non-critical
+        }
+
+        // 3. Optional sync to Google Drive in production without breaking if unavailable
+        if (config('app.env') === 'production') {
+            try {
+                Storage::disk('google')->put($relativePath, $content);
+            } catch (\Throwable $e) {
+                Log::warning("Google Drive sync skipped/failed for [{$relativePath}]: " . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Safely delete a file from public disk, public path, and optionally Google Drive.
+     */
+    private function deletePublicFile(string $relativePath): void
+    {
+        try {
+            Storage::disk('public')->delete($relativePath);
+            $fullPublicPath = public_path($relativePath);
+            if (file_exists($fullPublicPath)) {
+                @unlink($fullPublicPath);
+            }
+            if (config('app.env') === 'production') {
+                try {
+                    Storage::disk('google')->delete($relativePath);
+                } catch (\Throwable $e) {
+                    // Non-blocking
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Failed to delete public file [{$relativePath}]: " . $e->getMessage());
+        }
+    }
+
     // Billboard function
     function addBillboard(Request $request)
     {
         $request->flash();
         $request->validate([
-            'billboard_title' => 'required',
+            'billboard_title' => 'required|string|max:255',
             'billboard_text' => Rule::requiredIf($request->boolean('billboard_typeText')),
-            'billboard_image' => ['nullable', Rule::requiredIf($request->boolean('billboard_typeImage')), File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024)],
+            'billboard_image' => ['nullable', Rule::requiredIf($request->boolean('billboard_typeImage')), File::types(['jpg', 'jpeg', 'png', 'heic', 'webp'])->max(5 * 1024)],
         ]);
-        $data = [
-            'type' => ($request->input('billboard_typeImage') ? 1 : 0) + ($request->input('billboard_typeText') ? 2 : 0),
-            'title' => $request->input('billboard_title'),
-            'text' => $request->input('billboard_text'),
-        ];
+
         if (!$request->input('billboard_typeImage') && !$request->input('billboard_typeText')) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Please choose the dashboard type.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Please choose the billboard type.']);
         }
 
-        if ($request->input('billboard_typeImage')) {
-            if ($request->hasFile('billboard_image')) {
-                // Format receipt file
-                $receipt = $request->file('billboard_image');
-                // create new manager instance with desired driver
-                $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
-                $manager = new ImageManager($driver);
-                // get last id
-                $last = Billboard::orderBy('id', 'desc')->first();
-                $last_id = $last ? $last->id : 0;
-                // read receipt image
-                $receipt_image = $manager->read($receipt->getRealPath());
-                // encod jpeg data
-                $receipt_encoded = $receipt_image->toWebp(60);
-                // Format receipt name
-                $receipt_name =  'BB_' . ($last_id + 1) . '_image.webp';                // Checkk for env
-                $disk = config('app.env') === 'production' ? 'google' : 'public';
-                // store reciept file
-                Storage::disk($disk)->put('images/billboard/' . $receipt_name, $receipt_encoded);
+        try {
+            $data = [
+                'type' => ($request->input('billboard_typeImage') ? 1 : 0) + ($request->input('billboard_typeText') ? 2 : 0),
+                'title' => $request->input('billboard_title'),
+                'text' => $request->input('billboard_text'),
+            ];
 
-                $data += ['image' => $receipt_name];
-            } else {
-                return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'The file is empty. Uncheck image if you do not want to use image.']);
+            if ($request->input('billboard_typeImage')) {
+                if ($request->hasFile('billboard_image')) {
+                    $receipt = $request->file('billboard_image');
+                    $receipt_encoded = $this->encodeImageToWebp($receipt, 60);
+
+                    // Generate clean, collision-free filename
+                    $last = Billboard::withTrashed()->orderBy('id', 'desc')->first();
+                    $last_id = $last ? $last->id : 0;
+                    $receipt_name = 'BB_' . ($last_id + 1) . '_' . time() . '.webp';
+
+                    // Store safely across local and cloud
+                    $this->storePublicFile('images/billboard/' . $receipt_name, $receipt_encoded);
+
+                    $data += ['image' => $receipt_name];
+                } else {
+                    return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'The file is empty. Uncheck image if you do not want to use image.']);
+                }
             }
-        }
 
-        // Save data
-        Billboard::create($data);
-        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success add new Billboard.']);
+            // Save data
+            Billboard::create($data);
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success add new Billboard.']);
+        } catch (\Throwable $e) {
+            Log::error('Failed to add billboard: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'Gagal menambahkan billboard: ' . $e->getMessage()]);
+        }
     }
 
     function updateBillboard(Request $request, $id = 0)
@@ -161,59 +247,59 @@ class DashboardController extends Controller
 
         $request->flash();
         $request->validate([
-            'billboard_title' => 'required',
+            'billboard_title' => 'required|string|max:255',
             'billboard_text' => Rule::requiredIf($request->boolean('billboard_typeText')),
-            'billboard_image' => ['nullable', Rule::requiredIf($request->boolean('billboard_typeImage') && !$billboard->image), File::types(['jpg', 'jpeg', 'png', 'heic'])->max(5 * 1024)],
+            'billboard_image' => ['nullable', Rule::requiredIf($request->boolean('billboard_typeImage') && !$billboard->image), File::types(['jpg', 'jpeg', 'png', 'heic', 'webp'])->max(5 * 1024)],
         ]);
-
-        $data = [
-            'type' => ($request->input('billboard_typeImage') ? 1 : 0) + ($request->input('billboard_typeText') ? 2 : 0),
-            'title' => $request->input('billboard_title'),
-            'text' => $request->input('billboard_text'),
-        ];
 
         if (!$request->input('billboard_typeImage') && !$request->input('billboard_typeText')) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Please choose the billboard type.']);
         }
 
-        // Handle image update
-        if ($request->input('billboard_typeImage')) {
-            if ($request->hasFile('billboard_image')) {
-                // Delete old image if exists
-                if ($billboard->image) {
-                    $disk = config('app.env') === 'production' ? 'google' : 'public';
-                    Storage::disk($disk)->delete('images/billboard/' . $billboard->image);
+        try {
+            $data = [
+                'type' => ($request->input('billboard_typeImage') ? 1 : 0) + ($request->input('billboard_typeText') ? 2 : 0),
+                'title' => $request->input('billboard_title'),
+                'text' => $request->input('billboard_text'),
+            ];
+
+            // Handle image update
+            if ($request->input('billboard_typeImage')) {
+                if ($request->hasFile('billboard_image')) {
+                    // Delete old image if exists
+                    if ($billboard->image) {
+                        $this->deletePublicFile('images/billboard/' . $billboard->image);
+                    }
+
+                    // Upload new image
+                    $receipt = $request->file('billboard_image');
+                    $receipt_encoded = $this->encodeImageToWebp($receipt, 60);
+                    $receipt_name = 'BB_' . $id . '_' . time() . '.webp';
+
+                    $this->storePublicFile('images/billboard/' . $receipt_name, $receipt_encoded);
+
+                    $data['image'] = $receipt_name;
+                } elseif (!$billboard->image) {
+                    return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'The file is empty. Uncheck image if you do not want to use image.']);
+                } else {
+                    // Keep existing image
+                    $data['image'] = $billboard->image;
                 }
-
-                // Upload new image
-                $receipt = $request->file('billboard_image');
-                $driver = config('app.env') === 'production' ? new ImagickDriver() : new GdDriver();
-                $manager = new ImageManager($driver);
-                $receipt_image = $manager->read($receipt->getRealPath());
-                $receipt_encoded = $receipt_image->toWebp(60);
-                $receipt_name = 'BB_' . $id . '_image.webp';
-                $disk = config('app.env') === 'production' ? 'google' : 'public';
-                Storage::disk($disk)->put('images/billboard/' . $receipt_name, $receipt_encoded);
-
-                $data['image'] = $receipt_name;
-            } elseif (!$billboard->image) {
-                return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'The file is empty. Uncheck image if you do not want to use image.']);
             } else {
-                // Keep existing image
-                $data['image'] = $billboard->image;
+                // Remove image if type changed to text only
+                if ($billboard->image) {
+                    $this->deletePublicFile('images/billboard/' . $billboard->image);
+                }
+                $data['image'] = null;
             }
-        } else {
-            // Remove image if type changed to text only
-            if ($billboard->image) {
-                $disk = config('app.env') === 'production' ? 'google' : 'public';
-                Storage::disk($disk)->delete('images/billboard/' . $billboard->image);
-            }
-            $data['image'] = null;
+
+            $billboard->update($data);
+
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update billboard.']);
+        } catch (\Throwable $e) {
+            Log::error('Failed to update billboard: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'Gagal memperbarui billboard: ' . $e->getMessage()]);
         }
-
-        $billboard->update($data);
-
-        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update billboard.']);
     }
 
     function removeBillboard($id = 0)
@@ -225,15 +311,20 @@ class DashboardController extends Controller
         if (!$billboard) {
             return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Billboard doesn`t exist. Please ask administrator to check billboard id.']);
         }
-        // Delete image if exist
-        if ($billboard->image) {
-            // FIXED: Hapus dari disk yang benar
-            $disk = config('app.env') === 'production' ? 'google' : 'public';
-            Storage::disk($disk)->delete('images/billboard/' . $billboard->image);
-        }
-        $billboard->delete();
 
-        return  redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success delete billboard ' . $billboard->name . '.']);
+        try {
+            // Delete image if exists
+            if ($billboard->image) {
+                $this->deletePublicFile('images/billboard/' . $billboard->image);
+            }
+            $title = $billboard->title ?? 'Billboard';
+            $billboard->delete();
+
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success delete billboard ' . $title . '.']);
+        } catch (\Throwable $e) {
+            Log::error('Failed to remove billboard: ' . $e->getMessage());
+            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'Gagal menghapus billboard: ' . $e->getMessage()]);
+        }
     }
 
     // Attachment function
@@ -246,45 +337,59 @@ class DashboardController extends Controller
             'attachment_link' => ['url:https', Rule::requiredIf($request->input('attachment_type') == 'link'), 'nullable'],
             'attachment_document' => ['file', 'mimes:pdf,docx,png,jpeg,jpg,heic', 'max:5120', Rule::requiredIf($request->input('attachment_type') == 'document'), 'nullable']
         ]);
-        $data = [
-            'user_id' => Auth::user()->id,
-            'title' => $input['attachment_title'],
-        ];
 
-        if ($input['attachment_type'] == 'document') {
-            $document = $request->file('attachment_document');
-            $document_name =  'af_' . time() . '.' . $document->extension();
-            // store image file
-            $disk = config('app.env') === 'production' ? 'google' : 'public';
-            $document->storePubliclyAs('document/attachment/', $document_name, $disk);
-            $data += [
-                'type' => 0,
-                'document' => $document_name
+        try {
+            $data = [
+                'user_id' => Auth::user()->id,
+                'title' => $input['attachment_title'],
             ];
-        } elseif ($input['attachment_type'] == 'link') {
-            $data += [
-                'type' => 1,
-                'link' => $input['attachment_link']
-            ];
+
+            if ($input['attachment_type'] == 'document') {
+                $document = $request->file('attachment_document');
+                $document_name = 'af_' . time() . '.' . $document->extension();
+                $document_content = (string) file_get_contents($document->getRealPath());
+
+                $this->storePublicFile('document/attachment/' . $document_name, $document_content);
+
+                $data += [
+                    'type' => 0,
+                    'document' => $document_name
+                ];
+            } elseif ($input['attachment_type'] == 'link') {
+                $data += [
+                    'type' => 1,
+                    'link' => $input['attachment_link']
+                ];
+            }
+
+            Attachment::create($data);
+
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success add new ' . $input['attachment_type'] . ' attachment']);
+        } catch (\Throwable $e) {
+            Log::error('Failed to add attachment: ' . $e->getMessage());
+            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'Gagal menambahkan lampiran: ' . $e->getMessage()]);
         }
-
-        Attachment::create($data);
-
-        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success add new ' . $input['attachment_type'] . ' attachment']);
     }
 
     function removeAttachment($id)
     {
         $attachment = Attachment::find($id);
         if (!$attachment) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Attachment doesn`t existed. Your action can damage the system.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Attachment doesn`t exist.']);
         }
-        if ($attachment->type == 0) {
-            $disk = config('app.env') === 'production' ? 'google' : 'public';
-            Storage::disk($disk)->delete('document/attachment/' . $attachment->document);        }
-        $attachment->delete();
-        
-        return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success remove ' . $attachment->title . ' from attachment list.']);
+
+        try {
+            if ($attachment->type == 0 && $attachment->document) {
+                $this->deletePublicFile('document/attachment/' . $attachment->document);
+            }
+            $title = $attachment->title ?? 'Attachment';
+            $attachment->delete();
+            
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success remove ' . $title . ' from attachment list.']);
+        } catch (\Throwable $e) {
+            Log::error('Failed to remove attachment: ' . $e->getMessage());
+            return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'Gagal menghapus lampiran: ' . $e->getMessage()]);
+        }
     }
 
     // Post function

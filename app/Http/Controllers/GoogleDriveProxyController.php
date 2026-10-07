@@ -14,6 +14,35 @@ class GoogleDriveProxyController extends Controller
      */
     public function stream($path)
     {
+        // 1. Direct local public path check (fastest, zero network overhead)
+        $publicFile = public_path($path);
+        if (file_exists($publicFile) && is_file($publicFile)) {
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            $mime = mime_content_type($publicFile) ?: 'image/webp';
+            return Response::make(file_get_contents($publicFile), 200, [
+                'Content-Type' => $mime,
+                'Cache-Control' => 'public, max-age=31536000, immutable',
+                'Access-Control-Allow-Origin' => '*',
+            ]);
+        }
+
+        // 2. Storage public disk check
+        if (Storage::disk('public')->exists($path)) {
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            $content = Storage::disk('public')->get($path);
+            $mime = Storage::disk('public')->mimeType($path) ?? 'image/webp';
+            return Response::make($content, 200, [
+                'Content-Type' => $mime,
+                'Cache-Control' => 'public, max-age=31536000, immutable',
+                'Access-Control-Allow-Origin' => '*',
+            ]);
+        }
+
+        // 3. Fallback to Google Drive
         $cacheKey = 'gd_proxy_' . md5($path);
         try {
             $disk = Storage::disk('google');
@@ -54,14 +83,15 @@ class GoogleDriveProxyController extends Controller
                 'Access-Control-Allow-Origin' => '*',
             ]);
         } catch (\Throwable $e) {
-            Log::error('Google Drive Proxy Error for path (' . $path . '): ' . $e->getMessage());
+            Log::warning('Google Drive Proxy warning for path (' . $path . '): ' . $e->getMessage());
             Cache::forget($cacheKey);
             
             if (ob_get_level()) {
                 ob_end_clean();
             }
             
-            return response("Google Drive Proxy Error for path [$path]:\n" . $e->getMessage() . "\n\nStack Trace:\n" . $e->getTraceAsString(), 500)
+            // Return 404 instead of 500 when file is missing or Google Drive is unreachable
+            return response("File not found or storage unavailable for path [$path]", 404)
                 ->header('Content-Type', 'text/plain');
         }
     }

@@ -88,6 +88,60 @@ describe('Billboard', function () {
         $response->assertRedirect();
         $response->assertSessionHas('notif.type', 'warning');
     });
+
+    test('CEO can add image billboard successfully', function () {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $file = \Illuminate\Http\UploadedFile::fake()->image('billboard.png', 400, 300);
+
+        $response = $this->post('/seeo/staff/billboard/add', [
+            'billboard_title'     => 'Billboard Gambar Keren',
+            'billboard_typeImage' => '1',
+            'billboard_image'     => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('notif.type', 'info');
+        $this->assertDatabaseHas('billboard', ['title' => 'Billboard Gambar Keren']);
+    });
+
+    test('CEO can add image billboard under production environment without 500 error', function () {
+        config(['app.env' => 'production']);
+        $file = \Illuminate\Http\UploadedFile::fake()->image('billboard_prod.jpg', 300, 200);
+
+        $response = $this->post('/seeo/staff/billboard/add', [
+            'billboard_title'     => 'Billboard Prod Test',
+            'billboard_typeImage' => '1',
+            'billboard_image'     => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('notif.type', 'info');
+        $this->assertDatabaseHas('billboard', ['title' => 'Billboard Prod Test']);
+    });
+
+    test('CEO can update billboard image and text', function () {
+        $billboard = \App\Models\Billboard::create([
+            'type'  => 2,
+            'title' => 'Billboard Lama',
+            'text'  => 'Teks Lama',
+        ]);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->image('new_billboard.png', 400, 300);
+        $response = $this->post("/seeo/staff/billboard/update/{$billboard->id}", [
+            'billboard_title'     => 'Billboard Baru',
+            'billboard_typeImage' => '1',
+            'billboard_typeText'  => '1',
+            'billboard_text'      => 'Teks Baru',
+            'billboard_image'     => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('notif.type', 'info');
+        $updated = $billboard->fresh();
+        expect($updated->title)->toBe('Billboard Baru')
+            ->and($updated->text)->toBe('Teks Baru')
+            ->and($updated->image)->not->toBeNull();
+    });
 });
 
 // ============================================================

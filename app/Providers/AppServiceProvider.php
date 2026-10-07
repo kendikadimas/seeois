@@ -69,11 +69,7 @@ class AppServiceProvider extends ServiceProvider
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error('Google Drive Adapter Initialization Failed: ' . $e->getMessage());
 
-                if ($app->environment('production')) {
-                    throw $e;
-                }
-
-                // Keep local development usable when Google credentials are absent.
+                // Fallback to public disk so application does not crash if Google Drive is unauthenticated or fails
                 return \Illuminate\Support\Facades\Storage::disk('public');
             }
         });
