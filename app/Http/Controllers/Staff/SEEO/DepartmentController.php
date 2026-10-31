@@ -159,27 +159,40 @@ class DepartmentController extends Controller
             abort(403, 'Hanya Super Admin, CEO, dan Co-CEO yang dapat mengubah departemen.');
         }
 
+        $department = Department::find($id);
+        if (!$department) {
+            return back()->with('notif', ['type' => 'warning', 'message' => 'Department not found.']);
+        }
+
         // Validating data
         $request->validate([
             'name' => ['required', Rule::unique('department')->ignore($id)->whereNull('deleted_at')],
-            'manager_id' => ['required', 'numeric'],
+            'manager_id' => ['required', 'numeric', Rule::exists('users', 'id')->whereNull('deleted_at')],
         ]);
 
-        $department = Department::find($id);
         $current_name = $department->name;
         $new_name = $request->input('name');
 
         $department->name = $new_name;
 
-        if ($department->manager_id !== $request->input('manager_id')) {
+        // Compare as integers so "5" vs 5 never triggers a false manager change
+        if ((int) $department->manager_id !== (int) $request->input('manager_id')) {
+            // Detach old manager only when the record still exists (guards against
+            // stale/soft-deleted users that would crash on null).
             $old_manager = User::find($department->manager_id);
-            $old_manager->department_id = null;
-            $old_manager->save();
+            if ($old_manager) {
+                $old_manager->department_id = null;
+                $old_manager->save();
+            }
 
             $new_manager = User::find($request->input('manager_id'));
-            $new_manager->department_id = $id;
+            if (!$new_manager) {
+                return back()->with('notif', ['type' => 'warning', 'message' => 'Selected manager not found.']);
+            }
+            $new_manager->department_id = $department->id;
             $new_manager->save();
         }
+
         $department->manager_id = $request->input('manager_id');
         // sucees update
         if ($department->save()) {

@@ -160,9 +160,13 @@ class CeoPanelController extends Controller
     // STAFF MANAGEMENT
     // ──────────────────────────────────────────────────────────
 
-    /** Promote a non-staff user to staff (assign default role 4 = Staff) */
+    /** Promote a non-staff user to staff (default role 4 = Staff, optional custom role e.g. Co-CEO) */
     public function promoteUser(Request $request, User $user)
     {
+        $data = $request->validate([
+            'roles_id' => ['nullable', 'integer', 'exists:roles,id'],
+        ]);
+
         $activeYear = GovernanceYear::current();
 
         if ($user->roles_id && $user->year_id === $activeYear?->id) {
@@ -172,13 +176,15 @@ class CeoPanelController extends Controller
             ]);
         }
 
-        $user->roles_id = 4; // default: Staff
+        $user->roles_id = $data['roles_id'] ?? 4; // default: Staff
         $user->year_id  = $activeYear?->id;
         $user->save();
 
+        $roleName = Role::find($user->roles_id)?->name ?? "role #{$user->roles_id}";
+
         return back()->with('notif', [
             'type'    => 'info',
-            'message' => "{$user->name} berhasil dijadikan Staff" . ($activeYear ? " kepengurusan {$activeYear->year}." : '.'),
+            'message' => "{$user->name} berhasil dijadikan {$roleName}" . ($activeYear ? " kepengurusan {$activeYear->year}." : '.'),
         ]);
     }
 

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "jenderal": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "JenderalRouter",
+      "options": {
+        "baseURL": "https://chat.jenderalpanel.com/v1",
+        "apiKey": "jr-9ltca9cf50vngss4e6mp3pi2hoapjtin8rje14hb"
+      },
+      "models": {
+        "irham-model/glm-5.3-flash": {
+          "name": "irham-model/glm-5.3-flash"
+        },
+        "qwen3-30b": {
+          "name": "qwen3-30b"
+        }
+      }
+    }
+  },
+  "model": "jenderal/irham-model/glm-5.3-flash"
+}

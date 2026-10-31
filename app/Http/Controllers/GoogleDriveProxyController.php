@@ -10,11 +10,14 @@ use Illuminate\Support\Facades\Log;
 class GoogleDriveProxyController extends Controller
 {
     /**
-     * Proxy and stream files securely from Google Drive to avoid public permission & sharing issues.
+     * Proxy dan streaming file gambar/dokumen secara aman:
+     * 1. Cek langsung storage lokal (paling cepat & tidak butuh internet).
+     * 2. Jika di lokal belum ada, ambil dari Google Drive dan simpan di cache.
+     * 3. Jika file tidak ada atau Google Drive gagal, beri respon 404 (bukan error 500).
      */
     public function stream($path)
     {
-        // 1. Direct local public path check (fastest, zero network overhead)
+        // 1. Cek langsung file di folder public lokal (paling cepat, tanpa beban jaringan)
         $publicFile = public_path($path);
         if (file_exists($publicFile) && is_file($publicFile)) {
             if (ob_get_level()) {
@@ -28,7 +31,7 @@ class GoogleDriveProxyController extends Controller
             ]);
         }
 
-        // 2. Storage public disk check
+        // 2. Cek di disk storage lokal (storage/app/public)
         if (Storage::disk('public')->exists($path)) {
             if (ob_get_level()) {
                 ob_end_clean();
@@ -42,23 +45,21 @@ class GoogleDriveProxyController extends Controller
             ]);
         }
 
-        // 3. Fallback to Google Drive
+        // 3. Cadangan: Ambil dari Google Drive jika tidak ada di storage lokal
         $cacheKey = 'gd_proxy_' . md5($path);
         try {
             $disk = Storage::disk('google');
 
-            // Retrieve from cache
+            // Ambil dari cache sistem
             $fileData = Cache::get($cacheKey);
 
-            // If cache is empty or has invalid/empty content, fetch fresh from Google Drive
-            // Using content_base64 is 100% safe for database-backed cache drivers (preventing SQLSTATE encoding errors)
+            // Jika cache kosong, unduh file segar dari Google Drive
             if (!$fileData || !is_array($fileData) || empty($fileData['content_base64'])) {
-                // Clear the cache key to be clean
                 Cache::forget($cacheKey);
 
                 $content = $disk->get($path);
                 if ($content === false || $content === null || empty($content)) {
-                    throw new \Exception("File data is empty or could not be read");
+                    throw new \Exception("File kosong atau tidak dapat dibaca");
                 }
 
                 $fileData = [
@@ -66,13 +67,13 @@ class GoogleDriveProxyController extends Controller
                     'mime' => $disk->mimeType($path) ?? 'image/webp'
                 ];
 
-                // Cache successful read for 24 hours
+                // Simpan di cache selama 24 jam agar loading cepat
                 Cache::put($cacheKey, $fileData, 86400);
             }
 
             $rawContent = base64_decode($fileData['content_base64']);
 
-            // Safely clear any previous output buffers to avoid contamination and browser ERR_INVALID_RESPONSE
+            // Bersihkan buffer output agar respon gambar tidak rusak
             if (ob_get_level()) {
                 ob_end_clean();
             }
@@ -83,15 +84,15 @@ class GoogleDriveProxyController extends Controller
                 'Access-Control-Allow-Origin' => '*',
             ]);
         } catch (\Throwable $e) {
-            Log::warning('Google Drive Proxy warning for path (' . $path . '): ' . $e->getMessage());
+            Log::warning('Peringatan Google Drive Proxy untuk path (' . $path . '): ' . $e->getMessage());
             Cache::forget($cacheKey);
             
             if (ob_get_level()) {
                 ob_end_clean();
             }
             
-            // Return 404 instead of 500 when file is missing or Google Drive is unreachable
-            return response("File not found or storage unavailable for path [$path]", 404)
+            // Kembalikan 404 jika file tidak ada/Google Drive tidak bisa diakses (bukan error 500)
+            return response("File tidak ditemukan atau storage belum tersedia untuk path [$path]", 404)
                 ->header('Content-Type', 'text/plain');
         }
     }

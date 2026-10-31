@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
             Vite::prefetch(concurrency: 3);
         }
 
-        // Register the Google Drive filesystem with production-safe TLS defaults.
+        // Registrasi driver penyimpanan Google Drive dengan pengaman koneksi SSL
         \Illuminate\Support\Facades\Storage::extend('google', function ($app, $config) {
             $options = [];
             if (! empty($config['teamDriveId'] ?? null)) {
@@ -44,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
             try {
                 $client->refreshToken($config['refreshToken']);
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Google Drive Refresh Token Error: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Koneksi Refresh Token Google Drive gagal: ' . $e->getMessage());
             }
 
             if (isset($config['accessToken'])) {
@@ -55,8 +55,7 @@ class AppServiceProvider extends ServiceProvider
                 $service = new \Google\Service\Drive($client);
                 
                 $folder = $config['folder'] ?? '/';
-                // Detect if the folder option is a Google Drive Folder ID (e.g. 14vpzj0A2vTkiKiDW0PjX_Sx2NbTYXogI)
-                // Google Drive Folder IDs are alphanumeric, may contain dashes or underscores, and are usually 28-33 chars long.
+                // Deteksi apakah ID folder Google Drive valid
                 if ($folder !== '/' && preg_match('/^[a-zA-Z0-9-_]{25,45}$/', $folder)) {
                     $options['sharedFolderId'] = $folder;
                     $folder = null;
@@ -67,19 +66,19 @@ class AppServiceProvider extends ServiceProvider
 
                 return new \Illuminate\Filesystem\FilesystemAdapter($driver, $adapter);
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Google Drive Adapter Initialization Failed: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Inisialisasi Google Drive gagal: ' . $e->getMessage());
 
-                // Fallback to public disk so application does not crash if Google Drive is unauthenticated or fails
+                // Jika token Google Drive expired / bermasalah, otomatis alihkan ke storage lokal agar website tidak error 500
                 return \Illuminate\Support\Facades\Storage::disk('public');
             }
         });
 
-        // Force HTTPS in production
+        // Wajibkan HTTPS saat berjalan di server production
         if ($this->app->environment('production')) {
             \URL::forceScheme('https');
         }
 
-        // Share helpers & auth flags with all views (Blade)
+        // Bagikan fungsi helper gambar dan hak akses ke semua tampilan Blade
         view()->share('image_url', fn($path) => image_url($path));
         view()->composer('*', function ($view) {
             $user = \Illuminate\Support\Facades\Auth::user();

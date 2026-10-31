@@ -56,13 +56,23 @@ function setRoleValue(user, val) {
     roleMap.value[user.id] = parseInt(val);
 }
 
+// Per-candidate role selection state (recruit tab)
+const recruitRoleMap = ref({});
+function getRecruitRoleValue(user) {
+    return recruitRoleMap.value[user.id] ?? 4; // default: Staff
+}
+function setRecruitRoleValue(user, val) {
+    recruitRoleMap.value[user.id] = parseInt(val);
+}
+
 function assignRole(user) {
     const rid = roleMap.value[user.id] ?? user.roles_id;
     router.post(`/seeo/staff/ceo/user/${user.id}/role`, { roles_id: rid }, { preserveScroll: true });
 }
 
-function promoteUser(userId) {
-    router.post(`/seeo/staff/ceo/user/${userId}/promote`, {}, { preserveScroll: true });
+function promoteUser(user) {
+    const rid = getRecruitRoleValue(user);
+    router.post(`/seeo/staff/ceo/user/${user.id}/promote`, rid ? { roles_id: rid } : {}, { preserveScroll: true });
 }
 
 function demoteUser(userId, name) {
@@ -258,6 +268,7 @@ const tab = ref("years"); // "years" | "staff" | "recruit"
                                     <th>Nama</th>
                                     <th>Email</th>
                                     <th>Bergabung</th>
+                                    <th>Role Awal</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -269,7 +280,18 @@ const tab = ref("years"); // "years" | "staff" | "recruit"
                                         {{ new Date(user.created_at).toLocaleDateString('id-ID') }}
                                     </td>
                                     <td>
-                                        <button class="btn-sm-primary" @click="promoteUser(user.id)">
+                                        <select
+                                            :value="getRecruitRoleValue(user)"
+                                            @change="setRecruitRoleValue(user, $event.target.value)"
+                                            class="form-ctrl-sm"
+                                        >
+                                            <option v-for="r in roles" :key="r.id" :value="r.id">
+                                                [{{ r.id }}] {{ r.name }}
+                                            </option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button class="btn-sm-primary" @click="promoteUser(user)">
                                             <i class="bi bi-person-plus"></i> Jadikan Staff
                                         </button>
                                     </td>

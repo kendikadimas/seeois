@@ -86,8 +86,6 @@ function handleNewDepartment() {
 }
 
 function handleUpdateDepartment() {
-    console.log(form_update_department);
-
     form_update_department.post(
         `/seeo/staff/department/update/${active_department.value.id}`,
         {

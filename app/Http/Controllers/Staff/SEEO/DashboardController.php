@@ -31,9 +31,10 @@ class DashboardController extends Controller
         try {
             $disk = Storage::disk($diskName);
         } catch (\Throwable $e) {
-            Log::warning('Failed to resolve storage disk', ['error' => $e->getMessage()]);
+            Log::warning('Gagal memuat disk storage', ['error' => $e->getMessage()]);
         }
 
+        // Siapkan link gambar billboard: cek lokal dulu agar loading cepat, Google Drive sebagai cadangan
         $billboard_list = Billboard::all()->map(function ($billboard) {
             if ($billboard->image) {
                 if (file_exists(public_path('images/billboard/' . $billboard->image))) {
@@ -108,7 +109,8 @@ class DashboardController extends Controller
 
 
     /**
-     * Safely encode an uploaded image to WebP with multi-driver fallback.
+     * Kompres dan ubah gambar upload ke format WebP.
+     * Otomatis pakai Imagick jika terpasang di server, jika tidak otomatis fallback ke GD agar tidak error.
      */
     private function encodeImageToWebp($file, int $quality = 60): string
     {
@@ -119,28 +121,32 @@ class DashboardController extends Controller
             return (string) $image->toWebp($quality);
         } catch (\Throwable $e) {
             try {
+                // Cadangan: coba pakai GD driver jika Imagick gagal
                 $manager = new ImageManager(new GdDriver());
                 $image = $manager->read($file->getRealPath());
                 return (string) $image->toWebp($quality);
             } catch (\Throwable $e2) {
+                // Jika kedua driver gagal konversi WebP, simpan file aslinya
                 return (string) file_get_contents($file->getRealPath());
             }
         }
     }
 
     /**
-     * Store file with multi-tier storage: local public disk, direct public path, and optional Google Drive.
+     * Simpan file gambar dengan aman (berlapis):
+     * 1. Utama: Simpan ke storage lokal server agar gambar selalu bisa dibuka langsung.
+     * 2. Cadangan: Sinkronkan ke Google Drive di production (kalau token Google mati/expired, upload tetap sukses).
      */
     private function storePublicFile(string $relativePath, string $content): void
     {
-        // 1. Always store to local public disk so images are guaranteed to be served
+        // 1. Simpan ke storage lokal (public disk) agar gambar dijamin tersimpan di server hosting
         try {
             Storage::disk('public')->put($relativePath, $content);
         } catch (\Throwable $e) {
-            Log::warning("Failed to write to public disk for [{$relativePath}]: " . $e->getMessage());
+            Log::warning("Gagal simpan ke storage public lokal [{$relativePath}]: " . $e->getMessage());
         }
 
-        // 2. Also ensure direct public path has the file if directory is accessible
+        // 2. Salin langsung ke folder public_path agar web server bisa membaca langsung tanpa symlink
         try {
             $fullPublicPath = public_path($relativePath);
             $dir = dirname($fullPublicPath);
@@ -149,46 +155,49 @@ class DashboardController extends Controller
             }
             @file_put_contents($fullPublicPath, $content);
         } catch (\Throwable $e) {
-            // Non-critical
+            // Abaikan jika permission tidak mengizinkan write langsung
         }
 
-        // 3. Optional sync to Google Drive in production without breaking if unavailable
+        // 3. Backup ke Google Drive saat production (jika Google Drive error/expired, tidak menggagalkan upload)
         if (config('app.env') === 'production') {
             try {
                 Storage::disk('google')->put($relativePath, $content);
             } catch (\Throwable $e) {
-                Log::warning("Google Drive sync skipped/failed for [{$relativePath}]: " . $e->getMessage());
+                Log::warning("Sinkronisasi Google Drive dilewati/gagal untuk [{$relativePath}]: " . $e->getMessage());
             }
         }
     }
 
     /**
-     * Safely delete a file from public disk, public path, and optionally Google Drive.
+     * Hapus file gambar dari storage lokal dan Google Drive secara aman tanpa bikin web crash.
      */
     private function deletePublicFile(string $relativePath): void
     {
         try {
+            // Hapus dari storage lokal
             Storage::disk('public')->delete($relativePath);
             $fullPublicPath = public_path($relativePath);
             if (file_exists($fullPublicPath)) {
                 @unlink($fullPublicPath);
             }
+            // Hapus juga dari Google Drive jika di production
             if (config('app.env') === 'production') {
                 try {
                     Storage::disk('google')->delete($relativePath);
                 } catch (\Throwable $e) {
-                    // Non-blocking
+                    // Abaikan error Google Drive saat hapus file
                 }
             }
         } catch (\Throwable $e) {
-            Log::warning("Failed to delete public file [{$relativePath}]: " . $e->getMessage());
+            Log::warning("Gagal hapus file [{$relativePath}]: " . $e->getMessage());
         }
     }
 
-    // Billboard function
+    // Kelola Billboard (Papan Pengumuman Dashboard)
     function addBillboard(Request $request)
     {
         $request->flash();
+        // Validasi input: judul wajib, teks & gambar wajib jika centang tipe aktif
         $request->validate([
             'billboard_title' => 'required|string|max:255',
             'billboard_text' => Rule::requiredIf($request->boolean('billboard_typeText')),
@@ -196,7 +205,7 @@ class DashboardController extends Controller
         ]);
 
         if (!$request->input('billboard_typeImage') && !$request->input('billboard_typeText')) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Please choose the billboard type.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Pilih minimal satu tipe billboard (gambar atau teks).']);
         }
 
         try {
@@ -206,30 +215,33 @@ class DashboardController extends Controller
                 'text' => $request->input('billboard_text'),
             ];
 
+            // Proses upload gambar jika tipe gambar dicentang
             if ($request->input('billboard_typeImage')) {
                 if ($request->hasFile('billboard_image')) {
                     $receipt = $request->file('billboard_image');
+                    // Kompres gambar ke format webp
                     $receipt_encoded = $this->encodeImageToWebp($receipt, 60);
 
-                    // Generate clean, collision-free filename
+                    // Buat nama file unik agar tidak bentrok dengan gambar lama
                     $last = Billboard::withTrashed()->orderBy('id', 'desc')->first();
                     $last_id = $last ? $last->id : 0;
                     $receipt_name = 'BB_' . ($last_id + 1) . '_' . time() . '.webp';
 
-                    // Store safely across local and cloud
+                    // Simpan ke storage lokal server & backup ke cloud
                     $this->storePublicFile('images/billboard/' . $receipt_name, $receipt_encoded);
 
                     $data += ['image' => $receipt_name];
                 } else {
-                    return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'The file is empty. Uncheck image if you do not want to use image.']);
+                    return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'File gambar masih kosong. Hapus centang gambar jika tidak ingin upload foto.']);
                 }
             }
 
-            // Save data
+            // Simpan record billboard baru ke database
             Billboard::create($data);
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success add new Billboard.']);
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Billboard baru berhasil ditambahkan.']);
         } catch (\Throwable $e) {
-            Log::error('Failed to add billboard: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            // Tangani error tak terduga agar tidak keluar halaman error 500
+            Log::error('Gagal menambahkan billboard: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'Gagal menambahkan billboard: ' . $e->getMessage()]);
         }
     }
@@ -237,12 +249,12 @@ class DashboardController extends Controller
     function updateBillboard(Request $request, $id = 0)
     {
         if ($id == 0) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Missing parameter.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Parameter ID tidak valid.']);
         }
 
         $billboard = Billboard::find($id);
         if (!$billboard) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Billboard doesn`t exist.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Data billboard tidak ditemukan.']);
         }
 
         $request->flash();
@@ -253,7 +265,7 @@ class DashboardController extends Controller
         ]);
 
         if (!$request->input('billboard_typeImage') && !$request->input('billboard_typeText')) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Please choose the billboard type.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Pilih minimal satu tipe billboard.']);
         }
 
         try {
@@ -263,15 +275,15 @@ class DashboardController extends Controller
                 'text' => $request->input('billboard_text'),
             ];
 
-            // Handle image update
+            // Kelola pergantian file gambar
             if ($request->input('billboard_typeImage')) {
                 if ($request->hasFile('billboard_image')) {
-                    // Delete old image if exists
+                    // Hapus gambar lama agar storage server tidak penuh
                     if ($billboard->image) {
                         $this->deletePublicFile('images/billboard/' . $billboard->image);
                     }
 
-                    // Upload new image
+                    // Upload dan kompres gambar baru
                     $receipt = $request->file('billboard_image');
                     $receipt_encoded = $this->encodeImageToWebp($receipt, 60);
                     $receipt_name = 'BB_' . $id . '_' . time() . '.webp';
@@ -280,13 +292,13 @@ class DashboardController extends Controller
 
                     $data['image'] = $receipt_name;
                 } elseif (!$billboard->image) {
-                    return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'The file is empty. Uncheck image if you do not want to use image.']);
+                    return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'File gambar masih kosong.']);
                 } else {
-                    // Keep existing image
+                    // Pertahankan gambar yang sudah ada jika tidak upload baru
                     $data['image'] = $billboard->image;
                 }
             } else {
-                // Remove image if type changed to text only
+                // Jika tipe diubah jadi teks saja, hapus gambar lama
                 if ($billboard->image) {
                     $this->deletePublicFile('images/billboard/' . $billboard->image);
                 }
@@ -295,9 +307,9 @@ class DashboardController extends Controller
 
             $billboard->update($data);
 
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success update billboard.']);
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Billboard berhasil diperbarui.']);
         } catch (\Throwable $e) {
-            Log::error('Failed to update billboard: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('Gagal memperbarui billboard: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'Gagal memperbarui billboard: ' . $e->getMessage()]);
         }
     }
@@ -305,24 +317,24 @@ class DashboardController extends Controller
     function removeBillboard($id = 0)
     {
         if ($id == 0) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Missing parameter.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Parameter ID tidak valid.']);
         }
         $billboard = Billboard::find($id);
         if (!$billboard) {
-            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Billboard doesn`t exist. Please ask administrator to check billboard id.']);
+            return redirect()->back()->with('notif', ['type' => 'warning', 'message' => 'Billboard tidak ditemukan. Silakan hubungi administrator.']);
         }
 
         try {
-            // Delete image if exists
+            // Hapus file gambar dari server & cloud jika ada
             if ($billboard->image) {
                 $this->deletePublicFile('images/billboard/' . $billboard->image);
             }
             $title = $billboard->title ?? 'Billboard';
             $billboard->delete();
 
-            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Success delete billboard ' . $title . '.']);
+            return redirect()->back()->with('notif', ['type' => 'info', 'message' => 'Berhasil menghapus billboard ' . $title . '.']);
         } catch (\Throwable $e) {
-            Log::error('Failed to remove billboard: ' . $e->getMessage());
+            Log::error('Gagal menghapus billboard: ' . $e->getMessage());
             return redirect()->back()->with('notif', ['type' => 'danger', 'message' => 'Gagal menghapus billboard: ' . $e->getMessage()]);
         }
     }
