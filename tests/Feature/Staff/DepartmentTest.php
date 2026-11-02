@@ -163,7 +163,7 @@ describe('Department - Delete', function () {
         $this->assertSoftDeleted('department', ['id' => $dept->id]);
     });
 
-    test('cannot delete department if it has budget', function () {
+    test('department with budget can be deleted and its data is cleaned up', function () {
         $dept = Department::create([
             'name' => 'Funded Dept',
             'manager_id' => $this->ceo->id,
@@ -173,9 +173,10 @@ describe('Department - Delete', function () {
         $response = $this->post("/seeo/staff/department/delete/{$dept->id}", [
             'password' => 'password'
         ]);
-        
-        $response->assertSessionHas('notif.type', 'warning');
-        $this->assertDatabaseHas('department', ['id' => $dept->id]);
+
+        $response->assertRedirect('/seeo/staff/structural')
+            ->assertSessionHas('notif.type', 'info');
+        $this->assertSoftDeleted('department', ['id' => $dept->id]);
     });
 
     test('deleting department releases all assigned staff', function () {
@@ -191,6 +192,77 @@ describe('Department - Delete', function () {
         ])->assertRedirect('/seeo/staff/structural');
 
         expect($staff->fresh()->department_id)->toBeNull();
+    });
+
+    test('deleting department also deletes its programs and financial items', function () {
+        $dept = Department::create([
+            'name' => 'Program Dept ' . uniqid(),
+            'manager_id' => $this->ceo->id,
+            'budget' => 500000,
+            'expense' => 100000,
+            'disbursement' => 50000,
+        ]);
+        $program = Program::create([
+            'name' => 'Program Under Dept',
+            'department_id' => $dept->id,
+            'pic_id' => $this->ceo->id,
+            'budget' => 500000,
+            'expense' => 100000,
+            'disbursement' => 50000,
+        ]);
+        $budgetItem = \App\Models\BudgetItem::create([
+            'program_id' => $program->id,
+            'name' => 'Item',
+            'price' => 100000,
+            'qty' => 5,
+            'unit' => 'pcs',
+            'total_price' => 500000,
+        ]);
+
+        $response = $this->post("/seeo/staff/department/delete/{$dept->id}", [
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/seeo/staff/structural');
+        $this->assertSoftDeleted('department', ['id' => $dept->id]);
+        $this->assertSoftDeleted('program', ['id' => $program->id]);
+        $this->assertSoftDeleted('budget_item', ['id' => $budgetItem->id]);
+    });
+
+    test('deleting department still works when budget totals are stale or programs were already removed', function () {
+        // Stale aggregates with no remaining programs used to permanently
+        // block deletion because there was no way to clear them from the UI.
+        $dept = Department::create([
+            'name' => 'Stale Totals Dept ' . uniqid(),
+            'manager_id' => $this->ceo->id,
+            'budget' => 999999,
+            'expense' => 888888,
+            'disbursement' => 777777,
+        ]);
+
+        $response = $this->post("/seeo/staff/department/delete/{$dept->id}", [
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/seeo/staff/structural')
+            ->assertSessionHas('notif.type', 'info');
+        $this->assertSoftDeleted('department', ['id' => $dept->id]);
+    });
+
+    test('cannot delete department with wrong password', function () {
+        $dept = Department::create([
+            'name' => 'Wrong Pass Dept',
+            'manager_id' => $this->ceo->id,
+            'budget' => 0,
+            'expense' => 0,
+        ]);
+
+        $response = $this->post("/seeo/staff/department/delete/{$dept->id}", [
+            'password' => 'not-the-password',
+        ]);
+
+        $response->assertSessionHas('notif.type', 'danger');
+        $this->assertDatabaseHas('department', ['id' => $dept->id, 'deleted_at' => null]);
     });
 
     test('Staff cannot delete department', function () {

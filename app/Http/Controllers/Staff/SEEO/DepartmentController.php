@@ -7,11 +7,15 @@ use App\Http\Controllers\Concerns\ScopedByYear;
 use App\Models\BudgetItem;
 use App\Models\Department;
 use App\Models\DisbursementItem;
+use App\Models\DisbursementLetter;
 use App\Models\ExpenseItem;
+use App\Models\Logbook;
 use App\Models\Program;
+use App\Models\ProgramStaff;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -220,33 +224,36 @@ class DepartmentController extends Controller
             return back()->with('notif', ['type' => 'warning', 'message' => 'Department not found.']);
         }
 
-        // 1. Cek apakah ada budget/expense/disbursement
-        if ($department->budget > 0 || $department->expense > 0 || $department->disbursement > 0) {
-            return back()->with('notif', ['type' => 'warning', 'message' => 'Cannot delete department with active budget, expense, or disbursement. Please clear them first.']);
-        }
-
-        // 2. Authorization check
+        // Authorization check
         if (!Hash::check($request->input('password'), Auth::user()->password)) {
             return back()->with('notif', ['type' => 'danger', 'message' => 'Your password is wrong.']);
         }
 
         $name = $department->name;
 
-        // delete budget, disbursement, expense in the program
-        $programs = Program::where('department_id', $id)->get();
-        foreach ($programs as $program) {
-            BudgetItem::where('program_id', $program->id)->delete();
-            ExpenseItem::where('program_id', $program->id)->delete();
-            DisbursementItem::where('program_id', $program->id)->delete();
-            $program->delete();
-        }
+        // Delete everything belonging to this department atomically: programs
+        // plus their budget/expense/disbursement items, staff, letters, and
+        // logbooks. This also resets the stale aggregate columns so the
+        // department never gets stuck in an undeletable state.
+        DB::transaction(function () use ($department) {
+            $programIds = Program::where('department_id', $department->id)->pluck('id');
 
-        // Detach every member before soft-deleting the department. Leaving
-        // department_id populated would hide those users from the available
-        // staff list and leave them pointing at an inactive department.
-        User::where('department_id', $department->id)->update(['department_id' => null]);
+            BudgetItem::whereIn('program_id', $programIds)->delete();
+            ExpenseItem::whereIn('program_id', $programIds)->delete();
+            DisbursementItem::whereIn('program_id', $programIds)->delete();
+            DisbursementLetter::whereIn('program_id', $programIds)->delete();
+            ProgramStaff::whereIn('program_id', $programIds)->delete();
+            Logbook::whereIn('program_id', $programIds)->delete();
 
-        $department->delete();
+            Program::whereIn('id', $programIds)->delete();
+
+            // Detach every member before soft-deleting the department. Leaving
+            // department_id populated would hide those users from the available
+            // staff list and leave them pointing at an inactive department.
+            User::where('department_id', $department->id)->update(['department_id' => null]);
+
+            $department->delete();
+        });
 
         return redirect()->route('structural')->with('notif', ['type' => 'info', 'message' => 'Department ' . $name . ' has been deleted.']);
     }
